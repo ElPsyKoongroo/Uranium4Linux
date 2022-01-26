@@ -1,7 +1,14 @@
 /target
 /src/loadheaders.rs
 /doc
+<<<<<<< HEAD
 /*.json
 Cargo.lock
 .gitattributes
 /.vscode
+=======
+/.vscode
+/*.json
+Cargo.lock
+.gitattributes
+>>>>>>> 5450e3410108f2e9926b8429f9c39a1471cde3e5

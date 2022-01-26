@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5450e3410108f2e9926b8429f9c39a1471cde3e5
 #[allow(unused_imports)]
 use crate::load_headers::load_headers;
 use crate::easy_input::input;
@@ -63,8 +66,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
 
 
+<<<<<<< HEAD
     let mut input = input::<String>("Chose mod repo (RINTH/CURSE): ", "RINTH".to_string());
     if input == ""{input = RINTH.to_string();}
+=======
+    let input = easy_input::input_string("Chose mod repo (RINTH/CURSE): ", "RINTH".to_string());
+>>>>>>> 5450e3410108f2e9926b8429f9c39a1471cde3e5
     let repo = input.as_str();
     println!("Chosen repo: {}", repo);
     load_headers(repo.to_uppercase().as_str(), &mut headers);
