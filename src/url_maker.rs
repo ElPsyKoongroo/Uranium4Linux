@@ -2,8 +2,10 @@
 
 
 const BASE_CUR_URL: &str = "https://api.curseforge.com";
-const BASE_MRN_URL: &str =  "https://api.modrinth.com/api/v1/mod?";
+const BASE_MRN_URL: &str =  "https://api.modrinth.com/api/v1/mod";
 
+
+use crate::minecraft_mod::RinthMod;
 
 pub struct ModRinth{
 
@@ -17,7 +19,12 @@ impl ModRinth {
     }
     
     pub fn search_for(limit: u32, offset: u32) -> String{
-        format!("{}limit={}&offset={}", BASE_MRN_URL, limit, offset)
+        format!("{}?limit={}&offset={}", BASE_MRN_URL, limit, offset)
+    }
+
+    pub fn mod_versions(minecraft_mod: &RinthMod) -> String{
+        // https://api.modrinth.com/api/v1/mod/AANobbMI/version
+        format!("{}/{}/version", BASE_MRN_URL, minecraft_mod.get_id())
     }
     
 }

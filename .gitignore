@@ -1,4 +1,7 @@
 /target
-Cargo.lock
+/src/loadheaders.rs
 /doc
+/.vscode
 /*.json
+Cargo.lock
+.gitattributes
