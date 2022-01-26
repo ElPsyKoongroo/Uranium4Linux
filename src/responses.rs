@@ -6,7 +6,7 @@ use crate::minecraft_mod;
 
 trait Jsoneable{ 
     fn to_json(&self) -> serde_json::Result<()> 
-        where Self: Serialize{
+    where Self: Serialize{
             let file = File::create("mods.json").unwrap();
             let mut writer = BufWriter::new(file);
             serde_json::to_writer_pretty(&mut writer, &self)?;
@@ -20,9 +20,12 @@ pub struct CurseResponse{
 }
 impl Jsoneable for CurseResponse {}
 
+
+
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RinthResponse{
-    hits: Vec<minecraft_mod::RinthMod>,
+    pub hits: Vec<minecraft_mod::RinthMod>,
     offset: u32,
     limit: u32,
     total_hits: u64

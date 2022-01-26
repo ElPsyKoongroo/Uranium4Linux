@@ -1,6 +1,8 @@
+use crate::variables::{RINTH, CURSE};
+
+
 use reqwest::header::{HeaderMap, AUTHORIZATION};
-const RINTH: &str = "Rinth";
-const CURSE: &str = "Curse";
+
 pub fn load_headers(api: &str, headers: &mut HeaderMap){
     match api {
         RINTH => {
