@@ -1,4 +1,6 @@
-use crate::variables::{RINTH, CURSE};
+// use crate::variables::{RINTH, CURSE};
+
+use crate::variables::{constants::*};
 
 
 use reqwest::header::{HeaderMap, AUTHORIZATION};

@@ -5,7 +5,7 @@ const BASE_CUR_URL: &str = "https://api.curseforge.com";
 const BASE_MRN_URL: &str =  "https://api.modrinth.com/api/v1/mod";
 
 
-use crate::minecraft_mod::RinthMod;
+use crate::minecraft::minecraft_mod::RinthMod;
 
 pub struct ModRinth{
 

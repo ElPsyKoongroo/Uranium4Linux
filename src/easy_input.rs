@@ -17,8 +17,6 @@ where T: FromStr{
     result
 }
 
-<<<<<<< HEAD
-=======
 pub fn input_string(msg: &str, default: String) -> String{
     let mut s= String::new();
     let result: String;
@@ -32,5 +30,3 @@ pub fn input_string(msg: &str, default: String) -> String{
     }
     result
 }
-
->>>>>>> 5450e3410108f2e9926b8429f9c39a1471cde3e5
