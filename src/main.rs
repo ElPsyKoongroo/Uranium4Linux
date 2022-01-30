@@ -35,6 +35,7 @@ fn menu(properties: &mut Properties) -> CODES {
     let mut aux = user_input.split(" ");
 
     let option = aux.next().unwrap();
+    if option.to_lowercase() == "exit" {return CODES::Exit}
     let value = aux.next().unwrap();
     let parsed_value;
 
@@ -130,6 +131,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 let _ = easy_input::input::<String>("Press enter to continue...", " ".to_string());
             }
+
+            CODES::Exit => break,
 
             _ => break,
         }

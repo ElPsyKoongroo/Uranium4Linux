@@ -11,6 +11,7 @@ use crate::minecraft::minecraft_mod::{RinthMod, RinthVersions};
 
 
 pub enum CODES {
+    Exit,
     ModSelected,
     PageSelected,
     ParseError
