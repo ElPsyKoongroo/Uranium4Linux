@@ -6,9 +6,9 @@ use tokio::fs::File;
 
 use crate::{requester::request_maker::Requester};
 use crate::easy_input::input;
-use crate::minecraft::minecraft_mod::{RinthMod, RinthVersions};
 
-
+use crate::minecraft_mod::minecraft_mod::*;
+use crate::minecraft_mod::responses::*;
 
 pub enum CODES {
     Exit,

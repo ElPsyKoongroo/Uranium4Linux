@@ -1,11 +1,15 @@
 #![allow(unused_imports)]
+#![allow(non_snake_case)]
 use reqwest::header::HeaderMap;
 use serde_json::to_string;
 use std::collections::HashMap;
 
-mod minecraft;
-use crate::minecraft::minecraft_mod::*;
-use crate::minecraft::responses::*;
+// use MinecraftMod::minecraft_mod::*;
+// use MinecraftMod::responses::*;
+
+mod minecraft_mod;
+use crate::minecraft_mod::minecraft_mod::*;
+use crate::minecraft_mod::responses::*;
 
 mod requester;
 use crate::requester::load_headers::*;
@@ -22,6 +26,7 @@ use crate::easy_input::input;
 
 mod url_maker;
 use crate::url_maker::*;
+
 
 fn menu(properties: &mut Properties) -> CODES {
     println!(
@@ -112,12 +117,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             CODES::ModSelected => {
+                let actual_mod = &actual_page.hits[properties.selected_mod];
+                
                 let resp = requester
                     .get(url_maker::ModRinth::mod_versions(
-                        &actual_page.hits[properties.selected_mod],
+                        actual_mod,
                     ))
                     .await?;
-
+                println!("\n\n{}\n{}", actual_mod.get_title().to_uppercase()  ,actual_mod.get_description());
                 let m_versions = resp.json::<Vec<RinthVersion>>().await?;
                 let minecraft_mod = RinthVersions {
                     versions: m_versions,

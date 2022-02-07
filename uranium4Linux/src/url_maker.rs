@@ -1,12 +1,9 @@
 #![allow(dead_code)]
-
-
 const BASE_CUR_URL: &str = "https://api.curseforge.com";
 const BASE_MRN_URL: &str =  "https://api.modrinth.com/api/v1/mod";
 
-
-use crate::minecraft::minecraft_mod::RinthMod;
-
+use crate::minecraft_mod::minecraft_mod::*;
+use crate::minecraft_mod::responses::*;
 pub struct ModRinth{
 
 }
@@ -33,7 +30,6 @@ pub struct Curse{
 }
 
 impl Curse{
-
     pub fn search_for() -> String{ 
         format!("{}/v1/mods/search?gameid=432&pageSize=20&classId=6", BASE_CUR_URL)
     }
