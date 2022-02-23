@@ -1,4 +1,3 @@
-/requester/src/requester/load_headers.rs
 /target
 /doc
 /.vscode
@@ -7,3 +6,4 @@ Cargo.lock
 .gitattributes
 *.jar
 
+requester/src/requester/load_headers.rs
