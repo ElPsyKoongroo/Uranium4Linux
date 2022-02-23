@@ -1,15 +1,15 @@
 #![allow(dead_code)]
 use serde::{Deserialize, Serialize};
+use minecraft_mod::minecraft_mod::*;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ModPack{
-    pub count: usize,
-    pub name: String,
-    pub version: String,
-    pub author: String,
-    pub mods: Vec<Mods>,
+    name: String,
+    version: String,
+    author: String,
+    mods: Vec<Mods>,
+    count: usize,
 }
-
 impl ModPack{
     pub fn new() -> ModPack{
         ModPack{
@@ -23,6 +23,25 @@ impl ModPack{
     }
     pub fn mods(&self) -> &Vec<Mods>{
         &self.mods
+    }
+    #[allow(non_snake_case)]
+    pub fn modpack_from_RinthVers(mods: Vec<RinthVersion>)->ModPack{
+        let mut mod_vec = Vec::new();
+        for mmod in mods{
+            mod_vec.push(Mods::from_RinthVersion(mmod));
+        }
+        ModPack{
+            count: mod_vec.len(),
+            name: String::from("Modpack_1"),
+            version: String::from("1.0"),
+            author: String::from("Author"),
+            mods: mod_vec,
+        }
+    }
+
+    pub fn write_mod_pack(&self){
+        let j = serde_json::to_string(self).unwrap();
+        std::fs::write(self.name.clone(), j).unwrap();
     }
 }
 
@@ -59,5 +78,13 @@ impl Mods{
 
     pub fn get_file_name(&self) -> String{
         self.file_name.clone()
+    }
+    
+    #[allow(non_snake_case)]
+    pub fn from_RinthVersion(m_mod: RinthVersion) -> Mods{
+        Mods::new(
+            m_mod.get_name(), 
+            m_mod.get_file_url(), 
+            m_mod.get_file_name())
     }
 }

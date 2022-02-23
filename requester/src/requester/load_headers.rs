@@ -1,7 +1,8 @@
 // use crate::variables::{RINTH, CURSE};
 
-use crate::variables::{constants::*};
-
+// use crate::variables::{constants::*};
+pub const RINTH: &str = "RINTH";
+pub const CURSE: &str = "CURSE";
 
 use reqwest::header::{HeaderMap, AUTHORIZATION};
 

@@ -16,7 +16,7 @@ impl Requester{
 
     #[allow(dead_code)]
     pub async fn get(&self, url: String) -> Result<reqwest::Response, Box<dyn std::error::Error>>{
-        let resp:Response ;
+        let resp: Response;
         
         match self.headers.clone() {
             Some(h) => {

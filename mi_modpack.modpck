@@ -1,0 +1,33 @@
+{
+  "count": 0,
+  "name": "Pruebita",
+  "version": "1.0.0",
+  "author": "El sergio",
+  "mods": [
+    {
+      "name": "Sodium",
+      "file": "https://cdn.modrinth.com/data/AANobbMI/versions/mc1.18.1-0.4.0-alpha6/sodium-fabric-mc1.18.1-0.4.0-alpha6+build.14.jar",
+      "file_name": "sodium-fabric-mc1.18.1-0.4.0-alpha6+build.14.jar"
+    },
+    {
+      "name": "Iris",
+      "file": "https://cdn.modrinth.com/data/YL57xq9U/versions/1.18.x/v1.2.0/iris-mc1.18.1-1.2.0-pre.jar",
+      "file_name": "iris-mc1.18.1-1.2.0-pre.jar"
+    },
+    {
+      "name": "Hydrogen",
+      "file": "https://cdn.modrinth.com/data/AZomiSrC/versions/mc1.17.1-0.3.1/hydrogen-fabric-mc1.17.1-0.3.jar",
+      "file_name": "Hydrogen.jar"
+    },
+    {
+      "name": "Lazy",
+      "file": "https://cdn.modrinth.com/data/hvFnDODi/versions/0.1.2/lazydfu-0.1.2.jar",
+      "file_name": "Lazy.jar"
+    },
+    {
+      "name": "Lithium",
+      "file": "https://cdn.modrinth.com/data/gvQqBUqZ/versions/mc1.18.1-0.7.7/lithium-fabric-mc1.18.1-0.7.7.jar",
+      "file_name": "Lithium.jar"
+    }
+  ]
+}

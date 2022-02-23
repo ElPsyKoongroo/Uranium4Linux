@@ -1,4 +1,4 @@
 [workspace]
-members = ["uranium4Linux", "modpack_loader"]
+members = ["uranium4Linux", "modpack_loader", "requester", "minecraft_mod"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

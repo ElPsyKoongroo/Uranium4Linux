@@ -1,5 +1,5 @@
 [package]
-name = "modpack_loader"
+name = "requester"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,6 +8,3 @@ edition = "2021"
 [dependencies]
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-minecraft_mod = {path = "../minecraft_mod"}
