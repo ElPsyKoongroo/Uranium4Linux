@@ -7,3 +7,4 @@ Cargo.lock
 *.jar
 
 requester/src/requester/load_headers.rs
+rustfmt.toml
