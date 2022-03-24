@@ -58,7 +58,10 @@ impl ModPackDownloader {
         }
     }
 
-    pub fn set_path(&mut self, _path: String) {
+    pub fn set_path(&mut self, mut _path: String) {
+        if !_path.ends_with("/"){
+            _path.push('/');
+        }
         self.path = _path;
     }
 
