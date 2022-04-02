@@ -82,6 +82,94 @@ fn menu(properties: &mut Properties) -> CODES {
     }
 }
 
+
+
+async fn page_selection(
+    pages: &mut HashMap<u32,RinthResponse>, 
+    properties: &mut Properties, 
+    requester: &mut Requester,
+    actual_page: &mut RinthResponse,
+    ) {
+    if !pages.contains_key(&properties.get_page()) {
+        let resp = requester
+            .get(maker::ModRinth::search_for(
+                properties.get_limit(),
+                properties.get_page() * 20,
+            ))
+            .await.unwrap();
+        *actual_page = check(resp.json::<RinthResponse>().await, true).unwrap_or_default();
+        if actual_page.len() == 0 {
+            println!("This page is empty, nothing here !");
+        } else {
+            pages.insert(properties.get_page(), actual_page.clone());
+        }
+    } else {
+        *actual_page = pages.get(&properties.get_page()).unwrap().clone();
+    } 
+}
+
+
+async fn mod_selection(
+    properties: &mut Properties, 
+    requester: &mut Requester,
+    actual_page: &mut RinthResponse,
+) {
+    let actual_mod = &actual_page.hits[properties.get_selected_mod()];
+    let resp = requester
+        .get(maker::ModRinth::mod_versions(actual_mod))
+        .await.unwrap();
+    println!(
+        "\n\n{}\n{}",
+        actual_mod.get_title().to_uppercase(),
+        actual_mod.get_description()
+    );
+    let m_versions =
+        check(resp.json::<Vec<RinthVersion>>().await, true).unwrap_or_default();
+    let minecraft_mod = RinthVersions {
+        versions: m_versions,
+    };
+    println!("{}", minecraft_mod);
+    match download_mod(&minecraft_mod, &requester, &properties.get_path()).await {
+        Ok(_) => {}
+        Err(e) => println!("Runtime Error => {}", e.to_string()),
+    }
+    let _ =
+        easy_input::input::<String>("Press enter to continue...", String::from(" "));    
+    
+}
+
+
+async fn make_modpack(
+    requester: &mut Requester,
+) {
+    let input = easy_input::input("Path: ", String::from("-"));
+    let path = Path::new(input.as_str());
+    let a = get_mods(path).unwrap();
+    let mut responses: Vec<RinthVersion> = Vec::new();
+    for item in a {
+        let response = {
+            let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
+            check(request.json::<RinthVersion>().await, false)
+        };
+        match response {
+            Some(e) => responses.push(e),
+            None => {}
+        }
+    }
+    let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
+    let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
+    let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
+    let mp = modpack_struct::ModPack::modpack_from_RinthVers(
+        mp_name,
+        mp_version,
+        mp_author,
+        responses,
+    );
+    mp.write_mod_pack();
+
+    let _ = easy_input::input("Press enter to continue...", 0);    
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut headers = HeaderMap::new();
@@ -110,47 +198,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         actual_page.show();
         match menu(&mut properties) {
             CODES::PageSelected => {
-                if !pages.contains_key(&properties.get_page()) {
-                    let resp = requester
-                        .get(maker::ModRinth::search_for(
-                            properties.get_limit(),
-                            properties.get_page() * 20,
-                        ))
-                        .await?;
-                    actual_page =
-                        check(resp.json::<RinthResponse>().await, true).unwrap_or_default();
-                    if actual_page.len() == 0 {
-                        println!("This page is empty, nothing here !")
-                    } else {
-                        pages.insert(properties.get_page(), actual_page.clone());
-                    }
-                } else {
-                    actual_page = pages.get(&properties.get_page()).unwrap().clone();
-                }
+                page_selection(&mut pages, &mut properties, &mut requester, &mut actual_page).await;
             }
 
             CODES::ModSelected => {
-                let actual_mod = &actual_page.hits[properties.get_selected_mod()];
-                let resp = requester
-                    .get(maker::ModRinth::mod_versions(actual_mod))
-                    .await?;
-                println!(
-                    "\n\n{}\n{}",
-                    actual_mod.get_title().to_uppercase(),
-                    actual_mod.get_description()
-                );
-                let m_versions =
-                    check(resp.json::<Vec<RinthVersion>>().await, true).unwrap_or_default();
-                let minecraft_mod = RinthVersions {
-                    versions: m_versions,
-                };
-                println!("{}", minecraft_mod);
-                match download_mod(&minecraft_mod, &requester, &properties.get_path()).await {
-                    Ok(_) => {}
-                    Err(e) => println!("Runtime Error => {}", e.to_string()),
-                }
-                let _ =
-                    easy_input::input::<String>("Press enter to continue...", String::from(" "));
+                mod_selection(&mut properties, &mut requester, &mut actual_page).await;
             }
 
             CODES::SetPath => {
@@ -158,32 +210,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             CODES::MakeModPack => {
-                let input = easy_input::input("Path: ", String::from("-"));
-                let path = Path::new(input.as_str());
-                let a = get_mods(path).unwrap();
-                let mut responses: Vec<RinthVersion> = Vec::new();
-                for item in a {
-                    let response = {
-                        let request = requester.get(maker::ModRinth::hash(&item.0)).await?;
-                        check(request.json::<RinthVersion>().await, false)
-                    };
-                    match response {
-                        Some(e) => responses.push(e),
-                        None => {}
-                    }
-                }
-                let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
-                let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
-                let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
-                let mp = modpack_struct::ModPack::modpack_from_RinthVers(
-                    mp_name,
-                    mp_version,
-                    mp_author,
-                    responses,
-                );
-                mp.write_mod_pack();
-
-                let _ = easy_input::input("Press enter to continue...", 0);
+                make_modpack(&mut requester).await;
             }
 
             CODES::Exit => break,

@@ -5,6 +5,6 @@
 Cargo.lock
 .gitattributes
 *.jar
-
+/temp
 requester/src/requester/load_headers.rs
 rustfmt.toml

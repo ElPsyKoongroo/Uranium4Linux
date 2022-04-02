@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use minecraft_mod::minecraft_mod::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Error;
+use std::fs;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModPack {
@@ -30,7 +32,7 @@ impl ModPack {
         modpack_name: String,
         modpack_version: String,
         modpack_author: String,
-        mods: Vec<RinthVersion>
+        mods: Vec<RinthVersion>,
     ) -> ModPack {
         let mut mod_vec = Vec::new();
         for mmod in mods {
@@ -48,6 +50,29 @@ impl ModPack {
     pub fn write_mod_pack(&self) {
         let j = serde_json::to_string(self).unwrap();
         std::fs::write(self.name.clone(), j).unwrap();
+    }
+}
+
+fn deserializ_pack(path: String) -> Result<ModPack, Error> {
+    let j = fs::read_to_string(path).unwrap();
+    let pack: ModPack = serde_json::from_str(&j).unwrap();
+    Ok(pack)
+}
+
+pub fn load_pack(pack_path: &String) -> Option<ModPack> {
+    match fs::read_to_string(pack_path) {
+        Ok(_) => {}
+        Err(error) => {
+            println!("Error reading the pack \n\n{error}");
+            return None;
+        }
+    };
+    match deserializ_pack(pack_path.clone()) {
+        Ok(e) => return Some(e),
+        Err(error) => {
+            println!("Error deserializing the pack \n\n{error}");
+            return None;
+        }
     }
 }
 

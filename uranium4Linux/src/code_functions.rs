@@ -157,18 +157,18 @@ fn get_sha1_from_file(file_path: &String) -> String {
     hash
 }
 
-pub fn get_mods(p: &Path) -> Option<Vec<(String, String)>> {
+pub fn get_mods(mods_path: &Path) -> Option<Vec<(String, String)>> {
     let mut names: Vec<(String, String)> = Vec::new();
     let mods;
 
-    if !p.is_dir() {
+    if !mods_path.is_dir() {
         return None;
     }
 
-    mods = read_dir(p).unwrap();
+    mods = read_dir(mods_path).unwrap();
 
     for mmod in mods {
-        get_sha(p, mmod.unwrap(), &mut names);
+        get_sha(mods_path, mmod.unwrap(), &mut names);
     }
 
     Some(names)
