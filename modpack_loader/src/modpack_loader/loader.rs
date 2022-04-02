@@ -57,11 +57,13 @@ impl ModPackDownloader {
         };
 
         let responses: Vec<JoinHandle<Response>> = request_maker(&minecraft_mods).await;
-        self.download(not_done_mods, responses, minecraft_mods)
-            .await
+        //self.download(not_done_mods, responses, minecraft_mods).await
+        
+        self.download_v2(not_done_mods, responses, minecraft_mods).await
+        
     }
 
-    async fn download(
+    async fn download_v2(
         &mut self,
         mut not_done_mods: Vec<usize>,
         mut responses: Vec<JoinHandle<Response>>,
@@ -69,46 +71,59 @@ impl ModPackDownloader {
     ) -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(debug_assertions)]
         let start = Instant::now();
+        //let not_downloaded_mods = Box::new()
         loop {
-            for i in not_done_mods.clone() {
-                let sleep = time::sleep(Duration::from_millis(50));
-                tokio::pin!(sleep);
-    
-                #[cfg(debug_assertions)]
-                println!("Trying task {}\n----------------------", i);
-    
-                tokio::select! {
-                    _ = &mut sleep =>  {
-                        #[cfg(debug_assertions)]
-                        println!("Task {} not ready yet\n", i);
-                        continue;
-                    }
-
-                    res = &mut responses[i] => {
-                        let response = res.unwrap();
-                        let full_path = self.path.clone() + minecraft_mods.index(i).get_file_name().as_ref();
-                        tokio::fs::write(full_path,
-                                            response.bytes().await.unwrap()).await?;
-                        not_done_mods.retain(|&x| x != i);
-                    }
-
-                    else => {
-                        break;
-                    }
-                }
-            }
+            let done_mod = self.download_loop(not_done_mods.clone(), &mut responses, &minecraft_mods).await;
+            not_done_mods.retain(|&x| x != done_mod);
+        
             if not_done_mods.is_empty() {
                 break;
             }
+
         }
         #[cfg(debug_assertions)]
         {
-            print!("{:<3}ms has passed !! \t\n", start.elapsed().as_millis());
-            println!("/-------------------------------------------\\");
-            println!("|##############    FINISH    ################|");
-            println!("\\-------------------------------------------/\n\n\n");
+            print!("{:<3}\n", start.elapsed().as_millis());
         }
         Ok(())
+    }
+
+
+    async fn download_loop(
+        &mut self,
+        not_done_mods: Vec<usize>,
+        responses: &mut Vec<JoinHandle<Response>>,
+        minecraft_mods: &Vec<Mods>,
+    ) -> usize{
+        for i in not_done_mods.clone() {
+            let sleep = time::sleep(Duration::from_millis(50));
+            tokio::pin!(sleep);
+
+            #[cfg(debug_assertions)]
+            //println!("Trying task {}\n----------------------", i);
+
+
+            tokio::select! {
+                _ = &mut sleep =>  {
+                    #[cfg(debug_assertions)]
+                    //println!("Task {} not ready yet\n", i);
+                    continue;
+                }
+                
+                res = &mut responses[i] => {
+                    let web_res = res.unwrap();
+                    let full_path = self.path.clone() + minecraft_mods.index(i).get_file_name().as_ref(); 
+                    let content = web_res.bytes().await.unwrap();
+                    tokio::fs::write(full_path, content).await.unwrap();
+                }
+                
+                else => {
+                    break;
+                }
+            }
+            return i;
+        }
+        0
     }
 
 }
