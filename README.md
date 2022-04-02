@@ -27,4 +27,9 @@ Example: <br>
 <li> modpack_loader.exe path/to/modpack/file</li>
 <li> Done !</li>
 </ol>
-We also have a Windows version with GUI, you can download [here](https://github.com/ElPsyKoongroo/MinecraftModDownloader)
+
+We also have a Windows version with GUI, you can download [here]. <br> 
+
+
+
+[here]: https://github.com/ElPsyKoongroo/MinecraftModDownloader
