@@ -10,14 +10,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
     match args.len() >= 2 {
         true => { 
-            println!("{}", args[1]);
+            //println!("{}", args[1]);
             let mut modpack_loader = ModPackDownloader::new();
             modpack_loader.set_path(String::from(
                 &args[2],
             ));
             modpack_loader.load_pack(args[1].to_string());
             modpack_loader.start().await.unwrap();
-            println!("\n\n");
+            //println!("\n\n");
             Ok(())
         }
 
