@@ -2,6 +2,7 @@
 /doc
 /.vscode
 /*.json
+/test
 Cargo.lock
 .gitattributes
 *.jar
