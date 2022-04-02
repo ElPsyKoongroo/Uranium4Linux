@@ -1,3 +1,11 @@
+# Version 1.2.2:
+    
+    Changes:
+        Downloader v2 !! It goes ~24% faster than previous version!!
+        
+
+    Known bugs:
+        -
 # Version 1.2.1:
     
     Changes:
