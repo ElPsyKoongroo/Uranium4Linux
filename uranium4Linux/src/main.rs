@@ -10,6 +10,7 @@ use tokio::fs::read_dir;
 
 mod checker;
 use crate::checker::check;
+use crate::variables::constants::MENU;
 
 use minecraft_mod::minecraft_mod::*;
 use minecraft_mod::responses::*;
@@ -28,75 +29,34 @@ mod url_maker;
 use crate::url_maker::*;
 
 fn menu(properties: &mut Properties) -> CODES {
-    println!(
-        "
-        mod  + <number>\n
-        page + <number>\n
-        path \n
-        make \n        
-        ",
-    );
+    println!("{}", MENU);
 
-    let user_input = easy_input::input("Chose an option: ", String::from(" "));
-    let mut aux = user_input.split(" ");
+    let user_input: Vec<String> = {
+        let aux = easy_input::input("Chose an option: ", String::from(" "));
+        aux.split(" ").map(|x| x.to_string()).collect()
+    };
 
-    let option = aux.next().unwrap();
-    if option.to_lowercase() == "exit" {
-        return CODES::Exit;
-    }
-    let parsed_value;
-    let value;
-    if option != "path" && option != "make" {
-        value = aux.next().unwrap();
-        match value.parse::<u32>() {
-            Ok(a) => parsed_value = a,
-            Err(_) => {
-                parsed_value = 0;
-            }
-        }
-    } else {
-        parsed_value = 0;
-    }
-
-    match option {
-        "mod" => {
-            properties.set_selected_mod(parsed_value as usize);
-            return CODES::ModSelected;
-        }
-        "page" => {
-            properties.set_page(parsed_value);
-            return CODES::PageSelected;
-        }
-
-        "path" => {
-            return CODES::SetPath;
-        }
-
-        "make" => {
-            return CODES::MakeModPack;
-        }
-        _ => {
-            println!("Ooops!");
-            return CODES::ParseError;
-        }
+    match user_input.len() {
+        1 => one_input(user_input[0].clone()),
+        2 => two_inputs(user_input[0].clone(), user_input[1].as_str(), properties),
+        _ => CODES::ParseError,
     }
 }
 
-
-
 async fn page_selection(
-    pages: &mut HashMap<u32,RinthResponse>, 
-    properties: &mut Properties, 
+    pages: &mut HashMap<u32, RinthResponse>,
+    properties: &mut Properties,
     requester: &mut Requester,
     actual_page: &mut RinthResponse,
-    ) {
+) {
     if !pages.contains_key(&properties.get_page()) {
         let resp = requester
             .get(maker::ModRinth::search_for(
                 properties.get_limit(),
                 properties.get_page() * 20,
             ))
-            .await.unwrap();
+            .await
+            .unwrap();
         *actual_page = check(resp.json::<RinthResponse>().await, true).unwrap_or_default();
         if actual_page.len() == 0 {
             println!("This page is empty, nothing here !");
@@ -105,26 +65,25 @@ async fn page_selection(
         }
     } else {
         *actual_page = pages.get(&properties.get_page()).unwrap().clone();
-    } 
+    }
 }
 
-
 async fn mod_selection(
-    properties: &mut Properties, 
+    properties: &mut Properties,
     requester: &mut Requester,
     actual_page: &mut RinthResponse,
 ) {
     let actual_mod = &actual_page.hits[properties.get_selected_mod()];
     let resp = requester
         .get(maker::ModRinth::mod_versions(actual_mod))
-        .await.unwrap();
+        .await
+        .unwrap();
     println!(
         "\n\n{}\n{}",
         actual_mod.get_title().to_uppercase(),
         actual_mod.get_description()
     );
-    let m_versions =
-        check(resp.json::<Vec<RinthVersion>>().await, true).unwrap_or_default();
+    let m_versions = check(resp.json::<Vec<RinthVersion>>().await, true).unwrap_or_default();
     let minecraft_mod = RinthVersions {
         versions: m_versions,
     };
@@ -133,15 +92,10 @@ async fn mod_selection(
         Ok(_) => {}
         Err(e) => println!("Runtime Error => {}", e.to_string()),
     }
-    let _ =
-        easy_input::input::<String>("Press enter to continue...", String::from(" "));    
-    
+    let _ = easy_input::input::<String>("Press enter to continue...", String::from(" "));
 }
 
-
-async fn make_modpack(
-    requester: &mut Requester,
-) {
+async fn make_modpack(requester: &mut Requester) {
     let input = easy_input::input("Path: ", String::from("-"));
     let path = Path::new(input.as_str());
     let a = get_mods(path).unwrap();
@@ -159,15 +113,11 @@ async fn make_modpack(
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
     let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
-    let mp = modpack_struct::ModPack::modpack_from_RinthVers(
-        mp_name,
-        mp_version,
-        mp_author,
-        responses,
-    );
+    let mp =
+        modpack_struct::ModPack::modpack_from_RinthVers(mp_name, mp_version, mp_author, responses);
     mp.write_mod_pack();
 
-    let _ = easy_input::input("Press enter to continue...", 0);    
+    let _ = easy_input::input("Press enter to continue...", 0);
 }
 
 #[tokio::main]
@@ -198,7 +148,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         actual_page.show();
         match menu(&mut properties) {
             CODES::PageSelected => {
-                page_selection(&mut pages, &mut properties, &mut requester, &mut actual_page).await;
+                page_selection(
+                    &mut pages,
+                    &mut properties,
+                    &mut requester,
+                    &mut actual_page,
+                )
+                .await;
             }
 
             CODES::ModSelected => {
