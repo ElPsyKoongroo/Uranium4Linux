@@ -180,3 +180,27 @@ fn get_sha(path: &Path, mod_dir: fs::DirEntry, names_vec: &mut Vec<(String, Stri
     let hash = get_sha1_from_file(&file_path);
     names_vec.push((hash, file_name));
 }
+
+pub fn one_input(input: String) -> CODES {
+    match input.as_str() {
+        "path" => CODES::SetPath,
+        "make" => CODES::MakeModPack,
+        "exit" => CODES::Exit,
+        _ => CODES::ParseError,
+    }
+}
+
+pub fn two_inputs(opt: String, value: &str, properties: &mut Properties) -> CODES {
+    match opt.as_str() {
+        "mod" => {
+            properties.set_selected_mod(value.parse::<usize>().unwrap());
+            return CODES::ModSelected;
+        }
+        "page" => {
+            properties.set_page(value.parse::<u32>().unwrap());
+            return CODES::PageSelected;
+        }
+
+        _ => return CODES::ParseError,
+    }
+}
