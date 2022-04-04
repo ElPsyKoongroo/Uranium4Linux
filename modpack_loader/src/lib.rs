@@ -5,7 +5,7 @@ use std::error::Error;
 use std::path::Path;
 
 #[allow(dead_code)]
-async fn download_modpack(modpack: String, path: String) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn download_modpack(modpack: String, path: String) -> Result<(), Box<dyn std::error::Error>> {
     // TODO
     if !Path::new(path.as_str()).exists() {
         return Err(Box::<dyn Error>::from(format!(
@@ -45,7 +45,7 @@ async fn my_test() {
         }
 
         _ => {
-            println!("Bad modpack")
+            eprintln!("Bad modpack")
         }
     }
     assert!(true);
