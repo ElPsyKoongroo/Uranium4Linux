@@ -25,8 +25,6 @@ use crate::code_functions::*;
 mod easy_input;
 use crate::easy_input::input;
 
-// mod url_maker;
-// use crate::url_maker::*;
 
 use minecraft_mod::url_maker::maker;
 

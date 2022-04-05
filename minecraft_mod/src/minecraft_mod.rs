@@ -24,7 +24,7 @@ pub struct CurseMod {
 pub struct RinthMod {
     project_id: Option<String>,
     title: String,
-    latest_version: String,
+    //latest_version: String,
     description: String,
     downloads: u32,
     versions: Vec<String>,
@@ -76,6 +76,10 @@ impl RinthVersion {
 
     pub fn get_file_name(&self) -> String {
         self.files[0].filename.clone()
+    }
+
+    pub fn get_id(&self) -> String{
+        self.id.clone()
     }
 }
 

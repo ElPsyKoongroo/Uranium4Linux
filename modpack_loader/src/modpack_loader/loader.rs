@@ -57,7 +57,6 @@ impl ModPackDownloader {
         };
 
         let responses: Vec<JoinHandle<Response>> = request_maker(&minecraft_mods).await;
-        //self.download(not_done_mods, responses, minecraft_mods).await
         
         self.download_v2(not_done_mods, responses, minecraft_mods).await
         
@@ -71,7 +70,6 @@ impl ModPackDownloader {
     ) -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(debug_assertions)]
         let start = Instant::now();
-        //let not_downloaded_mods = Box::new()
         loop {
             let done_mod = self.download_loop(not_done_mods.clone(), &mut responses, &minecraft_mods).await;
             not_done_mods.retain(|&x| x != done_mod);
@@ -79,12 +77,10 @@ impl ModPackDownloader {
             if not_done_mods.is_empty() {
                 break;
             }
-
         }
         #[cfg(debug_assertions)]
-        {
-            print!("{:<3}\n", start.elapsed().as_millis());
-        }
+        print!("{:<3}\n", start.elapsed().as_millis());
+        
         Ok(())
     }
 
@@ -99,14 +95,9 @@ impl ModPackDownloader {
             let sleep = time::sleep(Duration::from_millis(50));
             tokio::pin!(sleep);
 
-            #[cfg(debug_assertions)]
-            //println!("Trying task {}\n----------------------", i);
-
 
             tokio::select! {
                 _ = &mut sleep =>  {
-                    #[cfg(debug_assertions)]
-                    //println!("Task {} not ready yet\n", i);
                     continue;
                 }
                 
@@ -125,5 +116,4 @@ impl ModPackDownloader {
         }
         0
     }
-
 }

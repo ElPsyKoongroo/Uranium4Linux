@@ -24,8 +24,8 @@ pub async fn download_modpack(modpack: String, path: String) -> Result<(), Box<d
 #[tokio::test]
 async fn my_test() {
     use crate::modpack_loader::updater::*;
-    let path = "/home/sergio/Documents/programacion/Rust/Uranium4Linux/Modpack_1.json";
+    let path = "C:\\Users\\usuario\\Desktop\\Uranium4Linux\\Modpack_1";
 
-    let a = update_modpack(path.to_string());
+    let a = update_modpack(path.to_string()).await;
     assert!(true);
 }

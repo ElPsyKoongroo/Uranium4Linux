@@ -16,6 +16,15 @@ impl ModRinth {
         format!("{}/search?limit={}&offset={}", BASE_MRN_URL2, limit, offset)
     }
 
+    pub fn get_mod_info_by_id(id: &String) -> String {
+        // https://api.modrinth.com/v2/project/AANobbMI
+        format!(
+            "{}/project/{}",
+            BASE_MRN_URL2,
+            id
+        )
+    }
+
     pub fn mod_versions(minecraft_mod: &RinthMod) -> String {
         // https://api.modrinth.com/v2/project/AANobbMI/version
         format!(
