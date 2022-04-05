@@ -25,8 +25,10 @@ use crate::code_functions::*;
 mod easy_input;
 use crate::easy_input::input;
 
-mod url_maker;
-use crate::url_maker::*;
+// mod url_maker;
+// use crate::url_maker::*;
+
+use minecraft_mod::url_maker::maker;
 
 fn menu(properties: &mut Properties) -> CODES {
     println!("{}", MENU);
@@ -147,30 +149,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         actual_page.show();
         match menu(&mut properties) {
-            CODES::PageSelected => {
-                page_selection(
-                    &mut pages,
-                    &mut properties,
-                    &mut requester,
-                    &mut actual_page,
-                )
-                .await;
-            }
-
-            CODES::ModSelected => {
-                mod_selection(&mut properties, &mut requester, &mut actual_page).await;
-            }
-
-            CODES::SetPath => {
-                properties.set_path(set_path());
-            }
-
-            CODES::MakeModPack => {
-                make_modpack(&mut requester).await;
-            }
-
+            CODES::PageSelected => page_selection(&mut pages,&mut properties,&mut requester,&mut actual_page,).await,
+            CODES::ModSelected => mod_selection(&mut properties, &mut requester, &mut actual_page).await,
+            CODES::SetPath => properties.set_path(set_path()),
+            CODES::MakeModPack => make_modpack(&mut requester).await,
             CODES::Exit => break,
-
             _ => break,
         }
         clear_screen();

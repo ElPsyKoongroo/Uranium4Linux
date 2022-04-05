@@ -124,7 +124,7 @@ pub fn exits_path(p: &Path) -> bool {
         true => return true,
 
         false => {
-            println!("This is not a valid directory!!");
+            eprintln!("This is not a valid directory!!");
             false
         }
     }
@@ -136,11 +136,7 @@ pub fn set_path() -> String {
 
     match exits_path(Path::new(path)) {
         true => return path.to_string(),
-
-        false => {
-            println!("This is not a valid directory!!");
-            String::from("./")
-        }
+        false => String::from("./")
     }
 }
 
@@ -161,11 +157,15 @@ pub fn get_mods(mods_path: &Path) -> Option<Vec<(String, String)>> {
     let mut names: Vec<(String, String)> = Vec::new();
     let mods;
 
-    if !mods_path.is_dir() {
-        return None;
+    if !mods_path.is_dir() {return None;}
+    
+    match read_dir(mods_path) {
+        Ok(e) => mods = e,
+        Err(error) => {
+            eprintln!("Error reading the directore: {}", error);
+            return None
+        }
     }
-
-    mods = read_dir(mods_path).unwrap();
 
     for mmod in mods {
         get_sha(mods_path, mmod.unwrap(), &mut names);

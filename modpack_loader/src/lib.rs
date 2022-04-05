@@ -23,30 +23,9 @@ pub async fn download_modpack(modpack: String, path: String) -> Result<(), Box<d
 
 #[tokio::test]
 async fn my_test() {
-    use crate::modpack_loader::loader::ModPackDownloader;
+    use crate::modpack_loader::updater::*;
+    let path = "/home/sergio/Documents/programacion/Rust/Uranium4Linux/Modpack_1.json";
 
-    let path = "U:\\Programacion\\rust\\Uranium4Linux\\mi_modpack.modpck";
-    let testing = true;
-    match true {
-        true => {
-            let mut modpack_loader = ModPackDownloader::new();
-            modpack_loader.set_path(String::from(
-                "U:\\Programacion\\rust\\Uranium4Linux\\temp\\",
-            ));
-            modpack_loader.load_pack(path.to_string());
-            if testing {
-                for _ in 0..10 {
-                    modpack_loader.start().await.unwrap();
-                    println!("\n\n");
-                }
-            } else {
-                modpack_loader.start().await.unwrap();
-            }
-        }
-
-        _ => {
-            eprintln!("Bad modpack")
-        }
-    }
+    let a = update_modpack(path.to_string());
     assert!(true);
 }

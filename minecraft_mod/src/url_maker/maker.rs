@@ -3,8 +3,8 @@ const BASE_CUR_URL: &str = "https://api.curseforge.com";
 const BASE_MRN_URL: &str = "https://api.modrinth.com/api/v1/mod";
 const BASE_MRN_URL2: &str = "https://api.modrinth.com/v2";
 
-use minecraft_mod::minecraft_mod::*;
-use minecraft_mod::responses::*;
+
+use crate::minecraft_mod::*;
 pub struct ModRinth {}
 
 impl ModRinth {
@@ -22,6 +22,15 @@ impl ModRinth {
             "{}/project/{}/version",
             BASE_MRN_URL2,
             minecraft_mod.get_id()
+        )
+    }
+
+    pub fn mod_versions_by_id(id: &String) -> String {
+        // https://api.modrinth.com/v2/project/AANobbMI/version
+        format!(
+            "{}/project/{}/version",
+            BASE_MRN_URL2,
+            id
         )
     }
 
