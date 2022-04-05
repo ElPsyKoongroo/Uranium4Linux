@@ -1,23 +1,35 @@
 #![allow(dead_code)]
-use std::ops::Index;
-use std::{fs, time::Duration};
-
-use reqwest::Response;
-use serde_json::{Error};
-use tokio::task::{self, JoinHandle};
-use tokio::time;
-use serde::{Deserialize, Serialize};
-
+use regex::Regex;
 use super::modpack_struct::*;
+use requester::requester::request_maker::Requester;
+use minecraft_mod::url_maker;
 
-
-fn updater(modpack_path: Path){
+pub fn update_modpack(modpack_path: String) {
     println!("Updater is not implemented yet");
-    let mut pack: Modpack = ModPack::new();
-    pack.load_pack(modpack_path);    
-    println!("{}", pack);
+    let pack: ModPack = load_pack(&modpack_path).unwrap();
+    let re = Regex::new("data/(.{8})").unwrap();
+    let mut identifiers = Vec::new();
+
+
+    for mmod in pack.mods() {
+        for cap in re.captures_iter(mmod.get_file().as_str()){
+            identifiers.push(cap[1].to_string());
+        }
+    }
+    get_updates(identifiers);
     
 }
+
+
+fn get_updates(identifiers: Vec<String>) {
+    // let req = Requester::new();
+
+    for id in identifiers{
+        let url = url_maker::maker::ModRinth::mod_versions_by_id(&id);
+        println!("{url}");
+    }
+}
+
 
 /*
 
