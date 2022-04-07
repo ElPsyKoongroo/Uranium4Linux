@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 use crate::easy_input::input;
 use hex::{FromHex, ToHex};
-use minecraft_mod::minecraft_mod::*;
-use minecraft_mod::responses::*;
+use mine_data_strutcs::minecraft_mod::*;
+use mine_data_strutcs::responses::*;
 use regex::Regex;
 use requester::requester::load_headers::*;
 use requester::requester::request_maker::*;

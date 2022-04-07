@@ -12,8 +12,8 @@ mod checker;
 use crate::checker::check;
 use crate::variables::constants::MENU;
 
-use minecraft_mod::minecraft_mod::*;
-use minecraft_mod::responses::*;
+use mine_data_strutcs::minecraft_mod::*;
+use mine_data_strutcs::responses::*;
 use modpack_loader::modpack_loader::*;
 
 mod variables;
@@ -25,8 +25,7 @@ use crate::code_functions::*;
 mod easy_input;
 use crate::easy_input::input;
 
-
-use minecraft_mod::url_maker::maker;
+use mine_data_strutcs::url_maker::maker;
 
 fn menu(properties: &mut Properties) -> CODES {
     println!("{}", MENU);
@@ -57,7 +56,13 @@ async fn page_selection(
             ))
             .await
             .unwrap();
-        *actual_page = check(resp.json::<RinthResponse>().await, true).unwrap_or_default();
+        *actual_page = check(
+            resp.json::<RinthResponse>().await,
+            true,
+            true,
+            "No page found",
+        )
+        .unwrap_or_default();
         if actual_page.len() == 0 {
             println!("This page is empty, nothing here !");
         } else {
@@ -83,7 +88,13 @@ async fn mod_selection(
         actual_mod.get_title().to_uppercase(),
         actual_mod.get_description()
     );
-    let m_versions = check(resp.json::<Vec<RinthVersion>>().await, true).unwrap_or_default();
+    let m_versions = check(
+        resp.json::<Vec<RinthVersion>>().await,
+        true,
+        true,
+        "No mod found",
+    )
+    .unwrap_or_default();
     let minecraft_mod = RinthVersions {
         versions: m_versions,
     };
@@ -98,12 +109,17 @@ async fn mod_selection(
 async fn make_modpack(requester: &mut Requester) {
     let input = easy_input::input("Path: ", String::from("-"));
     let path = Path::new(input.as_str());
-    let a = get_mods(path).unwrap();
+    let hash_filename = get_mods(path).unwrap();
     let mut responses: Vec<RinthVersion> = Vec::new();
-    for item in a {
+    for item in hash_filename {
         let response = {
             let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
-            check(request.json::<RinthVersion>().await, false)
+            check(
+                request.json::<RinthVersion>().await,
+                false,
+                true,
+                format!("Mod {} was not found !", &item.1).as_str(),
+            )
         };
         match response {
             Some(e) => responses.push(e),
@@ -147,7 +163,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         actual_page.show();
         match menu(&mut properties) {
-            CODES::PageSelected => page_selection(&mut pages,&mut properties,&mut requester,&mut actual_page,).await,
+            CODES::PageSelected => 
+                page_selection(
+                    &mut pages,
+                    &mut properties,
+                    &mut requester,
+                    &mut actual_page,
+                )
+                .await,
             CODES::ModSelected => mod_selection(&mut properties, &mut requester, &mut actual_page).await,
             CODES::SetPath => properties.set_path(set_path()),
             CODES::MakeModPack => make_modpack(&mut requester).await,

@@ -13,6 +13,6 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 regex = "1"
 sha-1 = "0.10.0"
 hex = "0.4.3"
-minecraft_mod = {path = "../minecraft_mod"}
+mine_data_strutcs = {path = "../mine_data_strutcs"}
 modpack_loader = {path = "../modpack_loader"}
 requester = {path = "../requester"}

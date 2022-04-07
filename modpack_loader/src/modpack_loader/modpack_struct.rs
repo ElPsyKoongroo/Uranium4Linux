@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use minecraft_mod::minecraft_mod::*;
+use mine_data_strutcs::minecraft_mod::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::fs;

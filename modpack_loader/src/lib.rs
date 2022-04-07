@@ -26,6 +26,6 @@ async fn my_test() {
     use crate::modpack_loader::updater::*;
     let path = "C:\\Users\\usuario\\Desktop\\Uranium4Linux\\Modpack_1";
 
-    let a = update_modpack(path.to_string()).await;
+    update_modpack(path.to_string()).await;
     assert!(true);
 }

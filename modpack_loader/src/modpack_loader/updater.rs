@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 use regex::Regex;
 use super::modpack_struct::*;
-use minecraft_mod::{url_maker, minecraft_mod::RinthMod};
-use minecraft_mod::minecraft_mod::RinthVersion;
+use mine_data_strutcs::{url_maker, minecraft_mod::RinthMod};
+use mine_data_strutcs::minecraft_mod::RinthVersion;
 use requester::requester::request_maker::Requester;
-use serde::{Deserialize, Serialize};
 use std::cmp;
 
 pub async fn update_modpack(modpack_path: String) {
@@ -38,34 +37,39 @@ pub fn get_project_identifiers(modpack_path: String) -> Vec<String>{
     identifiers
 }
 
-async fn get_updates(modpack_path: String) {
+async fn check_versions(mod_versions: &Vec<RinthVersion>, mine_mod: &Mods, versions_id: &mut Vec<String>){
+    for version in mod_versions {
+        if version.get_file_url() == mine_mod.get_file() {
+            println!("Version found!");
+            versions_id.push(version.get_id());
+            break;
+        }
+    }
+}
+
+
+async fn get_new_versions(identifiers: Vec<String>, mods_info: &mut Vec<RinthMod>, mpack_mods: ModPack, versions_id: &mut Vec<String>){
     let req = Requester::new();
-    
+    for (i, id) in identifiers.iter().enumerate(){
+        let url = url_maker::maker::ModRinth::get_mod_info_by_id(&id);
+        let mod_info: RinthMod = req.get(url).await.unwrap().json().await.unwrap();
+        mods_info.push(mod_info);
+
+        let mod_versions: Vec<RinthVersion> = req.get(
+            url_maker::maker::ModRinth::mod_versions_by_id(&id)
+        ).await.unwrap().json().await.unwrap();
+
+        check_versions(&mod_versions, &mpack_mods.mods()[i], versions_id).await;
+    }    
+}
+
+async fn get_updates(modpack_path: String) {
     let mpack_mods: ModPack = load_pack(&modpack_path).unwrap();
     let identifiers = get_project_identifiers(modpack_path);
     let mut mods_info: Vec<RinthMod> = Vec::new();
     let mut versions_id: Vec<String> = Vec::new();
     
-    let mut x = 0;
-    
-    for id in identifiers{
-        let url = url_maker::maker::ModRinth::get_mod_info_by_id(&id);
-        let mod_info: RinthMod = req.get(url).await.unwrap().json().await.unwrap();
-        mods_info.push(mod_info);
-        let mod_versions: Vec<RinthVersion> = req.get(
-            url_maker::maker::ModRinth::mod_versions_by_id(&id)
-        ).await.unwrap().json().await.unwrap();
-
-        for version in mod_versions {
-            if version.get_file_url() == mpack_mods.mods()[x].get_file() {
-                println!("Version found!");
-                versions_id.push(version.get_id());
-                break;
-            }
-        }
-        x += 1;
-    }
-
+    get_new_versions(identifiers, &mut mods_info, mpack_mods, &mut versions_id).await;
     let max_len = cmp::min(versions_id.len(), mods_info.len());
 
     for i in 0..max_len {

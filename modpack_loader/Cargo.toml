@@ -10,6 +10,6 @@ reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-minecraft_mod = {path = "../minecraft_mod"}
+mine_data_strutcs = {path = "../mine_data_strutcs"}
 requester = {path = "../requester"}
 regex = "1"
