@@ -79,7 +79,7 @@ async fn mod_selection(
     actual_page: &mut RinthResponse,
 ) {
     let actual_mod = &actual_page.hits[properties.get_selected_mod()];
-    let resp = requester
+    let version_resp = requester
         .get(maker::ModRinth::mod_versions(actual_mod))
         .await
         .unwrap();
@@ -89,7 +89,7 @@ async fn mod_selection(
         actual_mod.get_description()
     );
     let m_versions = check(
-        resp.json::<Vec<RinthVersion>>().await,
+        version_resp.json::<Vec<RinthVersion>>().await,
         true,
         true,
         "No mod found",
@@ -111,26 +111,13 @@ async fn make_modpack(requester: &mut Requester) {
     let path = Path::new(input.as_str());
     let hash_filename = get_mods(path).unwrap();
     let mut responses: Vec<RinthVersion> = Vec::new();
-    for item in hash_filename {
-        let response = {
-            let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
-            check(
-                request.json::<RinthVersion>().await,
-                false,
-                true,
-                format!("Mod {} was not found !", &item.1).as_str(),
-            )
-        };
-        match response {
-            Some(e) => responses.push(e),
-            None => {}
-        }
-    }
+    search_mods_for_modpack(requester, hash_filename, &mut responses).await;
+    
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
     let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
     let mp =
-        modpack_struct::ModPack::modpack_from_RinthVers(mp_name, mp_version, mp_author, responses);
+        mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(mp_name, mp_version, mp_author, responses);
     mp.write_mod_pack();
 
     let _ = easy_input::input("Press enter to continue...", 0);
@@ -140,17 +127,18 @@ async fn make_modpack(requester: &mut Requester) {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut headers = HeaderMap::new();
     let mut requester = Requester::new();
+    let mut pages: HashMap<u32, RinthResponse> = HashMap::new();
+    let mut actual_page: RinthResponse; 
+    let mut properties = Properties::new();
+    
     requester.set_headers(headers.clone());
 
-    let mut pages: HashMap<u32, RinthResponse> = HashMap::new();
-    let mut actual_page: RinthResponse; // = RinthResponse::new();
 
     let input = easy_input::input("Chose mod repo (RINTH/CURSE): ", String::from("RINTH"));
     let repo = input.as_str();
     println!("Chosen repo: {}", repo);
     load_headers(repo.to_uppercase().as_str(), &mut headers);
 
-    let mut properties = Properties::new();
 
     {
         let resp = requester

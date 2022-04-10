@@ -1,8 +1,12 @@
 #![allow(dead_code)]
+use crate::checker::check;
 use crate::easy_input::input;
+
+
 use hex::{FromHex, ToHex};
 use mine_data_strutcs::minecraft_mod::*;
 use mine_data_strutcs::responses::*;
+use mine_data_strutcs::url_maker::maker;
 use regex::Regex;
 use requester::requester::load_headers::*;
 use requester::requester::request_maker::*;
@@ -202,5 +206,23 @@ pub fn two_inputs(opt: String, value: &str, properties: &mut Properties) -> CODE
         }
 
         _ => return CODES::ParseError,
+    }
+}
+
+pub async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: Vec<(String, String)>, responses: &mut Vec<RinthVersion>) {
+    for item in hash_filename {
+        let response = {
+            let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
+            check(
+                request.json::<RinthVersion>().await,
+                false,
+                true,
+                format!("Mod {} was not found !", &item.1).as_str(),
+            )
+        };
+        match response {
+            Some(e) => responses.push(e),
+            None => {}
+        }
     }
 }

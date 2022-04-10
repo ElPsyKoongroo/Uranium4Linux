@@ -30,7 +30,7 @@ pub fn load_headers(api: &str, headers: &mut HeaderMap) {
             */
         }
         _ => {
-            println!("Wrong API name, nothing loaded");
+            println!("Wrong API name, using RINTH");
         }
     }
 }

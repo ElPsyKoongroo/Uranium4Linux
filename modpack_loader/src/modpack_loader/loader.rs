@@ -1,11 +1,11 @@
 use std::ops::Index;
 use std::time::Duration;
 
+use mine_data_strutcs::modpack_mod::Mods;
+use mine_data_strutcs::modpack_struct::{ModPack, load_pack};
 use reqwest::Response;
 use tokio::task::{self, JoinHandle};
 use tokio::time;
-
-use super::modpack_struct::*;
 
 #[cfg(debug_assertions)]
 use std::time::Instant;
