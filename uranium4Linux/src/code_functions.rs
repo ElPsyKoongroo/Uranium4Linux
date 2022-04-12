@@ -1,22 +1,20 @@
-#![allow(dead_code)]
 use crate::checker::check;
 use crate::easy_input::input;
 
 
-use hex::{FromHex, ToHex};
+use hex::ToHex;
 use mine_data_strutcs::minecraft_mod::*;
-use mine_data_strutcs::responses::*;
 use mine_data_strutcs::url_maker::maker;
-use regex::Regex;
-use requester::requester::load_headers::*;
+
+
 use requester::requester::request_maker::*;
 use sha1::{Digest, Sha1};
 use std::fs::{self, read_dir};
-use std::hash;
-use std::io::{Error, ErrorKind, Read, Stderr};
-use std::ops::{Add, Index};
+
+use std::io::{Error, ErrorKind, Read};
+use std::ops::{Add};
 use std::path::Path;
-use tokio::fs::File;
+
 
 pub enum CODES {
     Exit,
@@ -27,6 +25,7 @@ pub enum CODES {
     MakeModPack,
 }
 
+#[allow(dead_code)]
 pub struct Properties {
     limit: u32,
     page: u32,
@@ -54,6 +53,7 @@ impl Properties {
         self.page
     }
 
+    #[allow(dead_code)]
     pub fn get_offset(&self) -> u32 {
         self.offset
     }
@@ -66,6 +66,7 @@ impl Properties {
         self.path.clone()
     }
 
+    #[allow(dead_code)]
     pub fn set_limit(&mut self, limit: u32) {
         self.limit = limit;
     }
@@ -74,6 +75,7 @@ impl Properties {
         self.page = page;
     }
 
+    #[allow(dead_code)]
     pub fn set_offset(&mut self, offset: u32) {
         self.offset = offset;
     }
@@ -209,7 +211,7 @@ pub fn two_inputs(opt: String, value: &str, properties: &mut Properties) -> CODE
     }
 }
 
-pub async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: Vec<(String, String)>, responses: &mut Vec<RinthVersion>) {
+pub async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: Vec<(String, String)>, responses: &mut RinthVersions) {
     for item in hash_filename {
         let response = {
             let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();

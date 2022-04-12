@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::fs;
 
-use crate::{modpack_mod::*, minecraft_mod::RinthVersion};
+use crate::{modpack_mod::*, minecraft_mod::{RinthVersions}};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModPack {
@@ -10,8 +10,11 @@ pub struct ModPack {
     version: String,
     author: String,
     mods: Vec<Mods>,
+
+    #[serde(skip_serializing, skip_deserializing)]
     count: usize,
 }
+
 impl ModPack {
     pub fn new() -> ModPack {
         ModPack {
@@ -32,11 +35,11 @@ impl ModPack {
         modpack_name: String,
         modpack_version: String,
         modpack_author: String,
-        mods: Vec<RinthVersion>,
+        mods: RinthVersions,
     ) -> ModPack {
         let mut mod_vec = Vec::new();
-        for mmod in mods {
-            mod_vec.push(Mods::from_RinthVersion(mmod));
+        for mmod in mods.versions.iter() {
+            mod_vec.push(Mods::from_RinthVersion(mmod.clone()));
         }
         ModPack {
             count: mod_vec.len(),
@@ -50,6 +53,30 @@ impl ModPack {
     pub fn write_mod_pack(&self) {
         let j = serde_json::to_string(self).unwrap();
         std::fs::write(self.name.clone(), j).unwrap();
+    }
+
+    pub fn push_mod(&mut self, mine_mod: Mods) {
+        self.mods.push(mine_mod);
+    }
+    
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    pub fn set_version(&mut self, version: String) {
+        self.version = version;
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn get_version(&self) -> String {
+        self.version.clone()
+    }
+
+    pub fn len(&self) -> usize {
+        self.mods.len()
     }
 }
 
@@ -79,13 +106,12 @@ pub fn load_pack(pack_path: &String) -> Option<ModPack> {
 impl Iterator for ModPack {
     type Item = Mods;
     fn next(&mut self) -> Option<Mods> {
-        // Increment our count. This is why we started at zero.
         self.count += 1;
 
-        // Check to see if we've finished counting or not.
         if self.count < self.mods.len() {
             Some(self.mods[self.count].clone())
         } else {
+            self.count = 0;
             None
         }
     }

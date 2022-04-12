@@ -1,12 +1,9 @@
-#![allow(unused_imports)]
 #![allow(non_snake_case)]
 use requester::requester::load_headers::*;
 use requester::requester::request_maker::*;
 use reqwest::header::HeaderMap;
-use serde_json::to_string;
 use std::collections::HashMap;
 use std::path::Path;
-use tokio::fs::read_dir;
 
 mod checker;
 use crate::checker::check;
@@ -14,16 +11,13 @@ use crate::variables::constants::MENU;
 
 use mine_data_strutcs::minecraft_mod::*;
 use mine_data_strutcs::responses::*;
-use modpack_loader::modpack_loader::*;
 
 mod variables;
-use crate::variables::*;
 
 mod code_functions;
 use crate::code_functions::*;
 
 mod easy_input;
-use crate::easy_input::input;
 
 use mine_data_strutcs::url_maker::maker;
 
@@ -88,16 +82,13 @@ async fn mod_selection(
         actual_mod.get_title().to_uppercase(),
         actual_mod.get_description()
     );
-    let m_versions = check(
-        version_resp.json::<Vec<RinthVersion>>().await,
+    let minecraft_mod = check(
+        version_resp.json::<RinthVersions>().await,
         true,
         true,
         "No mod found",
     )
-    .unwrap_or_default();
-    let minecraft_mod = RinthVersions {
-        versions: m_versions,
-    };
+    .unwrap();
     println!("{}", minecraft_mod);
     match download_mod(&minecraft_mod, &requester, &properties.get_path()).await {
         Ok(_) => {}
@@ -110,7 +101,7 @@ async fn make_modpack(requester: &mut Requester) {
     let input = easy_input::input("Path: ", String::from("-"));
     let path = Path::new(input.as_str());
     let hash_filename = get_mods(path).unwrap();
-    let mut responses: Vec<RinthVersion> = Vec::new();
+    let mut responses: RinthVersions = RinthVersions::new();
     search_mods_for_modpack(requester, hash_filename, &mut responses).await;
     
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));

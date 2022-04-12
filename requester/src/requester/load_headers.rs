@@ -1,6 +1,3 @@
-// use crate::variables::{RINTH, CURSE};
-
-// use crate::variables::{constants::*};
 pub const RINTH: &str = "RINTH";
 pub const CURSE: &str = "CURSE";
 

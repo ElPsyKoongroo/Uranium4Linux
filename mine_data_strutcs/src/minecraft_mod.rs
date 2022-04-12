@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use core::fmt;
 use serde::{Deserialize, Serialize};
 
@@ -54,7 +53,7 @@ impl RinthMod {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RinthVersion {
     id: String,
     project_id: String,
@@ -63,6 +62,7 @@ pub struct RinthVersion {
     downloads: u64,
     files: Vec<RinthFile>,
     dependencies: Vec<String>,
+    loaders: Vec<String>,
 }
 
 impl RinthVersion {
@@ -81,6 +81,10 @@ impl RinthVersion {
     pub fn get_id(&self) -> String{
         self.id.clone()
     }
+
+    pub fn get_loader(&self) -> String {
+        self.loaders[0].clone()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -92,8 +96,38 @@ impl RinthVersions {
     pub fn get_version(&self, i: usize) -> &RinthVersion {
         &self.versions[i]
     }
+
+    pub fn new() -> RinthVersions {
+        RinthVersions { versions: Vec::new() }
+    }
+
+    pub fn len(&self) -> usize {
+        self.versions.len()
+    }
+
+    pub fn push(&mut self, version: RinthVersion) {
+        self.versions.push(version);
+    }
+
+    pub fn last(&self) -> &RinthVersion {
+        self.versions.last().unwrap()
+    }
+
+    pub fn first(&self) -> &RinthVersion {
+        self.versions.first().unwrap()
+    }
+
+    pub fn mod_at(&self, i: usize) -> &RinthVersion {
+        &self.versions[i]
+    }
 }
 
+impl Default for RinthVersions {
+    fn default() -> Self {
+        RinthVersions { versions: Vec::new() }
+    }
+}
+    
 impl fmt::Display for RinthVersions {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut max_width = {
@@ -127,7 +161,7 @@ impl fmt::Display for RinthVersions {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 
 struct RinthFile {
     pub url: String,

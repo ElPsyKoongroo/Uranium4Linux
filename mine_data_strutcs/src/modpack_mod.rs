@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
-
+use regex::Regex;
 use crate::minecraft_mod::RinthVersion;
-
-
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Mods {
@@ -26,6 +24,17 @@ impl Mods {
 
     pub fn get_file_name(&self) -> String {
         self.file_name.clone()
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn get_id(&self) -> String {
+        let re = Regex::new("data/(.{8})").unwrap();
+        let file_url = self.get_file();
+        let a = re.captures(file_url.as_str()).unwrap();
+        a[1].to_string()
     }
 
     #[allow(non_snake_case)]

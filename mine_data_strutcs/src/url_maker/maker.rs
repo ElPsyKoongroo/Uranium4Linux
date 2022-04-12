@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 const BASE_CUR_URL: &str = "https://api.curseforge.com";
 const BASE_MRN_URL: &str = "https://api.modrinth.com/api/v1/mod";
 const BASE_MRN_URL2: &str = "https://api.modrinth.com/v2";

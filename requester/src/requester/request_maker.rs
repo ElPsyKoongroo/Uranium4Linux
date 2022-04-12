@@ -1,6 +1,5 @@
 use reqwest::{header::HeaderMap, Response};
 
-#[allow(dead_code)]
 pub struct Requester {
     cliente: reqwest::Client,
     headers: Option<HeaderMap>,
