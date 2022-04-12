@@ -10,13 +10,11 @@ use requester::requester::request_maker::Requester;
 use std::cmp;
 
 pub async fn update_modpack(modpack_path: String) {
-    println!("Updater is not implemented yet");
     let old_modpack: ModPack = load_pack(&modpack_path).unwrap();
     let identifiers = get_project_identifiers(&old_modpack);
-    
+
     let mut mods_to_update: VecDeque<Mods> = get_updates(modpack_path, &identifiers).await;
-    
-    
+
     let mut updated_modpack = ModPack::new();
     make_updates(&old_modpack, &mut mods_to_update, &mut updated_modpack);
 
@@ -26,37 +24,36 @@ pub async fn update_modpack(modpack_path: String) {
 }
 
 fn make_updates(
-    pack: &ModPack,
+    old_pack: &ModPack,
     mods_to_update: &mut VecDeque<Mods>,
     updated_modpack: &mut ModPack,
 ) {
-    for mine_mod in pack.mods() {
-        if mine_mod.get_id() == mods_to_update.front().unwrap().get_id() {
+    for mine_mod in old_pack.mods() {
+        if mine_mod.get_id() == mods_to_update.front().unwrap().get_id() && mods_to_update.len() > 0{
             println!("Updating mod: {}", mine_mod.get_name());
             updated_modpack.push_mod(mods_to_update.pop_front().unwrap());
         } else {
             updated_modpack.push_mod(mine_mod.clone());
         }
-
-        if mods_to_update.len() == 0 {
-            break;
-        }
     }
 }
 
-async fn get_updates(modpack_path: String, identifiers: &Vec<String>) -> VecDeque<Mods> {
-    let mpack_mods: ModPack = load_pack(&modpack_path).unwrap();
-    let mut mods_info: RinthVersions = RinthVersions::new();
+async fn get_updates(old_modpack: &ModPack, identifiers: &Vec<String>) -> VecDeque<Mods> {
+    
+
+    // just the name of a variable that contains all the new versions of the mods
+    
+        
+    let mut mods_lastests_versions: RinthVersions = RinthVersions::new();
     let mut updated_mods: VecDeque<Mods> = VecDeque::new();
 
-    get_new_versions(identifiers, &mut mods_info).await;
-    let _max_len = cmp::min(mpack_mods.len(), mods_info.len());
+    get_new_versions(identifiers, &mut mods_lastests_versions).await;
+    let _max_len = cmp::min(old_modpack.len(), mods_lastests_versions.len());
 
-    for i in 0..mods_info.len() {
-        if mpack_mods.mods()[i].get_file() != mods_info.mod_at(i).get_file_url()
-            && mods_info.mod_at(i).get_loader() == "fabric"
-        {
-            updated_mods.push_back(Mods::from_RinthVersion(mods_info.mod_at(i).clone()));
+    for i in 0..mods_lastests_versions.len() {
+        if old_modpack.mods()[i].get_file() != mods_lastests_versions.mod_at(i).get_file_url()
+            && mods_lastests_versions.mod_at(i).get_loader() == "fabric" {
+            updated_mods.push_back(Mods::from_RinthVersion(mods_lastests_versions.mod_at(i).clone()));
         }
     }
     updated_mods
@@ -82,4 +79,3 @@ fn get_project_identifiers(modpack: &ModPack) -> Vec<String> {
     }
     identifiers
 }
-
