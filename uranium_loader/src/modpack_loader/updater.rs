@@ -13,7 +13,7 @@ pub async fn update_modpack(modpack_path: String) {
     let old_modpack: ModPack = load_pack(&modpack_path).unwrap();
     let identifiers = get_project_identifiers(&old_modpack);
 
-    let mut mods_to_update: VecDeque<Mods> = get_updates(modpack_path, &identifiers).await;
+    let mut mods_to_update: VecDeque<Mods> = get_updates(&old_modpack, &identifiers).await;
 
     let mut updated_modpack = ModPack::new();
     make_updates(&old_modpack, &mut mods_to_update, &mut updated_modpack);
@@ -38,11 +38,7 @@ fn make_updates(
     }
 }
 
-async fn get_updates(old_modpack: &ModPack, identifiers: &Vec<String>) -> VecDeque<Mods> {
-    
-
-    // just the name of a variable that contains all the new versions of the mods
-    
+async fn get_updates(old_modpack: &ModPack, identifiers: &Vec<String>) -> VecDeque<Mods> {    
         
     let mut mods_lastests_versions: RinthVersions = RinthVersions::new();
     let mut updated_mods: VecDeque<Mods> = VecDeque::new();
