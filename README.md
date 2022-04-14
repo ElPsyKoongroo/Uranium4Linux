@@ -3,7 +3,7 @@
 <h4> Minecraft Console Mod Downloader</h4>
 
 
-Version 1.2.2 (Functional)
+Version 1.3.0 (Functional)
 
 
 Avalible repositories: <br>
