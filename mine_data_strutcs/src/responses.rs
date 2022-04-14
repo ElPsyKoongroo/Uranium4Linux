@@ -34,13 +34,12 @@ impl Jsoneable for RinthResponse {}
 
 impl RinthResponse {
     pub fn new() -> RinthResponse {
-        let rinth_res = RinthResponse {
+        RinthResponse {
             hits: vec![],
             offset: 0,
             limit: 0,
             total_hits: 0,
-        };
-        rinth_res
+        }
     }
 
     pub fn show(&self) {

@@ -1,10 +1,6 @@
 use core::fmt;
 use serde::{Deserialize, Serialize};
 
-trait Downloadeable {
-    fn download() {}
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct CurseMod {
@@ -12,12 +8,6 @@ pub struct CurseMod {
     name: String,
     downloadCount: f64,
 }
-
-//
-//
-// RINTH MODS
-//
-//
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RinthMod {
@@ -53,6 +43,13 @@ impl RinthMod {
     }
 }
 
+pub enum Attributes {
+    Loader,
+    Name,
+    VersionType,
+}
+
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RinthVersion {
     id: String,
@@ -84,6 +81,14 @@ impl RinthVersion {
 
     pub fn get_loader(&self) -> String {
         self.loaders[0].clone()
+    }
+
+    pub fn get_project_id(&self) -> String {
+        self.project_id.clone()
+    }
+
+    pub fn is_fabric(&self) -> bool {
+        self.get_loader() == "fabric"
     }
 }
 
@@ -120,6 +125,38 @@ impl RinthVersions {
     pub fn mod_at(&self, i: usize) -> &RinthVersion {
         &self.versions[i]
     }
+
+    pub fn mods(&self) -> &Vec<RinthVersion> {
+        &self.versions
+    }
+
+    pub fn filter_by(&self, attribute: Attributes, content: &str) -> Vec<RinthVersion> {
+        match attribute {
+            Attributes::Loader => {
+                self.versions
+                    .iter()
+                    .filter(|x| x.loaders.contains(&content.to_string()))
+                    .map(|x| x.clone())
+                    .collect::<Vec<RinthVersion>>()
+            }
+
+            Attributes::Name => {
+                self.versions
+                    .iter()
+                    .filter(|x| x.name.contains(&content.to_string()))
+                    .map(|x| x.clone())
+                    .collect::<Vec<RinthVersion>>()
+            }
+
+            Attributes::VersionType => {
+                self.versions
+                    .iter()
+                    .filter(|x| x.version_type.contains(&content.to_string()))
+                    .map(|x| x.clone())
+                    .collect::<Vec<RinthVersion>>()
+            }
+        }
+    }
 }
 
 impl Default for RinthVersions {
@@ -131,7 +168,7 @@ impl Default for RinthVersions {
 impl fmt::Display for RinthVersions {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut max_width = {
-            &self
+            self
                 .versions
                 .iter()
                 .map(|x| x.name.clone().len())
@@ -140,8 +177,8 @@ impl fmt::Display for RinthVersions {
         };
         let vt_len = "version type".chars().count();
 
-        if max_width < &vt_len {
-            max_width = &vt_len;
+        if max_width < vt_len {
+            max_width = vt_len;
         }
 
         write!(

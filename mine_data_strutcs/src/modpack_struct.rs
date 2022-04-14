@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::fs;
 
-use crate::{modpack_mod::*, minecraft_mod::{RinthVersions}};
+use crate::{minecraft_mod::RinthVersions, modpack_mod::*};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModPack {
@@ -37,10 +37,12 @@ impl ModPack {
         modpack_author: String,
         mods: RinthVersions,
     ) -> ModPack {
-        let mut mod_vec = Vec::new();
-        for mmod in mods.versions.iter() {
-            mod_vec.push(Mods::from_RinthVersion(mmod.clone()));
-        }
+        let mod_vec = mods
+            .versions
+            .iter()
+            .map(|x| Mods::from_RinthVersion(x.clone()))
+            .collect::<Vec<Mods>>();
+
         ModPack {
             count: mod_vec.len(),
             name: modpack_name,
@@ -58,7 +60,7 @@ impl ModPack {
     pub fn push_mod(&mut self, mine_mod: Mods) {
         self.mods.push(mine_mod);
     }
-    
+
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
@@ -77,6 +79,10 @@ impl ModPack {
 
     pub fn len(&self) -> usize {
         self.mods.len()
+    }
+
+    pub fn mod_at(&self, i: usize) -> &Mods {
+        &self.mods[i]
     }
 }
 
