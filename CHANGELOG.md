@@ -1,3 +1,11 @@
+# Version pre-2.0
+
+    Uranium4Linux and uranium_loader are gonna get unificated under 
+    one workspace.
+
+    Uranium4Linux (rust version) wont be able anymore to download mods 
+    from console but only make, download and upgrade modpacks.
+
 # Version 1.2.2:
     
     Changes:
