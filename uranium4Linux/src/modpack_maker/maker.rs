@@ -3,9 +3,23 @@ use hex::ToHex;
 use mine_data_strutcs::{minecraft_mod::{RinthVersions, RinthVersion}, url_maker::maker};
 use requester::requester::request_maker::Requester;
 use sha1::{Sha1, Digest};
-
 use crate::{easy_input, checker::check};
 
+pub async fn make_modpack(path: &str) {
+    let mut requester = Requester::new();
+    let hash_filename = get_mods(Path::new(path)).unwrap();
+    let mut responses: RinthVersions = RinthVersions::new();
+    search_mods_for_modpack(&mut requester, hash_filename, &mut responses).await;
+    
+    let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
+    let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
+    let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
+    let mp =
+        mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(mp_name, mp_version, mp_author, responses);
+    mp.write_mod_pack();
+
+    let _ = easy_input::input("Press enter to continue...", 0);
+}
 
 fn get_sha1_from_file(file_path: &String) -> String {
     let mut hasher = Sha1::new();
@@ -20,7 +34,7 @@ fn get_sha1_from_file(file_path: &String) -> String {
     hash
 }
 
-pub fn get_mods(mods_path: &Path) -> Option<Vec<(String, String)>> {
+fn get_mods(mods_path: &Path) -> Option<Vec<(String, String)>> {
     let mut names: Vec<(String, String)> = Vec::new();
     let mods;
 
@@ -48,7 +62,7 @@ fn get_sha(path: &Path, mod_dir: fs::DirEntry, names_vec: &mut Vec<(String, Stri
     names_vec.push((hash, file_name));
 }
 
-pub async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: Vec<(String, String)>, responses: &mut RinthVersions) {
+async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: Vec<(String, String)>, responses: &mut RinthVersions) {
     for item in hash_filename {
         let response = {
             let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
@@ -66,18 +80,3 @@ pub async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: V
     }
 }
 
-pub async fn make_modpack(path: &str) {
-    let mut requester = Requester::new();
-    let hash_filename = get_mods(Path::new(path)).unwrap();
-    let mut responses: RinthVersions = RinthVersions::new();
-    search_mods_for_modpack(&mut requester, hash_filename, &mut responses).await;
-    
-    let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
-    let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
-    let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
-    let mp =
-        mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(mp_name, mp_version, mp_author, responses);
-    mp.write_mod_pack();
-
-    let _ = easy_input::input("Press enter to continue...", 0);
-}
