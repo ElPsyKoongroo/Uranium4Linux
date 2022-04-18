@@ -50,7 +50,7 @@ async fn get_updates(identifiers: &Vec<String>) -> VecDeque<Mods> {
     get_new_versions(identifiers, &mut mods_lastests_versions).await;
     mods_lastests_versions = sort_mods(&mut mods_lastests_versions, identifiers);
 
-    for i in 0..mods_lastests_versions.len(){
+    for i in 0..mods_lastests_versions.len() {
         updated_mods.push_back(Mods::from_RinthVersion(
             mods_lastests_versions.mod_at(i).clone(),
         ));
@@ -82,7 +82,7 @@ async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersio
     for i in done_responses {
         let value = i.text().await.unwrap();
         let a: Result<Vec<RinthVersion>, serde_json::Error> = serde_json::from_str(value.as_str());
-        match a{
+        match a {
             Ok(t) => {
                 mods_info.push(t[0].clone());
             }

@@ -3,10 +3,10 @@ pub const RINTH: &str = "RINTH";
 pub const CURSE: &str = "CURSE";
 
 
-pub const MENU: &str = 
+pub const HELP: &str = 
 "
-mod  + <number>\n
-page + <number>\n
-path \n                
-make \n        
+-d Download the specified modpack in the specified route
+-u Upgrade the specified modpack
+-m Make a modpack file from specified route
+-h Print this message
 ";

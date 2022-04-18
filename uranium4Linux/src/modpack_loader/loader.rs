@@ -2,7 +2,7 @@ use std::ops::Index;
 use std::time::Duration;
 
 use mine_data_strutcs::modpack_mod::Mods;
-use mine_data_strutcs::modpack_struct::{ModPack, load_pack};
+use mine_data_strutcs::modpack_struct::{load_pack, ModPack};
 use reqwest::Response;
 use tokio::task::{self, JoinHandle};
 use tokio::time;
@@ -58,9 +58,9 @@ impl ModPackDownloader {
         };
 
         let responses: Vec<JoinHandle<Response>> = request_maker(&minecraft_mods).await;
-        
-        self.download_v2(not_done_mods, responses, minecraft_mods).await
-        
+
+        self.download_v2(not_done_mods, responses, minecraft_mods)
+            .await
     }
 
     async fn download_v2(
@@ -72,43 +72,43 @@ impl ModPackDownloader {
         #[cfg(debug_assertions)]
         let start = Instant::now();
         loop {
-            let done_mod = self.download_loop(not_done_mods.clone(), &mut responses, &minecraft_mods).await;
+            let done_mod = self
+                .download_loop(not_done_mods.clone(), &mut responses, &minecraft_mods)
+                .await;
             not_done_mods.retain(|&x| x != done_mod);
-        
+
             if not_done_mods.is_empty() {
                 break;
             }
         }
         #[cfg(debug_assertions)]
         print!("{:<3}\n", start.elapsed().as_millis());
-        
+
         Ok(())
     }
-
 
     async fn download_loop(
         &mut self,
         not_done_mods: Vec<usize>,
         responses: &mut Vec<JoinHandle<Response>>,
         minecraft_mods: &Vec<Mods>,
-    ) -> usize{
+    ) -> usize {
         for i in not_done_mods.clone() {
             let sleep = time::sleep(Duration::from_millis(50));
             tokio::pin!(sleep);
-
 
             tokio::select! {
                 _ = &mut sleep =>  {
                     continue;
                 }
-                
+
                 res = &mut responses[i] => {
                     let web_res = res.unwrap();
-                    let full_path = self.path.clone() + minecraft_mods.index(i).get_file_name().as_ref(); 
+                    let full_path = self.path.clone() + minecraft_mods.index(i).get_file_name().as_ref();
                     let content = web_res.bytes().await.unwrap();
                     tokio::fs::write(full_path, content).await.unwrap();
                 }
-                
+
                 else => {
                     break;
                 }

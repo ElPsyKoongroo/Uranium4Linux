@@ -1,31 +1,27 @@
 #![allow(non_snake_case)]
-
-mod easy_input;
-mod code_functions;
 mod checker;
+mod code_functions;
+mod easy_input;
 mod modpack_loader;
+mod modpack_maker;
+mod variables;
 
-use std::env;
 use code_functions::{download_modpack, update};
 use modpack_maker::maker::make_modpack;
-mod modpack_maker;
-
-
-
+use std::env;
+use variables::constants::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
 
     match args[1].as_str() {
-        "-d" => {
-            return download_modpack(&args[2], &args[3]).await
-        }
-        "-u" => {
-            update(args[2].as_str()).await
-        }
-        "-m" => {
-            make_modpack(args[2].as_str()).await
+        "-d" => return download_modpack(&args[2], &args[3]).await,
+        "-u" => update(args[2].as_str()).await,
+        "-m" => make_modpack(args[2].as_str()).await,
+
+        "-h" => {
+            println!("{}", HELP);
         }
         _ => {
             println!("{}", "Invalid arguments");
@@ -34,17 +30,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-
-
-/* 
+/*
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut headers = HeaderMap::new();
     let mut requester = Requester::new();
     let mut pages: HashMap<u32, RinthResponse> = HashMap::new();
-    let mut actual_page: RinthResponse; 
+    let mut actual_page: RinthResponse;
     let mut properties = Properties::new();
-    
+
     requester.set_headers(headers.clone());
 
 
@@ -65,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         actual_page.show();
         match menu(&mut properties) {
-            CODES::PageSelected => 
+            CODES::PageSelected =>
                 page_selection(
                     &mut pages,
                     &mut properties,
