@@ -1,6 +1,6 @@
 # Uranium4Linux
  
-<h4> Minecraft Console Mod Downloader</h4>
+<h4>Minecraft Modpack Tools</h4>
 
 
 Version 2.0 (Unstable)
