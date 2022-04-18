@@ -38,8 +38,8 @@ impl ModPackDownloader {
         }
     }
 
-    pub fn load_pack(&mut self, pack_path: String) {
-        self.pack = load_pack(&pack_path);
+    pub fn load_pack(&mut self, pack_path: &str) {
+        self.pack = load_pack(pack_path);
     }
 
     pub fn set_path(&mut self, mut _path: String) {

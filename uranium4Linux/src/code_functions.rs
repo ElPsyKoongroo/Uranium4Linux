@@ -1,19 +1,33 @@
-use crate::checker::check;
-use crate::easy_input::input;
+use std::{path::Path, error::Error};
+use crate::modpack_loader::loader::ModPackDownloader;
 
 
-use hex::ToHex;
-use mine_data_strutcs::minecraft_mod::*;
-use mine_data_strutcs::url_maker::maker;
 
 
-use requester::requester::request_maker::*;
-use sha1::{Digest, Sha1};
-use std::fs::{self, read_dir};
 
-use std::io::{Error, ErrorKind, Read};
-use std::ops::{Add};
-use std::path::Path;
+pub async fn download_modpack(modpack: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    if !Path::new(path).exists() {
+        return Err(Box::<dyn Error>::from(format!(
+            "{} is not a valid path !",
+            path
+        )));
+    };
+    let mut modpack_loader = ModPackDownloader::new();
+    modpack_loader.set_path(String::from(path));
+    modpack_loader.load_pack(modpack);
+    modpack_loader.start().await?;
+    println!("\n\n");
+    Ok(())
+}
+
+
+
+/*
+            DEPRECATED
+||||||||||||||||||||||||||||||||||
+VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+
+
 
 
 pub enum CODES {
@@ -187,6 +201,24 @@ fn get_sha(path: &Path, mod_dir: fs::DirEntry, names_vec: &mut Vec<(String, Stri
     names_vec.push((hash, file_name));
 }
 
+pub async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: Vec<(String, String)>, responses: &mut RinthVersions) {
+    for item in hash_filename {
+        let response = {
+            let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
+            check(
+                request.json::<RinthVersion>().await,
+                false,
+                true,
+                format!("Mod {} was not found !", &item.1).as_str(),
+            )
+        };
+        match response {
+            Some(e) => responses.push(e),
+            None => {}
+        }
+    }
+}
+
 pub fn one_input(input: String) -> CODES {
     match input.as_str() {
         "path" => CODES::SetPath,
@@ -211,20 +243,97 @@ pub fn two_inputs(opt: String, value: &str, properties: &mut Properties) -> CODE
     }
 }
 
-pub async fn search_mods_for_modpack(requester: &mut Requester, hash_filename: Vec<(String, String)>, responses: &mut RinthVersions) {
-    for item in hash_filename {
-        let response = {
-            let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
-            check(
-                request.json::<RinthVersion>().await,
-                false,
-                true,
-                format!("Mod {} was not found !", &item.1).as_str(),
-            )
-        };
-        match response {
-            Some(e) => responses.push(e),
-            None => {}
-        }
+pub fn menu(properties: &mut Properties) -> CODES {
+    println!("{}", MENU);
+
+    let user_input: Vec<String> = {
+        let aux = easy_input::input("Chose an option: ", String::from(" "));
+        aux.split(" ").map(|x| x.to_string()).collect()
+    };
+
+    match user_input.len() {
+        1 => one_input(user_input[0].clone()),
+        2 => two_inputs(user_input[0].clone(), user_input[1].as_str(), properties),
+        _ => CODES::ParseError,
     }
 }
+
+pub async fn page_selection(
+    pages: &mut HashMap<u32, RinthResponse>,
+    properties: &mut Properties,
+    requester: &mut Requester,
+    actual_page: &mut RinthResponse,
+) {
+    if !pages.contains_key(&properties.get_page()) {
+        let resp = requester
+            .get(maker::ModRinth::search_for(
+                properties.get_limit(),
+                properties.get_page() * 20,
+            ))
+            .await
+            .unwrap();
+        *actual_page = check(
+            resp.json::<RinthResponse>().await,
+            true,
+            true,
+            "No page found",
+        )
+        .unwrap_or_default();
+        if actual_page.len() == 0 {
+            println!("This page is empty, nothing here !");
+        } else {
+            pages.insert(properties.get_page(), actual_page.clone());
+        }
+    } else {
+        *actual_page = pages.get(&properties.get_page()).unwrap().clone();
+    }
+}
+
+pub async fn mod_selection(
+    properties: &mut Properties,
+    requester: &mut Requester,
+    actual_page: &mut RinthResponse,
+) {
+    let actual_mod = &actual_page.hits[properties.get_selected_mod()];
+    let version_resp = requester
+        .get(maker::ModRinth::mod_versions(actual_mod))
+        .await
+        .unwrap();
+    println!(
+        "\n\n{}\n{}",
+        actual_mod.get_title().to_uppercase(),
+        actual_mod.get_description()
+    );
+    let minecraft_mod = check(
+        version_resp.json::<RinthVersions>().await,
+        true,
+        true,
+        "No mod found",
+    )
+    .unwrap();
+    println!("{}", minecraft_mod);
+    match download_mod(&minecraft_mod, &requester, &properties.get_path()).await {
+        Ok(_) => {}
+        Err(e) => println!("Runtime Error => {}", e.to_string()),
+    }
+    let _ = easy_input::input::<String>("Press enter to continue...", String::from(" "));
+}
+
+pub async fn make_modpack(requester: &mut Requester) {
+    let input = easy_input::input("Path: ", String::from("-"));
+    let path = Path::new(input.as_str());
+    let hash_filename = get_mods(path).unwrap();
+    let mut responses: RinthVersions = RinthVersions::new();
+    search_mods_for_modpack(requester, hash_filename, &mut responses).await;
+    
+    let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
+    let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
+    let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
+    let mp =
+        mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(mp_name, mp_version, mp_author, responses);
+    mp.write_mod_pack();
+
+    let _ = easy_input::input("Press enter to continue...", 0);
+}
+
+*/

@@ -53,7 +53,7 @@ impl ModPack {
     }
 
     pub fn write_mod_pack(&self) {
-        let j = serde_json::to_string(self).unwrap();
+        let j = serde_json::to_string_pretty(self).unwrap();
         std::fs::write(self.name.clone(), j).unwrap();
     }
 
@@ -86,13 +86,13 @@ impl ModPack {
     }
 }
 
-fn deserializ_pack(path: String) -> Result<ModPack, Error> {
+fn deserializ_pack(path: &str) -> Result<ModPack, Error> {
     let j = fs::read_to_string(path).unwrap();
     let pack: ModPack = serde_json::from_str(&j).unwrap();
     Ok(pack)
 }
 
-pub fn load_pack(pack_path: &String) -> Option<ModPack> {
+pub fn load_pack(pack_path: &str) -> Option<ModPack> {
     match fs::read_to_string(pack_path) {
         Ok(_) => {}
         Err(error) => {
@@ -100,7 +100,8 @@ pub fn load_pack(pack_path: &String) -> Option<ModPack> {
             return None;
         }
     };
-    match deserializ_pack(pack_path.clone()) {
+
+    match deserializ_pack(pack_path) {
         Ok(e) => return Some(e),
         Err(error) => {
             println!("Error deserializing the pack \n\n{error}");

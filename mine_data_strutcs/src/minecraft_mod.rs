@@ -49,6 +49,12 @@ pub enum Attributes {
     VersionType,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct Dependency{
+    version_id: String,
+    project_id: Option<String>,
+    dependency_type: String
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RinthVersion {
@@ -58,7 +64,7 @@ pub struct RinthVersion {
     version_type: String,
     downloads: u64,
     files: Vec<RinthFile>,
-    dependencies: Vec<String>,
+    dependencies: Vec<Dependency>,
     loaders: Vec<String>,
 }
 

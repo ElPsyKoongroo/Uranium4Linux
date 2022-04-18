@@ -14,5 +14,4 @@ regex = "1"
 sha-1 = "0.10.0"
 hex = "0.4.3"
 mine_data_strutcs = {path = "../mine_data_strutcs"}
-uranium_loader = {path = "../uranium_loader"}
 requester = {path = "../requester"}

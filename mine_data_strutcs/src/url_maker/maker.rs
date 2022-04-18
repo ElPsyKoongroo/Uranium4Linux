@@ -15,7 +15,7 @@ impl ModRinth {
         format!("{}/search?limit={}&offset={}", BASE_MRN_URL2, limit, offset)
     }
 
-    pub fn get_mod_info_by_id(id: &String) -> String {
+    pub fn get_mod_info_by_id(id: &str) -> String {
         // https://api.modrinth.com/v2/project/AANobbMI
         format!(
             "{}/project/{}",
@@ -33,7 +33,7 @@ impl ModRinth {
         )
     }
 
-    pub fn mod_versions_by_id(id: &String) -> String {
+    pub fn mod_versions_by_id(id: &str) -> String {
         // https://api.modrinth.com/v2/project/AANobbMI/version
         format!(
             "{}/project/{}/version",
@@ -42,11 +42,11 @@ impl ModRinth {
         )
     }
 
-    pub fn querry(q: &String) -> String {
+    pub fn querry(q: &str) -> String {
         format!("{}/search?query={}", BASE_MRN_URL2, q)
     }
 
-    pub fn hash(hash: &String) -> String {
+    pub fn hash(hash: &str) -> String {
         format!("{}/version_file/{}", BASE_MRN_URL2, hash)
     }
 }

@@ -1,4 +1,4 @@
 [workspace]
-members = ["uranium4Linux", "uranium_loader", "requester", "mine_data_strutcs"]
+members = ["uranium4Linux", "requester", "mine_data_strutcs"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
