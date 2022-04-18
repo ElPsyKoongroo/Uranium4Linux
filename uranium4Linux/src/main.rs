@@ -6,14 +6,8 @@ mod checker;
 mod modpack_loader;
 
 use std::env;
-
-use code_functions::download_modpack;
-
-
-use modpack_loader::updater::*;
+use code_functions::{download_modpack, update};
 use modpack_maker::maker::make_modpack;
-
-
 mod modpack_maker;
 
 
@@ -28,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return download_modpack(&args[2], &args[3]).await
         }
         "-u" => {
-            update_modpack(args[2].as_str()).await
+            update(args[2].as_str()).await
         }
         "-m" => {
             make_modpack(args[2].as_str()).await
