@@ -1,8 +1,3 @@
-#![allow(dead_code)]
-pub const RINTH: &str = "RINTH";
-pub const CURSE: &str = "CURSE";
-
-
 pub const HELP: &str = 
 "
 -d Download the specified modpack in the specified route
