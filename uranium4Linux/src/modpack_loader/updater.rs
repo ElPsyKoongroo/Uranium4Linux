@@ -1,39 +1,39 @@
 use mine_data_strutcs::minecraft_mod::{RinthVersion, RinthVersions};
 use mine_data_strutcs::modpack_mod::Mods;
 use mine_data_strutcs::modpack_struct::{load_pack, ModPack};
-use mine_data_strutcs::url_maker;
 use regex::Regex;
 use requester::async_pool::AsyncPool;
+use requester::mod_searcher::search_mod_by_id;
 use std::collections::VecDeque;
-use tokio::task;
 
 pub async fn update_modpack(modpack_path: &str) {
     let old_modpack: ModPack = load_pack(modpack_path).unwrap();
     let identifiers = get_project_identifiers(&old_modpack);
 
-    let mut mods_to_update: VecDeque<Mods> = get_updates(&identifiers).await;
+    let mods_to_update: VecDeque<Mods> = get_updates(&identifiers).await;
 
     let mut updated_modpack = ModPack::new();
-    make_updates(&mut mods_to_update, &mut updated_modpack);
+    make_updates(mods_to_update, &mut updated_modpack);
 
     updated_modpack.set_name(old_modpack.get_name());
     updated_modpack.set_version(old_modpack.get_version());
     updated_modpack.write_mod_pack();
 }
 
-/// Update the old versions of the mods with the new ones
-fn make_updates(mods_to_update: &mut VecDeque<Mods>, updated_modpack: &mut ModPack) {
+/// Update the old versions of the mods with the new ones. <br>
+/// Consumes mods_to_update.
+fn make_updates(mods_to_update: VecDeque<Mods>, updated_modpack: &mut ModPack) {
     mods_to_update
-        .iter()
-        .for_each(|m| updated_modpack.push_mod(m.clone()));
+        .into_iter()
+        .for_each(|m| updated_modpack.push_mod(m));
 }
 
 /// Sorts the modpack mods by their identifiers
-fn sort_mods(mods: &mut RinthVersions, identifiers: &Vec<String>) -> RinthVersions {
+fn sort_mods(mods: RinthVersions, identifiers: &Vec<String>) -> RinthVersions {
     let mut sorted_mods: RinthVersions = RinthVersions::new();
 
     for identifier in identifiers {
-        for mod_ in mods.mods() {
+        for mod_ in mods.mods(){
             if mod_.get_project_id() == *identifier {
                 sorted_mods.push(mod_.clone());
             }
@@ -48,7 +48,7 @@ async fn get_updates(identifiers: &Vec<String>) -> VecDeque<Mods> {
     let mut updated_mods: VecDeque<Mods> = VecDeque::new();
 
     get_new_versions(identifiers, &mut mods_lastests_versions).await;
-    mods_lastests_versions = sort_mods(&mut mods_lastests_versions, identifiers);
+    mods_lastests_versions = sort_mods(mods_lastests_versions, identifiers);
 
     for i in 0..mods_lastests_versions.len() {
         updated_mods.push_back(Mods::from_RinthVersion(
@@ -68,12 +68,7 @@ fn is_newest(old_mod: &Mods, new_mod: &Mods) -> bool {
 async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersions) {
     let mut pool = AsyncPool::new();
     for id in identifiers.iter() {
-        let url = url_maker::maker::ModRinth::mod_versions_by_id(&id);
-        let a_func = async {
-            let cliente = reqwest::Client::new();
-            cliente.get(url).send().await.unwrap()
-        };
-        let task = task::spawn(a_func);
+        let task = search_mod_by_id(id);
         pool.push_request(task);
     }
 
@@ -88,7 +83,6 @@ async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersio
             }
             Err(e) => {
                 eprintln!("{}", e);
-                eprintln!("{:?}", value.get(12300..12500));
             }
         }
     }
