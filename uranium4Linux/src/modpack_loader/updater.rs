@@ -3,7 +3,7 @@ use mine_data_strutcs::modpack_mod::Mods;
 use mine_data_strutcs::modpack_struct::{load_pack, ModPack};
 use regex::Regex;
 use requester::async_pool::AsyncPool;
-use requester::mod_searcher::search_mod_by_id;
+use requester::mod_searcher::{search_mod_by_id, search_version_by_id};
 use std::collections::VecDeque;
 
 pub async fn update_modpack(modpack_path: &str) {
@@ -49,6 +49,8 @@ async fn get_updates(identifiers: &Vec<String>) -> VecDeque<Mods> {
 
     get_new_versions(identifiers, &mut mods_lastests_versions).await;
     mods_lastests_versions = sort_mods(mods_lastests_versions, identifiers);
+
+    resolve_dependencies(&mut mods_lastests_versions).await;
 
     for i in 0..mods_lastests_versions.len() {
         updated_mods.push_back(Mods::from_RinthVersion(
@@ -99,3 +101,21 @@ fn get_project_identifiers(modpack: &ModPack) -> Vec<String> {
     }
     identifiers
 }
+
+async fn resolve_dependencies(mods: &mut RinthVersions){ 
+    for mine_mod in mods.mods().clone() {
+        if mine_mod.had_dependencies() {
+            for dependency in mine_mod.get_dependencies(){
+                if !mods.has(dependency.get_project_id()){
+                    let response = search_version_by_id(dependency.get_version_id()).await.unwrap();
+                    let body = response.text().await.unwrap();
+                    let a: RinthVersion= serde_json::from_str(body.as_str()).unwrap();
+                    println!("The following dependency was added: {}", a.get_name());
+                    mods.push(a);
+                }
+            }
+        }
+    }
+
+}
+
