@@ -159,17 +159,31 @@ impl RinthVersions {
     }
 
     pub fn filter_by(&self, attribute: Attributes, content: &str) -> Vec<RinthVersion> {
-        self.versions
-            .iter()
-            .filter(|x| 
-                match attribute {
-                    Attributes::Loader => x.loaders.contains(&content.to_string()),
-                    Attributes::Name => x.name.contains(&content.to_string()),
-                    Attributes::VersionType => x.version_type.contains(&content.to_string())
-                }
-            )
-            .map(|x| x.clone())
-            .collect::<Vec<RinthVersion>>()
+        match attribute {
+            Attributes::Loader => {
+                self.versions
+                    .iter()
+                    .filter(|x| x.loaders.contains(&content.to_string()))
+                    .map(|x| x.clone())
+                    .collect::<Vec<RinthVersion>>()
+            }
+
+            Attributes::Name => {
+                self.versions
+                    .iter()
+                    .filter(|x| x.name.contains(&content.to_string()))
+                    .map(|x| x.clone())
+                    .collect::<Vec<RinthVersion>>()
+            }
+
+            Attributes::VersionType => {
+                self.versions
+                    .iter()
+                    .filter(|x| x.version_type.contains(&content.to_string()))
+                    .map(|x| x.clone())
+                    .collect::<Vec<RinthVersion>>()
+            }
+        }
     }
 
     pub fn has(&self, id: &str) -> bool{
