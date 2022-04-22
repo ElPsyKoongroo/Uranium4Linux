@@ -42,6 +42,15 @@ impl ModRinth {
         )
     }
 
+    pub fn mod_version_by_id(id: &str) -> String{
+        // https://api.modrinth.com/v2/version/{id}
+        format!(
+            "{}/version/{}",
+            BASE_MRN_URL2,
+            id
+        )
+    }
+
     pub fn querry(q: &str) -> String {
         format!("{}/search?query={}", BASE_MRN_URL2, q)
     }
