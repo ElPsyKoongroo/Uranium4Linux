@@ -50,11 +50,25 @@ pub enum Attributes {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct Dependency{
+pub struct Dependency{
     version_id: String,
     project_id: Option<String>,
     dependency_type: String
 }
+
+impl Dependency {
+    pub fn get_project_id(&self) -> &str {
+        match self.project_id {
+            Some(ref id) => id,
+            None => "",
+        }
+    }
+    
+    pub fn get_version_id(&self) -> &str {
+        &self.version_id
+    }
+}
+    
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RinthVersion {
@@ -95,6 +109,14 @@ impl RinthVersion {
 
     pub fn is_fabric(&self) -> bool {
         self.get_loader() == "fabric"
+    }
+
+    pub fn had_dependencies(&self) -> bool {
+        self.dependencies.len() > 0
+    }
+
+    pub fn get_dependencies(&self) -> &Vec<Dependency> {
+        &self.dependencies
     }
 }
 
@@ -148,6 +170,10 @@ impl RinthVersions {
             )
             .map(|x| x.clone())
             .collect::<Vec<RinthVersion>>()
+    }
+
+    pub fn has(&self, id: &str) -> bool{
+        self.versions.iter().any(|x| x.project_id == id)
     }
 }
 
