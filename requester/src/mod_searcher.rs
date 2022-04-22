@@ -11,3 +11,13 @@ pub fn search_mod_by_id(id: &str) -> task::JoinHandle<reqwest::Response> {
     let task = task::spawn(a_func);
     task
 }
+
+pub fn search_version_by_id(id: &str) -> task::JoinHandle<reqwest::Response> {
+    let url = ModRinth::mod_version_by_id(id);
+    let a_func = async {
+            let cliente = reqwest::Client::new();
+            cliente.get(url).send().await.unwrap()
+    };
+    let task = task::spawn(a_func);
+    task
+}
