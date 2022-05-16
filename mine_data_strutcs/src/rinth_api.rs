@@ -9,6 +9,13 @@ pub struct CurseMod {
     downloadCount: f64,
 }
 
+pub enum Attributes {
+    Loader,
+    Name,
+    VersionType,
+}
+
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RinthMod {
     project_id: Option<String>,
@@ -43,12 +50,6 @@ impl RinthMod {
     }
 }
 
-pub enum Attributes {
-    Loader,
-    Name,
-    VersionType,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency{
     version_id: String,
@@ -69,7 +70,6 @@ impl Dependency {
     }
 }
     
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RinthVersion {
     id: String,
@@ -79,6 +79,7 @@ pub struct RinthVersion {
     downloads: u64,
     files: Vec<RinthFile>,
     dependencies: Vec<Dependency>,
+    game_versions: Vec<String>,
     loaders: Vec<String>,
 }
 
@@ -87,9 +88,9 @@ impl RinthVersion {
         self.name.clone()
     }
 
-    // pub fn get_version(&self) -> String {
-    //     return self.
-    // }
+    pub fn get_versions(&self) -> &Vec<String> {
+        &self.game_versions
+    }
 
     pub fn get_file_url(&self) -> String {
         self.files[0].url.clone()
@@ -241,7 +242,24 @@ struct RinthFile {
     pub filename: String,
 }
 
+/// If a is newer -1, if b is newer 1, if they are the same 0
+pub fn compare_versions(a: &RinthVersion, b: &RinthVersion) -> i8{
+    let a_version = a.get_versions()[0].clone();
+    let b_version = b.get_versions()[0].clone();   
+    println!("{} - {}", a_version, b_version);
+    for (a_number, b_number) in a_version.split(".").zip(b_version.split(".")) {
+        if a_number == b_number {
+            continue;
+        }
 
-// pub fn compare_versions(a: &RinthVersion, b: &RinthVersion) -> bool{
-//     true
-// }
+        let a_number = a_number.parse::<u8>().unwrap();
+        let b_number = b_number.parse::<u8>().unwrap();
+
+        if a_number > b_number {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+    return 0;
+}

@@ -26,10 +26,6 @@ impl ModPack {
         }
     }
 
-    pub fn mods(&self) -> &Vec<Mods> {
-        &self.mods
-    }
-
     #[allow(non_snake_case)]
     pub fn modpack_from_RinthVers(
         modpack_name: String,
@@ -50,6 +46,10 @@ impl ModPack {
             author: modpack_author,
             mods: mod_vec,
         }
+    }
+
+    pub fn mods(&self) -> &Vec<Mods> {
+        &self.mods
     }
 
     pub fn write_mod_pack(&self) {

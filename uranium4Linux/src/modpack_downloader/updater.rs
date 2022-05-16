@@ -76,11 +76,12 @@ async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersio
 
     pool.start().await;
     let done_responses = pool.get_done_request();
-    for i in done_responses {
-        let value = i.text().await.unwrap();
-        let a: Result<Vec<RinthVersion>, serde_json::Error> = serde_json::from_str(value.as_str());
-        match a {
+    for response in done_responses {
+        let value = response.text().await.unwrap();
+        let versions: Result<Vec<RinthVersion>, serde_json::Error> = serde_json::from_str(value.as_str());
+        match versions {
             Ok(t) => {
+                // TODO: Check if the version is the lastest
                 mods_info.push(t[0].clone());
             }
             Err(e) => {
