@@ -1,3 +1,4 @@
+use std::fs;
 use std::ops::Index;
 use std::time::Duration;
 
@@ -44,8 +45,15 @@ impl ModPackDownloader {
 
     pub fn set_path(&mut self, mut _path: String) {
         if !_path.ends_with("/") {
-            _path.push('/');
+            _path.push_str("/mods/");
+        } else {
+            _path.push_str("mods/");
+        }      
+
+        if !std::path::Path::new(_path.as_str()).exists(){
+            fs::create_dir(_path.as_str()).unwrap();
         }
+
         self.path = _path;
     }
 

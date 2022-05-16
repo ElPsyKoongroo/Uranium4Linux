@@ -1,7 +1,7 @@
 use crate::{checker::check, easy_input};
 use hex::ToHex;
 use mine_data_strutcs::{
-    minecraft_mod::{RinthVersion, RinthVersions},
+    rinth_api::{RinthVersion, RinthVersions},
     url_maker::maker,
 };
 use requester::requester::request_maker::Requester;
@@ -18,12 +18,15 @@ pub async fn make_modpack(path: &str) {
     let mut responses: RinthVersions = RinthVersions::new();
     search_mods_for_modpack(&mut requester, hash_filename, &mut responses).await;
 
-    let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
+    let mut mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
     let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
+    fix_name(&mut mp_name);
+    
     let mp = mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(
         mp_name, mp_version, mp_author, responses,
     );
+
     mp.write_mod_pack();
 
     let _ = easy_input::input("Press enter to continue...", 0);
@@ -42,15 +45,16 @@ fn get_sha1_from_file(file_path: &String) -> String {
     hash
 }
 
-fn get_mods(mods_path: &Path) -> Option<Vec<(String, String)>> {
+fn get_mods(minecraft_path: &Path) -> Option<Vec<(String, String)>> {
     let mut names: Vec<(String, String)> = Vec::new();
     let mods;
 
-    if !mods_path.is_dir() {
+    if !minecraft_path.is_dir() {
         return None;
     }
-
-    match read_dir(mods_path) {
+    let mods_path = minecraft_path.join("mods/");
+    
+    match read_dir(&mods_path) {
         Ok(e) => mods = e,
         Err(error) => {
             eprintln!("Error reading the directore: {}", error);
@@ -59,7 +63,7 @@ fn get_mods(mods_path: &Path) -> Option<Vec<(String, String)>> {
     }
 
     for mmod in mods {
-        get_sha(mods_path, mmod.unwrap(), &mut names);
+        get_sha(mods_path.as_path(), mmod.unwrap(), &mut names);
     }
 
     Some(names)
@@ -91,5 +95,12 @@ async fn search_mods_for_modpack(
             Some(e) => responses.push(e),
             None => {}
         }
+    }
+}
+
+
+fn fix_name(name: &mut String){
+    if !name.ends_with(".json") {
+        name.push_str(".json");
     }
 }

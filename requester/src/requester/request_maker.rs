@@ -7,14 +7,12 @@ pub struct Requester {
 
 impl Requester {
     pub fn new() -> Requester {
-        let reqter = Requester {
+        Requester {
             cliente: reqwest::Client::new(),
             headers: None,
-        };
-        reqter
+        }
     }
 
-    #[allow(dead_code)]
     pub async fn get(&self, url: String) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
         let resp: Response;
         match self.headers.clone() {

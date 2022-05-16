@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use regex::Regex;
-use crate::minecraft_mod::RinthVersion;
+use crate::rinth_api::RinthVersion;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Mods {

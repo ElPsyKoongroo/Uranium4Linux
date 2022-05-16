@@ -3,7 +3,7 @@ const BASE_MRN_URL: &str = "https://api.modrinth.com/api/v1/mod";
 const BASE_MRN_URL2: &str = "https://api.modrinth.com/v2";
 
 
-use crate::minecraft_mod::*;
+use crate::rinth_api::*;
 pub struct ModRinth {}
 
 impl ModRinth {

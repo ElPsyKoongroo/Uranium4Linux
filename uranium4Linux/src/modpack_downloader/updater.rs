@@ -1,4 +1,4 @@
-use mine_data_strutcs::minecraft_mod::{RinthVersion, RinthVersions};
+use mine_data_strutcs::rinth_api::{RinthVersion, RinthVersions};
 use mine_data_strutcs::modpack_mod::Mods;
 use mine_data_strutcs::modpack_struct::{load_pack, ModPack};
 use regex::Regex;
@@ -108,10 +108,9 @@ async fn resolve_dependencies(mods: &mut RinthVersions){
             for dependency in mine_mod.get_dependencies(){
                 if !mods.has(dependency.get_project_id()){
                     let response = search_version_by_id(dependency.get_version_id()).await.unwrap();
-                    let body = response.text().await.unwrap();
-                    let a: RinthVersion= serde_json::from_str(body.as_str()).unwrap();
-                    println!("The following dependency was added: {}", a.get_name());
-                    mods.push(a);
+                    let version: RinthVersion = response.json().await.unwrap();
+                    println!("The following dependency was added: {}", version.get_name());
+                    mods.push(version);
                 }
             }
         }

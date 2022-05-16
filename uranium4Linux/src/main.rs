@@ -2,7 +2,7 @@
 mod checker;
 mod code_functions;
 mod easy_input;
-mod modpack_loader;
+mod modpack_downloader;
 mod modpack_maker;
 mod variables;
 
@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "-u" => update(args[2].as_str()).await,
         "-m" => make_modpack(args[2].as_str()).await,
         "-h" => println!("{}", HELP),
-        _ => println!("{}", "Invalid arguments")
+        _    => println!("{}", "Invalid arguments")
     }
     Ok(())
 }

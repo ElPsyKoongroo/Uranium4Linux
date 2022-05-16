@@ -32,7 +32,16 @@ Example: <br>
 
 We also have a Windows version with GUI, you can download [here]. <br> 
 
+To make a modpack from a folder just run uranium4Linux with -m and folder path. There is no warranty all mods can be found. <br>
+<b>If the mods were download from ModRinth there is 99.999999% uranium4Linux can find all mods.</b>
 
+Examen:
+<ol>
+<li> cargo build</li>
+<li> uranium4Linux.exe -m path/to/mods/folder </li>
+<li> DONE ! </li>
+</ol>
+    
 
 
 

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
 
-use super::minecraft_mod::*;
+use super::rinth_api::*;
 
 trait Jsoneable {
     fn to_json(&self) -> serde_json::Result<()>

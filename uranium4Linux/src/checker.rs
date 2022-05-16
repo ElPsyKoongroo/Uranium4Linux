@@ -20,7 +20,7 @@ where
 {
     eprintln!("{msg}");
     if show_error {
-        eprintln!("{}\nNext error ocurred in runtime: {:?}\n\n", msg, error);
+        eprintln!("Next error ocurred in runtime: {:?}\n\n", error);
     }
     if stop {
         let _ = easy_input::input("Press enter to continue...", String::from(""));

@@ -13,7 +13,7 @@ pub struct CurseMod {
 pub struct RinthMod {
     project_id: Option<String>,
     title: String,
-    //latest_version: String,
+    game_versions: Vec<String>,
     description: String,
     downloads: u32,
     versions: Vec<String>,
@@ -86,6 +86,10 @@ impl RinthVersion {
     pub fn get_name(&self) -> String {
         self.name.clone()
     }
+
+    // pub fn get_version(&self) -> String {
+    //     return self.
+    // }
 
     pub fn get_file_url(&self) -> String {
         self.files[0].url.clone()
@@ -236,3 +240,8 @@ struct RinthFile {
     pub url: String,
     pub filename: String,
 }
+
+
+// pub fn compare_versions(a: &RinthVersion, b: &RinthVersion) -> bool{
+//     true
+// }

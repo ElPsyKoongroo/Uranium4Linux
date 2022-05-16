@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::fs;
 
-use crate::{minecraft_mod::RinthVersions, modpack_mod::*};
+use crate::{rinth_api::RinthVersions, modpack_mod::*};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModPack {
