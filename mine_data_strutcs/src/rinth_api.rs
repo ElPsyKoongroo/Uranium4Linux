@@ -52,7 +52,7 @@ impl RinthMod {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Dependency{
-    version_id: String,
+    version_id: Option<String>,
     project_id: Option<String>,
     dependency_type: String
 }
@@ -66,7 +66,10 @@ impl Dependency {
     }
     
     pub fn get_version_id(&self) -> &str {
-        &self.version_id
+        match self.version_id {
+            Some(ref id) => id,
+            None => "",
+        }
     }
 }
     

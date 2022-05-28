@@ -1,4 +1,4 @@
-use crate::{checker::check, easy_input};
+use crate::{checker::check, easy_input, zipper::pack_zipper::compress_pack};
 use hex::ToHex;
 use mine_data_strutcs::{
     rinth_api::{RinthVersion, RinthVersions},
@@ -18,17 +18,21 @@ pub async fn make_modpack(path: &str) {
     let mut responses: RinthVersions = RinthVersions::new();
     search_mods_for_modpack(&mut requester, hash_filename, &mut responses).await;
 
-    let mut mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
+    let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
     let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
-    fix_name(&mut mp_name);
+    let mut json_name = mp_name.clone();
+    fix_name(&mut json_name);
     
     let mp = mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(
-        mp_name, mp_version, mp_author, responses,
+        json_name.clone(), mp_version, mp_author, responses,
     );
 
     mp.write_mod_pack();
 
+    compress_pack(&mp_name, path).unwrap();
+
+    std::fs::remove_file(json_name).unwrap();
     let _ = easy_input::input("Press enter to continue...", 0);
 }
 
@@ -100,7 +104,8 @@ async fn search_mods_for_modpack(
 
 
 fn fix_name(name: &mut String){
-    if !name.ends_with(".json") {
-        name.push_str(".json");
+    if name.ends_with(".json") {
+        name.strip_suffix(".json").unwrap();
     }
+    name.push_str("_temp.json");
 }

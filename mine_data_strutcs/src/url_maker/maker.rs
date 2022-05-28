@@ -16,7 +16,7 @@ impl ModRinth {
     }
 
     pub fn get_mod_info_by_id(id: &str) -> String {
-        // https://api.modrinth.com/v2/project/AANobbMI
+        // https://api.modrinth.com/v2/project/6AQIaxuO
         format!(
             "{}/project/{}",
             BASE_MRN_URL2,

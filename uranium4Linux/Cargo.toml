@@ -8,12 +8,13 @@ edition = "2021"
 # crate-type = ["cdylib"]
 
 [dependencies]
+mine_data_strutcs = {path = "../mine_data_strutcs"}
+requester = {path = "../requester"}
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 regex = "1"
 sha-1 = "0.10.0"
 hex = "0.4.3"
-mine_data_strutcs = {path = "../mine_data_strutcs"}
-requester = {path = "../requester"}
+zip = "0.6.2"

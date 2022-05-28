@@ -1,6 +1,9 @@
 use crate::easy_input;
 use std::fmt::Debug;
 
+/// Given a Result<T, E> it checks if Ok() or Err(), 
+/// if Ok it returns T
+/// if Err it calls manage_error
 pub fn check<T, E>(value: Result<T, E>, stop: bool, show_error: bool, msg: &str) -> Option<T>
 where
     E: Debug,
