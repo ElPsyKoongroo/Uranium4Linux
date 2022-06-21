@@ -12,25 +12,32 @@ use std::{
     path::Path,
 };
 
+/// ```path```: path to a minecraft directory <br>
+/// ~/.minecraft
 pub async fn make_modpack(path: &str) {
     let mut requester = Requester::new();
     let hash_filename = get_mods(Path::new(path)).unwrap();
     let mut responses: RinthVersions = RinthVersions::new();
-    search_mods_for_modpack(&mut requester, hash_filename, &mut responses).await;
+    let mut not_found_mods: Vec<String> = Vec::new();
+    search_mods_for_modpack(&mut requester, hash_filename, &mut responses, &mut not_found_mods).await;
 
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
     let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
+    
     let mut json_name = mp_name.clone();
     fix_name(&mut json_name);
-    
+
     let mp = mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(
-        json_name.clone(), mp_version, mp_author, responses,
+        &mp_name,
+        mp_version,
+        mp_author,
+        responses,
     );
 
-    mp.write_mod_pack();
+    mp.write_mod_pack_with_name(&json_name);
 
-    compress_pack(&mp_name, path).unwrap();
+    compress_pack(&mp_name, path, not_found_mods).unwrap();
 
     std::fs::remove_file(json_name).unwrap();
     let _ = easy_input::input("Press enter to continue...", 0);
@@ -57,7 +64,7 @@ fn get_mods(minecraft_path: &Path) -> Option<Vec<(String, String)>> {
         return None;
     }
     let mods_path = minecraft_path.join("mods/");
-    
+
     match read_dir(&mods_path) {
         Ok(e) => mods = e,
         Err(error) => {
@@ -80,10 +87,13 @@ fn get_sha(path: &Path, mod_dir: fs::DirEntry, names_vec: &mut Vec<(String, Stri
     names_vec.push((hash, file_name));
 }
 
+/// Search the mods in mods/ in RinthAPI by hash, if cant find it, add it to not_found_mods and later
+/// add them raw to the modpack.
 async fn search_mods_for_modpack(
     requester: &mut Requester,
     hash_filename: Vec<(String, String)>,
     responses: &mut RinthVersions,
+    not_found_mods: &mut Vec<String>,
 ) {
     for item in hash_filename {
         let response = {
@@ -97,13 +107,12 @@ async fn search_mods_for_modpack(
         };
         match response {
             Some(e) => responses.push(e),
-            None => {}
+            None => not_found_mods.push(item.1)
         }
     }
 }
 
-
-fn fix_name(name: &mut String){
+fn fix_name(name: &mut String) {
     if name.ends_with(".json") {
         name.strip_suffix(".json").unwrap();
     }
