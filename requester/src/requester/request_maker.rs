@@ -1,5 +1,8 @@
 use reqwest::{header::HeaderMap, Response};
 
+use super::load_headers;
+
+
 pub struct Requester {
     cliente: reqwest::Client,
     headers: Option<HeaderMap>,
@@ -7,9 +10,11 @@ pub struct Requester {
 
 impl Requester {
     pub fn new() -> Requester {
+        let mut headers = HeaderMap::new();
+        load_headers::load_headers("RINTH", &mut headers);
         Requester {
             cliente: reqwest::Client::new(),
-            headers: None,
+            headers: Some(headers),
         }
     }
 
@@ -24,6 +29,7 @@ impl Requester {
             }
         }
         Ok(resp)
+        
     }
 
     #[allow(dead_code)]
