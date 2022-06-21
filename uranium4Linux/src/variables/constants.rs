@@ -5,3 +5,6 @@ pub const HELP: &str =
 -m Make a modpack file from specified route
 -h Print this message
 ";
+
+pub const EXTENSION: &str = ".zip";
+pub const TEMP_DIR: &str = "./temp_dir/";
