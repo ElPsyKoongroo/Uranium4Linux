@@ -8,5 +8,6 @@ Cargo.lock
 *.jar
 *.zip
 /temp
+/temp_dir
 requester/src/requester/load_headers.rs
 rustfmt.toml
