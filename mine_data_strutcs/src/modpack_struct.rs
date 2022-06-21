@@ -28,7 +28,7 @@ impl ModPack {
 
     #[allow(non_snake_case)]
     pub fn modpack_from_RinthVers(
-        modpack_name: String,
+        modpack_name: &str,
         modpack_version: String,
         modpack_author: String,
         mods: RinthVersions,
@@ -41,7 +41,7 @@ impl ModPack {
 
         ModPack {
             count: mod_vec.len(),
-            name: modpack_name,
+            name: modpack_name.to_owned(),
             version: modpack_version,
             author: modpack_author,
             mods: mod_vec,
@@ -55,6 +55,11 @@ impl ModPack {
     pub fn write_mod_pack(&self) {
         let j = serde_json::to_string_pretty(self).unwrap();
         std::fs::write(self.name.clone(), j).unwrap();
+    }
+
+    pub fn write_mod_pack_with_name(&self, name: &str) {
+        let j = serde_json::to_string_pretty(self).unwrap();
+        std::fs::write(name, j).unwrap();
     }
 
     pub fn push_mod(&mut self, mine_mod: Mods) {
