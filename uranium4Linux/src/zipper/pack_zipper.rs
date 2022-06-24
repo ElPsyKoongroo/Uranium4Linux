@@ -22,8 +22,7 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: Vec<String>) -> ZipResult
     // Iter through all the files and sub-directories in "config/" and set the file type.
     search_files(path, "config/", &mut config_files);
 
-    // Add the files to modpack.zip
-    write_zip(path, &mut config_files, &mut zip, options);
+    add_files_to_zip(path, &mut config_files, &mut zip, options);
 
     // Add the modpack_temp.json file
     let modpack_json = File::open(name.to_owned() + "_temp.json").unwrap();
@@ -68,6 +67,7 @@ fn get_new_files(path: &str, relative_path: &str) -> Vec<UraniumFile> {
         true,
         &format!("Error al leer {}", path),
     ).unwrap();
+
     let sub_config_files: Vec<UraniumFile> = sub_directory
         .map(|file| {
             UraniumFile::new(
@@ -80,27 +80,36 @@ fn get_new_files(path: &str, relative_path: &str) -> Vec<UraniumFile> {
     sub_config_files
 }
 
-fn write_zip(
+fn add_files_to_zip(
     root_path: &str,
     config_files: &mut Vec<UraniumFile>,
     zip: &mut ZipWriter<File>,
     options: FileOptions,
 ) {
     for file in config_files {
-        match file.get_type() {
-            FileType::Data => {
-                let absolute_path = PathBuf::from(root_path.to_owned() + &file.get_absolute_path());
-                let rel_path = file.get_absolute_path();
-                append_config_file(absolute_path, &rel_path, zip, options);
-            }
+       match_file(root_path, zip, options, file);
+    }
+}
 
-            FileType::Dir => {
-                zip.add_directory(file.get_path() + &file.get_name(), options)
-                    .unwrap();
-            }
-
-            _ => {}
+fn match_file(
+    root_path: &str,
+    zip: &mut ZipWriter<File>,
+    options: FileOptions,
+    file: &mut UraniumFile
+){
+    match file.get_type() {
+        FileType::Data => {
+            let absolute_path = PathBuf::from(root_path.to_owned() + &file.get_absolute_path());
+            let rel_path = file.get_absolute_path();
+            append_config_file(absolute_path, &rel_path, zip, options);
         }
+
+        FileType::Dir => {
+            zip.add_directory(file.get_path() + &file.get_name(), options)
+                .unwrap();
+        }
+
+        _ => {}
     }
 }
 
@@ -130,9 +139,17 @@ fn add_raw_mods(
     
     for jar_file in raw_mods.iter() {
         let file_name = "mods/".to_owned() + jar_file;
+        
+        #[cfg(debug_assertions)]
         println!("Adding {}", file_name);
+        
         let buffer = std::fs::read((path.to_owned() + "mods/") + jar_file).unwrap();
         zip.start_file(file_name, options).unwrap();
-        checker::check(zip.write(&buffer), false, false, "Error while writing");
+        check(
+            zip.write(&buffer),
+            false,
+            false,
+            &format!("Error while raw adding {}", jar_file)
+        );
     }
 }
