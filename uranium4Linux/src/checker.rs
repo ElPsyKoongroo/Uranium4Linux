@@ -1,4 +1,3 @@
-use crate::easy_input;
 use std::fmt::Debug;
 
 /// Given a Result<T, E> it checks if Ok() or Err(), 
