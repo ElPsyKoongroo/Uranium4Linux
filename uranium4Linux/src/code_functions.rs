@@ -1,13 +1,7 @@
-use std::{path::Path, error::Error};
+use std::path::Path;
 use crate::modpack_downloader::{loader::ModPackDownloader, updater::update_modpack};
 
 pub async fn download_modpack<'a>(modpack: &str, path: &'a str) -> Result<(), usize> {
-    // if !Path::new(path).exists() {
-    //     return Err(Box::<dyn Error>::from(format!(
-    //         "{} is not a valid path !",
-    //         path
-    //     )));
-    // };
     if !Path::new(path).exists() {
         return Err(1)
     };
