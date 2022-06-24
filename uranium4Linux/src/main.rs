@@ -14,14 +14,6 @@ use variables::constants::*;
 use zipper::pack_unzipper::unzip_pack;
 
 
-/*
-    TODO: 
-        - If a mod cant be found on Rinth, add the .jar to the modpack.
-        - Unzip de modpack in minecraft folder.
-        - Add '.' to the modpack name. (now it writes Name + "zip" instead of Name + ".zip")
-
-*/
-
 #[tokio::main]
 async fn main() -> Result<(), usize> {
     let args: Vec<String> = env::args().collect();
