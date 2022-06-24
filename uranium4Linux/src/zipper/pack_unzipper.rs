@@ -1,8 +1,7 @@
 use std::fs::{File, remove_dir_all};
 use std::fs::{create_dir};
-use std::io::{Write, Read};
-use tokio::runtime::Builder;
 use zip::result::ZipResult;
+use fs_extra;
 
 use crate::checker::check;
 use crate::code_functions::download_modpack;
@@ -34,13 +33,25 @@ pub async fn unzip_pack(file_path: &str, minecraft_root: &str) -> ZipResult<()>{
 
     );
 
+    
+    let options = fs_extra::dir::CopyOptions::new();
+    let config_result = fs_extra::dir::copy(
+        TEMP_DIR.to_owned() + "config",
+        minecraft_root,
+        &options
+    );
+    let raw_mods_result = fs_extra::dir::copy(
+        TEMP_DIR.to_owned() + "mods",
+        minecraft_root,
+        &options
+    );
+    
+    check(config_result, true, true, "No config to copy");
+    check(raw_mods_result, true, true, "No raw mods to copy");
+
+    println!("Downloading modpack: ");
     download_modpack(&(TEMP_DIR.to_owned() + &json_name), minecraft_root).await.unwrap();
-    remove_dir_all(TEMP_DIR);
+    check(remove_dir_all(TEMP_DIR), false, true, "Error at deleting temp dir");
 
     Ok(())
-}
-
-
-fn full_filename(path: &str, name: &str) -> String {
-    path.to_owned() + name
 }
