@@ -6,10 +6,11 @@ use mine_data_strutcs::{
 };
 use requester::requester::request_maker::Requester;
 use sha1::{Digest, Sha1};
+use futures::{self, Future};
 use std::{
     fs::{self, read_dir},
     io::Read,
-    path::Path,
+    path::Path
 };
 
 /// ```path```: path to a minecraft directory <br>
@@ -19,20 +20,23 @@ pub async fn make_modpack(path: &str) {
     let hash_filename = get_mods(Path::new(path)).unwrap();
     let mut responses: RinthVersions = RinthVersions::new();
     let mut not_found_mods: Vec<String> = Vec::new();
-    search_mods_for_modpack(&mut requester, hash_filename, &mut responses, &mut not_found_mods).await;
+    search_mods_for_modpack(
+        &mut requester,
+        hash_filename,
+        &mut responses,
+        &mut not_found_mods,
+    )
+    .await;
 
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
     let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
-    
+
     let mut json_name = mp_name.clone();
     fix_name(&mut json_name);
 
     let mp = mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(
-        &mp_name,
-        mp_version,
-        mp_author,
-        responses,
+        &mp_name, mp_version, mp_author, responses,
     );
 
     mp.write_mod_pack_with_name(&json_name);
@@ -82,7 +86,7 @@ fn get_mods(minecraft_path: &Path) -> Option<Vec<(String, String)>> {
 
 fn get_sha(path: &Path, mod_dir: fs::DirEntry, names_vec: &mut Vec<(String, String)>) {
     let file_name = mod_dir.file_name().into_string().unwrap();
-    let file_path = { path.join(&file_name).to_str().unwrap().to_string() };
+    let file_path = path.join(&file_name).to_str().unwrap().to_string();
     let hash = get_sha1_from_file(&file_path);
     names_vec.push((hash, file_name));
 }
@@ -95,21 +99,27 @@ async fn search_mods_for_modpack(
     responses: &mut RinthVersions,
     not_found_mods: &mut Vec<String>,
 ) {
+    // TODO
     for item in hash_filename {
-        let response = {
-            let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
-            check(
-                request.json::<RinthVersion>().await,
-                false,
-                true,
-                format!("Mod {} was not found !", &item.1).as_str(),
-            )
-        };
+        let response = search_mod(requester, &item).await;
         match response {
             Some(e) => responses.push(e),
-            None => not_found_mods.push(item.1)
+            None => not_found_mods.push(item.1),
         }
-    }
+    }  
+}
+
+async fn search_mod(requester: &Requester, item: &(String, String)) -> Option<RinthVersion>{
+    let response = {
+        let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
+        check(
+            request.json::<RinthVersion>().await,
+            false,
+            false,
+            format!("[Maker {}]\nMod {} was not found !\n", 106, &item.1).as_str(),
+        )
+    };
+    response 
 }
 
 fn fix_name(name: &mut String) {

@@ -1,4 +1,6 @@
 use super::uranium_structs::UraniumFile;
+
+use crate::code_functions::fix_path;
 use crate::checker::check;
 use crate::zipper::uranium_structs::FileType;
 use crate::{checker, variables::constants};
@@ -12,6 +14,9 @@ use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 /// ```path```: path to a minecraft directory <br><br>
 /// ```name```: name of the modpack <br>
 pub fn compress_pack(name: &str, path: &str, raw_mods: Vec<String>) -> ZipResult<()> {
+
+    let path = &fix_path(path);
+
     let zip_file = File::create(name.to_owned() + constants::EXTENSION).unwrap();
     let mut zip = zip::ZipWriter::new(zip_file);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
@@ -39,14 +44,14 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: Vec<String>) -> ZipResult
     Ok(())
 }
 
-fn search_files(root_path: &str, relative_path: &str, config_files: &mut Vec<UraniumFile>) {
+fn search_files(minecraft_path: &str, relative_path: &str, config_files: &mut Vec<UraniumFile>) {
     // Get this directory files
     let mut sub_config_files =
-        get_new_files(&(root_path.to_owned() + relative_path), relative_path);
+        get_new_files(&(minecraft_path.to_owned() + relative_path), relative_path);
 
     // Go through the sub_config_files vector and set the right tipe to each file. Then add them to config_files
     for config_file in sub_config_files.iter_mut() {
-        let path: PathBuf = (root_path.to_owned() + &config_file.get_absolute_path()).into();
+        let path: PathBuf = (minecraft_path.to_owned() + &config_file.get_absolute_path()).into();
         if Path::is_file(&path) {
             (*config_file).set_type(FileType::Data);
             config_files.push(config_file.to_owned());
@@ -54,7 +59,7 @@ fn search_files(root_path: &str, relative_path: &str, config_files: &mut Vec<Ura
             (*config_file).set_type(FileType::Dir);
             config_files.push(config_file.to_owned());
             let new_path = relative_path.to_owned() + &config_file.get_name() + "/";
-            search_files(root_path, &new_path, config_files);
+            search_files(minecraft_path, &new_path, config_files);
         }
     }
 }
@@ -69,25 +74,25 @@ fn get_new_files(path: &str, relative_path: &str) -> Vec<UraniumFile> {
     ).unwrap();
 
     let sub_config_files: Vec<UraniumFile> = sub_directory
-        .map(|file| {
+        .map(|file| 
             UraniumFile::new(
                 relative_path,
                 file.unwrap().file_name().to_str().unwrap(),
                 FileType::Other,
             )
-        })
+        )
         .collect();
     sub_config_files
 }
 
 fn add_files_to_zip(
-    root_path: &str,
+    minecraft_path: &str,
     config_files: &mut Vec<UraniumFile>,
     zip: &mut ZipWriter<File>,
     options: FileOptions,
 ) {
     for file in config_files {
-       match_file(root_path, zip, options, file);
+       match_file(minecraft_path, zip, options, file);
     }
 }
 
@@ -144,10 +149,12 @@ fn add_raw_mods(
         println!("Adding {}", file_name);
         
         let buffer = std::fs::read((path.to_owned() + "mods/") + jar_file).unwrap();
+        
         zip.start_file(file_name, options).unwrap();
+        
         check(
-            zip.write(&buffer),
-            false,
+            zip.write_all(&buffer),
+            true,
             false,
             &format!("Error while raw adding {}", jar_file)
         );
