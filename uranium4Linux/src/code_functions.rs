@@ -9,10 +9,16 @@ pub async fn download_modpack<'a>(modpack: &str, path: &'a str) -> Result<(), us
     modpack_loader.set_path(String::from(path));
     modpack_loader.load_pack(modpack);
     modpack_loader.start().await.unwrap();
-    println!("\n\n");
     Ok(())
 }
 
 pub async fn update(path: &str){
     update_modpack(path).await;
+}
+
+pub fn fix_path(path: &str) -> String{
+    if !path.ends_with('/') {
+        return path.to_owned() + "/"
+    }
+    path.to_owned()
 }
