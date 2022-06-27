@@ -1,14 +1,14 @@
+use core::panic;
 use std::fs;
 use std::ops::Index;
-use std::time::Duration;
 
+use crate::code_functions::fix_path;
 use mine_data_strutcs::modpack_mod::Mods;
 use mine_data_strutcs::modpack_struct::{load_pack, ModPack};
 use reqwest::Response;
+use requester::async_pool;
 use tokio::task::{self, JoinHandle};
-use tokio::time;
 
-#[cfg(debug_assertions)]
 use std::time::Instant;
 
 #[allow(dead_code)]
@@ -17,18 +17,45 @@ pub struct ModPackDownloader {
     path: String,
 }
 
-async fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Response>> {
-    let mut responses = Vec::new();
+async fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Result<Response, reqwest::Error>>> {
+    let mut responses: Vec<JoinHandle<Result<Response, reqwest::Error>>> = Vec::new();
+    let cliente = reqwest::Client::new();
     for minecraft_mod in minecraft_mods {
         let link = minecraft_mod.get_file();
-        let a_func = async {
-            let cliente = reqwest::Client::new();
-            cliente.get(link).send().await.unwrap()
-        };
+
+        let a_func = cliente.get(link).send();
+
         let task = task::spawn(a_func);
         responses.push(task);
     }
     responses
+}
+
+fn writters_maker(path: String, responses: Vec<Response>, minecraft_mods: &Vec<Mods>,) -> Vec<JoinHandle<()>>{
+    let mut i = 0;
+    let mut writters = Vec::new();
+    for response in responses.into_iter(){
+        let path_copy = path.clone();
+        let mod_name = minecraft_mods.index(i.clone()).get_file_name();
+        let task = async move {
+            write_mod(
+                &path_copy, 
+                response,
+                &mod_name
+            ).await;
+        }; 
+        writters.push(tokio::spawn(task));
+        i += 1;
+    }
+    writters
+}
+
+async fn write_mod(path: &str, res: Response, name: &str){
+    let web_res = res;
+    let full_path = path.to_owned() + name;
+    let content = web_res.bytes().await.unwrap();
+    tokio::fs::write(full_path, content).await.unwrap();
+ 
 }
 
 impl ModPackDownloader {
@@ -44,85 +71,57 @@ impl ModPackDownloader {
     }
 
     pub fn set_path(&mut self, mut _path: String) {
-        if !_path.ends_with("/") {
-            _path.push_str("/mods/");
-        } else {
-            _path.push_str("mods/");
-        }      
+        _path = fix_path(&_path).to_owned();
+        _path.push_str("mods/");
+              
 
-        if !std::path::Path::new(_path.as_str()).exists(){
-            fs::create_dir(_path.as_str()).unwrap();
+        if !std::path::Path::new(&_path).exists(){
+            fs::create_dir(&_path).unwrap();
         }
 
         self.path = _path;
     }
 
-    pub async fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let n_mods = (&self.pack).as_ref().unwrap().mods().len();
-        let not_done_mods: Vec<usize> = Vec::from_iter(0..n_mods);
-        let minecraft_mods = {
-            let c_pack = self.pack.clone().unwrap();
-            c_pack.mods().clone()
-        };
+    pub async fn start<'a>(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let minecraft_mods: &Vec<Mods>;
+        let responses: Vec<JoinHandle<Result<Response, _>>>;
+        match &self.pack {
+            Some(modpack) => {
+                minecraft_mods = modpack.mods();
+                responses = request_maker(minecraft_mods).await;
+            },
+            None => panic!("No modpack !")
+        }
 
-        let responses: Vec<JoinHandle<Response>> = request_maker(&minecraft_mods).await;
 
-        self.download_v2(not_done_mods, responses, minecraft_mods)
-            .await
-    }
+        // Start the pool request
+        let mut pool = async_pool::AsyncPool::new();
+        pool.push_request_vec(responses);
 
-    async fn download_v2(
-        &mut self,
-        mut not_done_mods: Vec<usize>,
-        mut responses: Vec<JoinHandle<Response>>,
-        minecraft_mods: Vec<Mods>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        #[cfg(debug_assertions)]
         let start = Instant::now();
-        loop {
-            let done_mod = self
-                .download_loop(not_done_mods.clone(), &mut responses, &minecraft_mods)
-                .await;
-            not_done_mods.retain(|&x| x != done_mod);
 
-            if not_done_mods.is_empty() {
-                break;
-            }
-        }
-        #[cfg(debug_assertions)]
-        print!("{:<3}\n", start.elapsed().as_millis());
+        pool.start().await;
+       
+        let end = Instant::now();
+        
 
+        println!("{:?}", end.duration_since(start).as_millis());
+
+        let responses = pool
+        .get_done_request()
+        .into_iter()
+        .map(|f| f.unwrap())
+        .collect();
+
+        
+
+        // Start the writting pool
+        let writters: Vec<JoinHandle<()>> = writters_maker(self.path.clone(), responses, minecraft_mods);
+        let mut pool = async_pool::AsyncPool::new();
+        pool.push_request_vec(writters);
+        pool.start().await;
+ 
         Ok(())
-    }
+    } 
 
-    async fn download_loop(
-        &mut self,
-        not_done_mods: Vec<usize>,
-        responses: &mut Vec<JoinHandle<Response>>,
-        minecraft_mods: &Vec<Mods>,
-    ) -> usize {
-        for i in not_done_mods.clone() {
-            let sleep = time::sleep(Duration::from_millis(50));
-            tokio::pin!(sleep);
-
-            tokio::select! {
-                _ = &mut sleep =>  {
-                    continue;
-                }
-
-                res = &mut responses[i] => {
-                    let web_res = res.unwrap();
-                    let full_path = self.path.clone() + minecraft_mods.index(i).get_file_name().as_ref();
-                    let content = web_res.bytes().await.unwrap();
-                    tokio::fs::write(full_path, content).await.unwrap();
-                }
-
-                else => {
-                    break;
-                }
-            }
-            return i;
-        }
-        0
-    }
 }
