@@ -104,18 +104,21 @@ fn get_project_identifiers(modpack: &ModPack) -> Vec<String> {
 }
 
 async fn resolve_dependencies(mods: &mut RinthVersions){ 
-    for mine_mod in mods.mods().clone() {
-        if mine_mod.had_dependencies() {
-            for dependency in mine_mod.get_dependencies(){
-                if !mods.has(dependency.get_project_id()){
-                    let response = search_version_by_id(dependency.get_version_id()).await.unwrap();
-                    let version: RinthVersion = response.json().await.unwrap();
-                    println!("The following dependency was added: {}", version.get_name());
-                    mods.push(version);
-                }
+    let mut dep_vector = Vec::new();
+   
+    for mine_mod in mods.mods() {
+        if !mine_mod.had_dependencies(){ continue; }
+        for dependency in mine_mod.get_dependencies() {
+            if !mods.has(dependency.get_project_id()) {
+                let response = search_version_by_id(dependency.get_version_id()).await.unwrap();
+                let version: RinthVersion = response.json().await.unwrap();
+                println!("The following dependency was added: {}", version.get_name());
+                dep_vector.push(version);
             }
         }
     }
+    
+    dep_vector.into_iter().for_each(|dep| mods.push(dep));
 
 }
 
