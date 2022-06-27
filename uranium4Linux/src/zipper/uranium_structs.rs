@@ -7,18 +7,20 @@ pub enum FileType {
 
 #[derive(Clone)]
 pub struct UraniumFile{
-    path: String,
+    /// Relative path from minecraft root mods/sodium.jar
+    path: String, 
+    /// sodium.jar  
     name: String,
     file_type: FileType,
 }
 
 
 impl UraniumFile {
-    pub fn new(path: &str, name: &str, _file_type: FileType) -> UraniumFile {
+    pub fn new(path: &str, name: &str, file_type: FileType) -> UraniumFile {
         UraniumFile {
             path: path.to_owned(),
             name: name.to_owned(),
-            file_type: _file_type,
+            file_type,
         }
     }
 
