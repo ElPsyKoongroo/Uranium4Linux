@@ -5,9 +5,16 @@ use regex::Regex;
 use requester::async_pool::AsyncPool;
 use requester::mod_searcher::{search_mod_by_id, search_version_by_id};
 use std::collections::VecDeque;
+use crate::variables::constants::{EXTENSION, TEMP_DIR};
+use crate::zipper::pack_unzipper::unzip_temp_pack;
 
 pub async fn update_modpack(modpack_path: &str) {
-    let old_modpack: ModPack = load_pack(modpack_path).unwrap();
+    unzip_temp_pack(modpack_path); 
+
+    let json_name = TEMP_DIR.to_owned() + &modpack_path.replace(EXTENSION, ".json");
+
+
+    let old_modpack: ModPack = load_pack(&json_name).unwrap();
     let identifiers = get_project_identifiers(&old_modpack);
 
     let mods_to_update: VecDeque<Mods> = get_updates(&identifiers).await;
@@ -112,7 +119,9 @@ async fn resolve_dependencies(mods: &mut RinthVersions){
             if !mods.has(dependency.get_project_id()) {
                 let response = search_version_by_id(dependency.get_version_id()).await.unwrap();
                 let version: RinthVersion = response.json().await.unwrap();
-                println!("The following dependency was added: {}", version.get_name());
+                #[cfg(debug_assertions)]
+                println!("The following dependency was added: {} by {}", version.get_name(), mine_mod.get_name());
+
                 dep_vector.push(version);
             }
         }

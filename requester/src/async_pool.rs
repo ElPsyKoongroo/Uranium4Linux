@@ -40,6 +40,14 @@ impl<T> AsyncPool<T> {
     }
 
     async fn request_loop(&mut self) {
+
+        // let join_all = futures::future::join_all(&mut self.request_pool).await;
+        // let a: Vec<&T> = join_all.iter().flatten().collect::<Vec<&T>>();
+        
+        // for (i, res) in (0..self.items).zip(a){
+        //     self.ordered_requests.insert(i, res);
+        // }
+
         for i in self.not_done_request.clone().into_iter() {
             let sleep = time::sleep(Duration::from_millis(20));
             tokio::pin!(sleep);

@@ -1,7 +1,6 @@
 use core::panic;
 use std::fs;
 use std::ops::Index;
-
 use crate::code_functions::fix_path;
 use mine_data_strutcs::modpack_mod::Mods;
 use mine_data_strutcs::modpack_struct::{load_pack, ModPack};
@@ -9,7 +8,7 @@ use reqwest::Response;
 use requester::async_pool;
 use tokio::task::{self, JoinHandle};
 
-use std::time::Instant;
+
 
 #[allow(dead_code)]
 pub struct ModPackDownloader {
@@ -31,15 +30,17 @@ async fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Result<Resp
     responses
 }
 
+/// Return the JoinHandle of all the writters for the Response Vec
 fn writters_maker(path: String, responses: Vec<Response>, minecraft_mods: &Vec<Mods>,) -> Vec<JoinHandle<()>>{
     let mut i = 0;
     let mut writters = Vec::new();
     for response in responses.into_iter(){
-        let path_copy = path.clone();
-        let mod_name = minecraft_mods.index(i.clone()).get_file_name();
+        let path_ref = path.clone();
+        let mod_name = minecraft_mods.index(i).get_file_name();
+        
         let task = async move {
             write_mod(
-                &path_copy, 
+                &path_ref, 
                 response,
                 &mod_name
             ).await;
@@ -50,6 +51,7 @@ fn writters_maker(path: String, responses: Vec<Response>, minecraft_mods: &Vec<M
     writters
 }
 
+/// Simple function that writes the content of the response into the .jar file 
 async fn write_mod(path: &str, res: Response, name: &str){
     let web_res = res;
     let full_path = path.to_owned() + name;
@@ -71,11 +73,12 @@ impl ModPackDownloader {
     }
 
     pub fn set_path(&mut self, mut _path: String) {
+        // In case the user enter "/some/random/path" and forgot the last '/'
         _path = fix_path(&_path).to_owned();
         _path.push_str("mods/");
               
 
-        if !std::path::Path::new(&_path).exists(){
+        if !std::path::Path::new(&_path).exists(){    
             fs::create_dir(&_path).unwrap();
         }
 
@@ -97,23 +100,13 @@ impl ModPackDownloader {
         // Start the pool request
         let mut pool = async_pool::AsyncPool::new();
         pool.push_request_vec(responses);
-
-        let start = Instant::now();
-
         pool.start().await;
-       
-        let end = Instant::now();
         
-
-        println!("{:?}", end.duration_since(start).as_millis());
-
         let responses = pool
         .get_done_request()
         .into_iter()
-        .map(|f| f.unwrap())
+        .flatten()
         .collect();
-
-        
 
         // Start the writting pool
         let writters: Vec<JoinHandle<()>> = writters_maker(self.path.clone(), responses, minecraft_mods);

@@ -10,15 +10,11 @@ pub struct ModPack {
     version: String,
     author: String,
     mods: Vec<Mods>,
-
-    #[serde(skip_serializing, skip_deserializing)]
-    count: usize,
 }
 
 impl ModPack {
     pub fn new() -> ModPack {
         ModPack {
-            count: 0,
             name: String::from(" "),
             version: String::from(" "),
             author: String::from(" "),
@@ -40,7 +36,6 @@ impl ModPack {
             .collect::<Vec<Mods>>();
 
         ModPack {
-            count: mod_vec.len(),
             name: modpack_name.to_owned(),
             version: modpack_version,
             author: modpack_author,
@@ -101,7 +96,7 @@ pub fn load_pack(pack_path: &str) -> Option<ModPack> {
     match fs::read_to_string(pack_path) {
         Ok(_) => {}
         Err(error) => {
-            println!("Error reading the pack \n\n{error}");
+            eprintln!("Error reading the pack \n\n{error}");
             return None;
         }
     };
@@ -109,22 +104,8 @@ pub fn load_pack(pack_path: &str) -> Option<ModPack> {
     match deserializ_pack(pack_path) {
         Ok(e) => return Some(e),
         Err(error) => {
-            println!("Error deserializing the pack \n\n{error}");
+            eprintln!("Error deserializing the pack \n\n{error}");
             return None;
-        }
-    }
-}
-
-impl Iterator for ModPack {
-    type Item = Mods;
-    fn next(&mut self) -> Option<Mods> {
-        self.count += 1;
-
-        if self.count < self.mods.len() {
-            Some(self.mods[self.count].clone())
-        } else {
-            self.count = 0;
-            None
         }
     }
 }

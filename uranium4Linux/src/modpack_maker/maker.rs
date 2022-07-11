@@ -6,7 +6,6 @@ use mine_data_strutcs::{
 };
 use requester::requester::request_maker::Requester;
 use sha1::{Digest, Sha1};
-use futures::{self, Future};
 use std::{
     fs::{self, read_dir},
     io::Read,
@@ -15,6 +14,7 @@ use std::{
 
 /// ```path```: path to a minecraft directory <br>
 /// ~/.minecraft
+
 pub async fn make_modpack(path: &str) {
     let mut requester = Requester::new();
     let hash_filename = get_mods(Path::new(path)).unwrap();
@@ -25,8 +25,7 @@ pub async fn make_modpack(path: &str) {
         hash_filename,
         &mut responses,
         &mut not_found_mods,
-    )
-    .await;
+    ).await;
 
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack.mm"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
@@ -98,15 +97,16 @@ async fn search_mods_for_modpack(
     hash_filename: Vec<(String, String)>,
     responses: &mut RinthVersions,
     not_found_mods: &mut Vec<String>,
-) {
+){
     // TODO
     for item in hash_filename {
         let response = search_mod(requester, &item).await;
+
         match response {
             Some(e) => responses.push(e),
             None => not_found_mods.push(item.1),
         }
-    }  
+    }    
 }
 
 async fn search_mod(requester: &Requester, item: &(String, String)) -> Option<RinthVersion>{

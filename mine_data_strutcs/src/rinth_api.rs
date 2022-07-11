@@ -15,7 +15,16 @@ pub enum Attributes {
     VersionType,
 }
 
+// This structures pretends be the same format as
+// Rinth API json responses so in order to easily mantein 
+// the code all the attributes should be private so if 
+// somewhen the name of an attributes change only the
+// attribute inside the structure will change but the setter/getter 
+// will be the same.
 
+
+/// RinthMod pretends to be the structure for the response of
+/// 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RinthMod {
     project_id: Option<String>,
@@ -27,9 +36,9 @@ pub struct RinthMod {
     categories: Vec<String>,
 }
 
+
 impl RinthMod {
     pub fn get_id(&self) -> String {
-        //let id = self.project_id.clone().unwrap().split_off(6);
         self.project_id.clone().unwrap()
     }
 
@@ -72,7 +81,10 @@ impl Dependency {
         }
     }
 }
-    
+
+
+// RinthVersion pretends to be the response for:
+// https://api.modrinth.com/v2/project/{id | slug}/version
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RinthVersion {
     id: String,
@@ -249,7 +261,7 @@ struct RinthFile {
 pub fn compare_versions(a: &RinthVersion, b: &RinthVersion) -> i8{
     let a_version = a.get_versions()[0].clone();
     let b_version = b.get_versions()[0].clone();   
-    println!("{} - {}", a_version, b_version);
+    eprintln!("{} - {}", a_version, b_version);
     for (a_number, b_number) in a_version.split(".").zip(b_version.split(".")) {
         if a_number == b_number {
             continue;

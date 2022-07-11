@@ -12,10 +12,12 @@ pub async fn download_modpack<'a>(modpack: &str, path: &'a str) -> Result<(), us
     Ok(())
 }
 
+
 pub async fn update(path: &str){
     update_modpack(path).await;
 }
 
+///Add '/' at the end of the path if it isnt already in it. 
 pub fn fix_path(path: &str) -> String{
     if !path.ends_with('/') {
         return path.to_owned() + "/"

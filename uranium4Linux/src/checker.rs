@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, process::exit};
 
 /// Given a Result<T, E> it checks if Ok() or Err(), 
 /// if Ok it returns T
@@ -14,7 +14,7 @@ where
             if !panic {
                 None
             } else {
-                panic!();
+                exit(0);
             }
         }
     }
