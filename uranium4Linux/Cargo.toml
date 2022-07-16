@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-# [lib]
-# crate-type = ["cdylib"]
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
 mine_data_strutcs = {path = "../mine_data_strutcs"}
@@ -20,3 +20,5 @@ sha-1 = "0.10.0"
 hex = "0.4.3"
 zip = "0.6.2"
 fs_extra = "1.2.0"
+libc = "0.2.126" 
+murmurhash32 = {git = "https://github.com/gorilla-devs/murmurhash32.git"} 

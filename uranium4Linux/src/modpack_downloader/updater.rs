@@ -1,6 +1,7 @@
-use mine_data_strutcs::rinth_api::{RinthVersion, RinthVersions};
-use mine_data_strutcs::modpack_mod::Mods;
-use mine_data_strutcs::modpack_struct::{load_pack, ModPack};
+use mine_data_strutcs::rinth::rinth_mods::{RinthVersions, RinthVersion};
+use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
+use mine_data_strutcs::uranium_modpack::modpack_struct::*;
+
 use regex::Regex;
 use requester::async_pool::AsyncPool;
 use requester::mod_searcher::{search_mod_by_id, search_version_by_id};
@@ -98,6 +99,7 @@ async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersio
     }
 }
 
+
 fn get_project_identifiers(modpack: &ModPack) -> Vec<String> {
     let re = Regex::new("data/(.{8})").unwrap(); // MAGIC !!
     let mut identifiers = Vec::new();
@@ -112,15 +114,19 @@ fn get_project_identifiers(modpack: &ModPack) -> Vec<String> {
 
 async fn resolve_dependencies(mods: &mut RinthVersions){ 
     let mut dep_vector = Vec::new();
-   
+       
     for mine_mod in mods.mods() {
         if !mine_mod.had_dependencies(){ continue; }
+        // For each dependency check if it is already in the pack, if not, add it
         for dependency in mine_mod.get_dependencies() {
             if !mods.has(dependency.get_project_id()) {
-                let response = search_version_by_id(dependency.get_version_id()).await.unwrap();
+                let response = search_version_by_id(
+                    dependency.get_version_id()
+                ).await.unwrap();
                 let version: RinthVersion = response.json().await.unwrap();
+
                 #[cfg(debug_assertions)]
-                println!("The following dependency was added: {} by {}", version.get_name(), mine_mod.get_name());
+                println!("The following dependency was added: {} by {}", version.get_name(),mine_mod.get_name());
 
                 dep_vector.push(version);
             }

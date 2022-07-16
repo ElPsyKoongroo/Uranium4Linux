@@ -1,10 +1,15 @@
+#![allow(dead_code)]
+#![allow(non_snake_case)]
+
+
 const BASE_CUR_URL: &str = "https://api.curseforge.com";
 const BASE_MRN_URL: &str = "https://api.modrinth.com/api/v1/mod";
 const BASE_MRN_URL2: &str = "https://api.modrinth.com/v2";
 
+use crate::rinth::rinth_mods::*;
 
-use crate::rinth_api::*;
-pub struct ModRinth {}
+
+pub struct ModRinth;
 
 impl ModRinth {
     pub fn search() -> String {
@@ -24,7 +29,7 @@ impl ModRinth {
         )
     }
 
-    pub fn mod_versions(minecraft_mod: &RinthMod) -> String {
+    pub fn mod_versions(minecraft_mod: &RinthProject) -> String {
         // https://api.modrinth.com/v2/project/AANobbMI/version
         format!(
             "{}/project/{}/version",
@@ -41,6 +46,16 @@ impl ModRinth {
             id
         )
     }
+
+    pub fn modpacks() -> String{
+        format!(
+            "{}/search?facets=[[\"project_type:modpack\"]]",
+            BASE_MRN_URL2, 
+        )
+    
+    }
+
+
 
     pub fn mod_version_by_id(id: &str) -> String{
         // https://api.modrinth.com/v2/version/{id}
@@ -59,19 +74,23 @@ impl ModRinth {
         format!("{}/version_file/{}", BASE_MRN_URL2, hash)
     }
 }
-pub struct Curse {
-    // TODO
 
-}
 
-impl Curse {
-    pub fn search_for() -> String {
-        format!("{}/v1/mods/search?gameid=432&pageSize=20&classId=6", BASE_CUR_URL)
+pub struct Curse;
+
+impl Curse{
+
+    pub fn file(modId: &str, fileId: &str) -> String {
+        format!("{}/v1/mods/{}/files/{}",
+            BASE_CUR_URL,
+            modId,
+            fileId
+        )
+    }
+
+    pub fn hash(hash: &str) -> String {
+        format!("{}/v1/fingerprint",
+            BASE_CUR_URL
+        )
     }
 }
-
-/*
-pub fn curse_games() -> String{
-    format!("{}/v1/categories", BASE_CUR_URL)
-}
-*/

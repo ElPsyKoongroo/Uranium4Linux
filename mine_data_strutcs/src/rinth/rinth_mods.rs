@@ -1,13 +1,8 @@
+#![allow(dead_code)]
+#![allow(non_snake_case)]
+
 use core::fmt;
 use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
-pub struct CurseMod {
-    id: u64,
-    name: String,
-    downloadCount: f64,
-}
 
 pub enum Attributes {
     Loader,
@@ -21,23 +16,28 @@ pub enum Attributes {
 // somewhen the name of an attributes change only the
 // attribute inside the structure will change but the setter/getter 
 // will be the same.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchProjects {
+    hits: Vec<RinthProject>
+}
 
 
 /// RinthMod pretends to be the structure for the response of
-/// 
+/// https://api.modrinth.com/v2/project/{id | slug} 
+/// This type is also usable when requesting searchs for rinth api
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RinthMod {
+pub struct RinthProject {
     project_id: Option<String>,
     title: String,
-    game_versions: Vec<String>,
     description: String,
     downloads: u32,
     versions: Vec<String>,
     categories: Vec<String>,
+    icon_url: String,
 }
 
 
-impl RinthMod {
+impl RinthProject {
     pub fn get_id(&self) -> String {
         self.project_id.clone().unwrap()
     }
@@ -83,10 +83,10 @@ impl Dependency {
 }
 
 
-// RinthVersion pretends to be the response for:
-// https://api.modrinth.com/v2/project/{id | slug}/version
+/// RinthProject pretends to be the response for:
+/// https://api.modrinth.com/v2/version/{version id}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RinthVersion {
+pub struct RinthVersion{
     id: String,
     project_id: String,
     name: String,
@@ -98,7 +98,7 @@ pub struct RinthVersion {
     loaders: Vec<String>,
 }
 
-impl RinthVersion {
+impl RinthVersion{ 
     pub fn get_name(&self) -> String {
         self.name.clone()
     }
@@ -140,6 +140,9 @@ impl RinthVersion {
     }
 }
 
+/// Rinthversions pretends to parse the response of:
+/// https://api.modrinth.com/v2/project/{id | slug}/version
+/// This structure is commonly use 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RinthVersions {
     pub versions: Vec<RinthVersion>,
@@ -150,27 +153,27 @@ impl RinthVersions {
         &self.versions[i]
     }
 
-    pub fn new() -> RinthVersions {
-        RinthVersions { versions: Vec::new() }
-    }
+        pub fn new() -> RinthVersions {
+            RinthVersions { versions: Vec::new() }
+        }
 
-    pub fn len(&self) -> usize {
-        self.versions.len()
-    }
+        pub fn len(&self) -> usize {
+            self.versions.len()
+        }
 
-    pub fn push(&mut self, version: RinthVersion) {
-        self.versions.push(version);
-    }
+        pub fn push(&mut self, version: RinthVersion) {
+            self.versions.push(version);
+        }
 
-    pub fn last(&self) -> &RinthVersion {
-        self.versions.last().unwrap()
-    }
+        pub fn last(&self) -> &RinthVersion {
+            self.versions.last().unwrap()
+        }
 
-    pub fn first(&self) -> &RinthVersion {
-        self.versions.first().unwrap()
-    }
+        pub fn first(&self) -> &RinthVersion {
+            self.versions.first().unwrap()
+        }
 
-    pub fn mod_at(&self, i: usize) -> &RinthVersion {
+        pub fn mod_at(&self, i: usize) -> &RinthVersion{
         &self.versions[i]
     }
 
@@ -251,14 +254,62 @@ impl fmt::Display for RinthVersions {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 struct RinthFile {
     pub url: String,
     pub filename: String,
 }
 
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RinthResponse {
+    pub hits: Vec<RinthProject>, 
+    offset: u32,
+    limit: u32,
+    total_hits: u64,
+}
+
+impl RinthResponse {
+    pub fn new() -> RinthResponse {
+        RinthResponse {
+            hits: vec![],
+            offset: 0,
+            limit: 0,
+            total_hits: 0,
+        }
+    }
+
+    pub fn show(&self) {
+        println!("{}", self);
+    }
+
+    pub fn len(&self) -> usize {
+        self.hits.len()
+    }
+}
+
+impl std::default::Default for RinthResponse {
+    fn default() -> RinthResponse {
+        RinthResponse::new()
+    }
+}
+
+impl std::fmt::Display for RinthResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for (index, minecraft_mod) in self.hits.iter().enumerate() {
+            write!(f, "{:2}: {}\n", index, minecraft_mod.to_string())?;
+        }
+        write!(f, "")
+    }
+}
+
+        
+        
+        
+        
+
+
 /// If a is newer -1, if b is newer 1, if they are the same 0
-pub fn compare_versions(a: &RinthVersion, b: &RinthVersion) -> i8{
+pub fn compare_versions(a: &RinthProject, b: &RinthProject) -> i8{
     let a_version = a.get_versions()[0].clone();
     let b_version = b.get_versions()[0].clone();   
     eprintln!("{} - {}", a_version, b_version);

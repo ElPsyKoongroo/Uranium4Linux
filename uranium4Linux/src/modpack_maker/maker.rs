@@ -1,23 +1,23 @@
 use crate::{checker::check, easy_input, zipper::pack_zipper::compress_pack};
-use hex::ToHex;
+use std::fs::read_dir;
 use mine_data_strutcs::{
-    rinth_api::{RinthVersion, RinthVersions},
+    rinth::rinth_mods::{RinthVersion, RinthVersions},
+    curse::curse_mods::CurseFingerPrint,
     url_maker::maker,
 };
-use requester::requester::request_maker::Requester;
-use sha1::{Digest, Sha1};
-use std::{
-    fs::{self, read_dir},
-    io::Read,
-    path::Path
-};
+use requester::requester::request_maker::{Requester, CurseRequester};
+use std::path::Path;
+use crate::hashes::{rinth_hash, curse_hash};
 
-/// ```path```: path to a minecraft directory <br>
-/// ~/.minecraft
+struct ModHashes{
+    rinth_hash: String,
+    curse_hash: String
+}
 
 pub async fn make_modpack(path: &str) {
     let mut requester = Requester::new();
     let hash_filename = get_mods(Path::new(path)).unwrap();
+
     let mut responses: RinthVersions = RinthVersions::new();
     let mut not_found_mods: Vec<String> = Vec::new();
     search_mods_for_modpack(
@@ -34,7 +34,7 @@ pub async fn make_modpack(path: &str) {
     let mut json_name = mp_name.clone();
     fix_name(&mut json_name);
 
-    let mp = mine_data_strutcs::modpack_struct::ModPack::modpack_from_RinthVers(
+    let mp = mine_data_strutcs::uranium_modpack::modpack_struct::ModPack::modpack_from_RinthVers(
         &mp_name, mp_version, mp_author, responses,
     );
 
@@ -46,21 +46,9 @@ pub async fn make_modpack(path: &str) {
     let _ = easy_input::input("Press enter to continue...", 0);
 }
 
-fn get_sha1_from_file(file_path: &String) -> String {
-    let mut hasher = Sha1::new();
-    let mut file = fs::File::open(file_path).unwrap();
-    let metadata = fs::metadata(file_path).expect("unable to read metadata");
-    let mut buffer = vec![0; metadata.len() as usize];
-    file.read(&mut buffer).expect("buffer overflow");
 
-    hasher.update(buffer);
-    let temp = hasher.finalize().to_vec();
-    let hash = temp.encode_hex::<String>();
-    hash
-}
-
-fn get_mods(minecraft_path: &Path) -> Option<Vec<(String, String)>> {
-    let mut names: Vec<(String, String)> = Vec::new();
+fn get_mods(minecraft_path: &Path) -> Option<Vec<(ModHashes, String)>> {
+    let mut hashes_names = Vec::new();
     let mods;
 
     if !minecraft_path.is_dir() {
@@ -69,39 +57,45 @@ fn get_mods(minecraft_path: &Path) -> Option<Vec<(String, String)>> {
     let mods_path = minecraft_path.join("mods/");
 
     match read_dir(&mods_path) {
-        Ok(e) => mods = e,
+        Ok(e) => mods = e.into_iter()
+            .map(|f| f.unwrap().path().to_str().unwrap().to_owned())
+            .collect::<Vec<String>>(),
         Err(error) => {
             eprintln!("Error reading the directore: {}", error);
             return None;
         }
     }
 
-    for mmod in mods {
-        get_sha(mods_path.as_path(), mmod.unwrap(), &mut names);
+    // Push all the (has, file_name) to the vector
+    for path in mods {
+        let rinth = rinth_hash(&path);
+        let curse = curse_hash(&path);
+        let hashes = ModHashes{
+            rinth_hash: rinth,
+            curse_hash: curse
+        };
+        let file_name = path.split("/").last().unwrap().to_owned();
+        hashes_names.push((hashes, file_name));
     }
 
-    Some(names)
+    Some(hashes_names)
 }
 
-fn get_sha(path: &Path, mod_dir: fs::DirEntry, names_vec: &mut Vec<(String, String)>) {
-    let file_name = mod_dir.file_name().into_string().unwrap();
-    let file_path = path.join(&file_name).to_str().unwrap().to_string();
-    let hash = get_sha1_from_file(&file_path);
-    names_vec.push((hash, file_name));
-}
-
-/// Search the mods in mods/ in RinthAPI by hash, if cant find it, add it to not_found_mods and later
+/// Search the mods in mods/ in RinthAPI by hash, 
+/// if cant find it, add it to not_found_mods and later
 /// add them raw to the modpack.
 async fn search_mods_for_modpack(
     requester: &mut Requester,
-    hash_filename: Vec<(String, String)>,
+    hash_filename: Vec<(ModHashes, String)>,
     responses: &mut RinthVersions,
     not_found_mods: &mut Vec<String>,
 ){
     // TODO
+
+    let curse_requester = CurseRequester::new();
+
     for item in hash_filename {
         let response = search_mod(requester, &item).await;
-
         match response {
             Some(e) => responses.push(e),
             None => not_found_mods.push(item.1),
@@ -109,15 +103,41 @@ async fn search_mods_for_modpack(
     }    
 }
 
-async fn search_mod(requester: &Requester, item: &(String, String)) -> Option<RinthVersion>{
+
+async fn search_mod(requester: &Requester, item: &(ModHashes, String)) -> Option<RinthVersion>{
     let response = {
-        let request = requester.get(maker::ModRinth::hash(&item.0)).await.unwrap();
-        check(
-            request.json::<RinthVersion>().await,
+        let rinth_request = requester.get(maker::ModRinth::hash(&item.0.rinth_hash)).await.unwrap();
+
+        let curse_body = format!("{{
+                \"fingerprints\": [
+                    {}
+                ]
+            }}", item.0.curse_hash
+        );
+        
+
+        let curse_request = requester.get_curse(maker::Curse::hash(&item.0.curse_hash), "post", &curse_body).await.unwrap();
+        
+        // TODO!
+        let curse_parse = check(
+            curse_request.json::<CurseFingerPrint>().await,
+            false,
+            false,
+            ""
+        );
+
+        let rinth_parse = check(
+            rinth_request.json::<RinthVersion>().await,
             false,
             false,
             format!("[Maker {}]\nMod {} was not found !\n", 106, &item.1).as_str(),
-        )
+        );    
+        if rinth_parse.is_some(){
+            rinth_parse
+        } else {
+            rinth_parse
+            // curse_parse
+        }
     };
     response 
 }

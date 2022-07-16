@@ -6,6 +6,7 @@ mod modpack_downloader;
 mod modpack_maker;
 mod variables;
 mod zipper;
+mod hashes;
 
 use code_functions::{download_modpack, update};
 use modpack_maker::maker::make_modpack;

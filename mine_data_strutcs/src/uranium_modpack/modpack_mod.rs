@@ -1,6 +1,7 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use regex::Regex;
-use crate::rinth_api::RinthVersion;
+use crate::rinth::rinth_mods::*;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Mods {
@@ -46,3 +47,4 @@ impl Mods {
         )
     }
 }
+

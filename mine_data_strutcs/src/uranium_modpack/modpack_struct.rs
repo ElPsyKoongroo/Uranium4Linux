@@ -1,8 +1,9 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::fs;
-
-use crate::{rinth_api::RinthVersions, modpack_mod::*};
+use crate::rinth::rinth_mods::RinthVersions;
+use crate::uranium_modpack::modpack_mod::Mods;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModPack {
@@ -13,21 +14,21 @@ pub struct ModPack {
 }
 
 impl ModPack {
-    pub fn new() -> ModPack {
-        ModPack {
-            name: String::from(" "),
-            version: String::from(" "),
-            author: String::from(" "),
-            mods: Vec::new(),
+        pub fn new() -> ModPack {
+            ModPack {
+                name: String::from(" "),
+                version: String::from(" "),
+                author: String::from(" "),
+                mods: Vec::new(),
+            }
         }
-    }
 
-    #[allow(non_snake_case)]
+        #[allow(non_snake_case)]
     pub fn modpack_from_RinthVers(
-        modpack_name: &str,
-        modpack_version: String,
-        modpack_author: String,
-        mods: RinthVersions,
+            modpack_name: &str,
+            modpack_version: String,
+            modpack_author: String,
+            mods: RinthVersions,
     ) -> ModPack {
         let mod_vec = mods
             .versions
