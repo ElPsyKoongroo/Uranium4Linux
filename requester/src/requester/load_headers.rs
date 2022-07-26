@@ -8,23 +8,18 @@ pub fn load_headers(api: &str, headers: &mut HeaderMap) {
         RINTH => {
             headers.insert(
                 AUTHORIZATION,
-                "Bearer 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"
+                "Bearer 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" 
                     .parse()
                     .unwrap(),
             );
         }
         CURSE => {
-            println!("CURSE repository is not implemente yet, RINTH will be loaded instead!");
             headers.insert(
                 AUTHORIZATION,
-                "Bearer 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"
+                "$2a$10$6mO.gbGdm7elhecL3XMcxOby5RrftY2ufGTZxg3gocM1kDlF1UCuK"
                     .parse()
                     .unwrap(),
             );
-            /*
-            headers.insert("Accept", "application/json".parse().unwrap());
-            headers.insert("x-api-key", "$2a$10$VlTkbyk.57PemPJAOTPEVel1mqbpgcZ8H2hkMuTp21Q50DSKvROku".parse().unwrap());
-            */
         }
         _ => {
             println!("Wrong API name, using RINTH");

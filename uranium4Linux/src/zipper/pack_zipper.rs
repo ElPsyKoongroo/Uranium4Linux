@@ -11,8 +11,6 @@ use std::{
 };
 use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 
-/// ```path```: path to a minecraft directory <br><br>
-/// ```name```: name of the modpack <br>
 pub fn compress_pack(name: &str, path: &str, raw_mods: Vec<String>) -> ZipResult<()> {
 
     let path = &fix_path(path);

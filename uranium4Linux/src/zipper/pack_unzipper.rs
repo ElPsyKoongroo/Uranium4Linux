@@ -9,7 +9,7 @@ use crate::variables::constants::EXTENSION;
 use crate::variables::constants::TEMP_DIR;
 
 
-pub async fn unzip_pack(file_path: &str, minecraft_root: &str) -> ZipResult<()>{
+pub async fn unzip_pack(file_path: &str, minecraft_root: &str, n_threads: usize) -> ZipResult<()>{
     let json_name = file_path.split("/").last().unwrap().strip_suffix(EXTENSION).unwrap().to_owned() + ".json";
 
     unzip_temp_pack(file_path);
@@ -30,7 +30,7 @@ pub async fn unzip_pack(file_path: &str, minecraft_root: &str) -> ZipResult<()>{
     check(config_result, true, true, "No config to copy");
     check(raw_mods_result, true, true, "No raw mods to copy");
 
-    download_modpack(&(TEMP_DIR.to_owned() + &json_name), minecraft_root).await.unwrap();
+    download_modpack(&(TEMP_DIR.to_owned() + &json_name), minecraft_root, n_threads).await.unwrap();
     remove_temp_pack();
 
     Ok(())
@@ -38,9 +38,8 @@ pub async fn unzip_pack(file_path: &str, minecraft_root: &str) -> ZipResult<()>{
 
 
 pub fn unzip_temp_pack(file_path: &str){
-    let zip_file = File::open(file_path).unwrap();
+    let zip_file = File::open(file_path).expect("Could not open the zip file");
 
-    eprintln!("{file_path}");
     // Should't fail, in case this fail the program must end because the file_path is wrong or the
     // file is not valid
     let mut zip = zip::ZipArchive::new(zip_file).unwrap();

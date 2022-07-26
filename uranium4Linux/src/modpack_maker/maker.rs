@@ -2,10 +2,10 @@ use crate::{checker::check, easy_input, zipper::pack_zipper::compress_pack};
 use std::fs::read_dir;
 use mine_data_strutcs::{
     rinth::rinth_mods::{RinthVersion, RinthVersions},
-    curse::curse_mods::CurseFingerPrint,
+    curse::curse_mods::{CurseFingerPrint, CurseResponse},
     url_maker::maker,
 };
-use requester::requester::request_maker::{Requester, CurseRequester};
+use requester::requester::request_maker::{Requester, CurseRequester, CurseMethod};
 use std::path::Path;
 use crate::hashes::{rinth_hash, curse_hash};
 
@@ -90,10 +90,6 @@ async fn search_mods_for_modpack(
     responses: &mut RinthVersions,
     not_found_mods: &mut Vec<String>,
 ){
-    // TODO
-
-    let curse_requester = CurseRequester::new();
-
     for item in hash_filename {
         let response = search_mod(requester, &item).await;
         match response {
@@ -115,29 +111,40 @@ async fn search_mod(requester: &Requester, item: &(ModHashes, String)) -> Option
             }}", item.0.curse_hash
         );
         
-
-        let curse_request = requester.get_curse(maker::Curse::hash(&item.0.curse_hash), "post", &curse_body).await.unwrap();
         
-        // TODO!
+        let curse_requester = CurseRequester::new();
+        let url = maker::Curse::hash();
+        let curse_request = curse_requester.get(url.clone(), CurseMethod::POST, &curse_body).await.await.unwrap().unwrap();
+
+        let curse_text = curse_request.text().await.unwrap();
+        let curse_parse: Result<CurseResponse<CurseFingerPrint>, _> = serde_json::from_str(&curse_text); 
+        /*
         let curse_parse = check(
             curse_request.json::<CurseFingerPrint>().await,
             false,
             false,
             ""
         );
-
+        */
         let rinth_parse = check(
             rinth_request.json::<RinthVersion>().await,
             false,
             false,
-            format!("[Maker {}]\nMod {} was not found !\n", 106, &item.1).as_str(),
+            "",
         );    
         if rinth_parse.is_some(){
             rinth_parse
-        } else {
-            rinth_parse
-            // curse_parse
-        }
+        } 
+        else if curse_parse.is_ok(){
+            let rinth_parse = RinthVersion::from_CurseFile(curse_parse.unwrap().data.get_file().clone());
+            // Sometimes even if CurseApi has the mod in the database the URL field can be 
+            // empty so we need to check firt
+            if rinth_parse.get_file_url() != ""{
+                Some(rinth_parse)
+            } else {
+                None
+            }
+        } else {println!("[Maker {}]\nMod {} was not found !\n", 106, &item.1); None}
     };
     response 
 }

@@ -4,6 +4,8 @@
 use core::fmt;
 use serde::{Deserialize, Serialize};
 
+use crate::curse::curse_mods::CurseFile;
+
 pub enum Attributes {
     Loader,
     Name,
@@ -101,6 +103,24 @@ pub struct RinthVersion{
 impl RinthVersion{ 
     pub fn get_name(&self) -> String {
         self.name.clone()
+    }
+
+    pub fn from_CurseFile(curse_file: CurseFile) -> RinthVersion {
+        RinthVersion{
+            id: curse_file.get_modId().to_string(),
+            project_id: curse_file.get_id().to_string(),
+            name: curse_file.get_displayName(),
+            version_type: "Curse".to_string(),
+            dependencies: Vec::new(),
+            game_versions: curse_file.get_gameVersions().clone(),
+            loaders: Vec::new(),
+            downloads: 0,
+            files: vec![RinthFile{
+                url: curse_file.get_downloadUrl(), 
+                filename: curse_file.get_fileName(),
+            }]
+        }
+    
     }
 
     pub fn get_versions(&self) -> &Vec<String> {

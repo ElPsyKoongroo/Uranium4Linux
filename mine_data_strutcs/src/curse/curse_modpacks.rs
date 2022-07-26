@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::fs::read_to_string;

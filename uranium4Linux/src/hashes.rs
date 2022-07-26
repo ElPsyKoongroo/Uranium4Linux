@@ -1,8 +1,5 @@
 use hex::ToHex;
 use sha1::{Digest, Sha1};
-use std::fmt::Error;
-use std::path::Path;
-
 use std::fs;
 use std::io::Read;
 use murmurhash32::murmurhash2;

@@ -1,14 +1,21 @@
 #![allow(dead_code)]
 
 
+mod modpack_downloader;
+mod easy_input;
+mod hashes;
+mod variables;
+mod zipper;
+mod checker;
+mod modpack_maker;
+mod code_functions;
 
 use serde_json;
 use serde::Deserialize;
 
 use mine_data_strutcs::url_maker::maker;
 use requester::requester::request_maker::Requester;
-// use crate::mine_data_strutcs::url_maker::maker;
-// use crate::requester::requester::request_maker::Requester;
+use modpack_downloader::curse_downloader::curse_modpack_downloader;
 
 pub enum RequestType{
     Search,
@@ -58,10 +65,6 @@ pub extern "C" fn requester_c(request_type: u32 , limit: u32, offset: u32, id: *
 
         }
     }
-
-
-    
-
     let requester = Requester::new();
     
     let handle = tokio::runtime::Builder::new_current_thread()
@@ -71,17 +74,27 @@ pub extern "C" fn requester_c(request_type: u32 , limit: u32, offset: u32, id: *
      
     let response = requester.get(url);
     let a = handle.block_on(response).unwrap();
-   
-
     let text = a.text();
     let text = handle.block_on(text).unwrap();
-
-
-    //let response = requester.get(url).await.unwrap();
-    //let text = response.text().await.unwrap();
-
     let c_string = CString::new(text).unwrap();
     c_string.into_raw()
+}
+
+fn c_string_to_owned(chars: *const u8, lenth: usize) -> String {
+    let slice = unsafe{slice::from_raw_parts(chars, lenth)};
+    let c_string = unsafe{CString::from_vec_with_nul_unchecked(slice.to_owned())};
+    c_string.to_str().unwrap().to_owned()
+}
+
+#[no_mangle]
+pub extern "C" fn download_curse_pack(path: *const u8, lenth: usize, n_threads: usize){
+    let path    = c_string_to_owned(path, lenth);
+    let handle  = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+
+    handle.block_on(curse_modpack_downloader(&path, "./mods/", n_threads));
 }
 
 pub fn converter<'a, T: Deserialize<'a>>(text: &'a String) -> T {

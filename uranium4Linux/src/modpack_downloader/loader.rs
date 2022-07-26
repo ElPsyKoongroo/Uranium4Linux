@@ -1,19 +1,19 @@
 use core::panic;
 use std::fs;
-use std::ops::Index;
 use crate::code_functions::fix_path;
 use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
 use mine_data_strutcs::uranium_modpack::modpack_struct::*;
 use reqwest::Response;
 use requester::async_pool;
 use tokio::task::{self, JoinHandle};
-
+use super::functions::*;
 
 
 #[allow(dead_code)]
 pub struct ModPackDownloader {
     pack: Option<ModPack>,
     path: String,
+    n_threads: usize,
 }
 
 async fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Result<Response, reqwest::Error>>> {
@@ -30,41 +30,21 @@ async fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Result<Resp
     responses
 }
 
-/// Return the JoinHandle of all the writters for the Response Vec
-fn writters_maker(path: String, responses: Vec<Response>, minecraft_mods: &Vec<Mods>,) -> Vec<JoinHandle<()>>{
-    let mut i = 0;
-    let mut writters = Vec::new();
-    for response in responses.into_iter(){
-        let path_ref = path.clone();
-        let mod_name = minecraft_mods.index(i).get_file_name();
-        
-        let task = async move {
-            write_mod(
-                &path_ref, 
-                response,
-                &mod_name
-            ).await;
-        }; 
-        writters.push(tokio::spawn(task));
-        i += 1;
-    }
-    writters
-}
-
-/// Simple function that writes the content of the response into the .jar file 
-async fn write_mod(path: &str, res: Response, name: &str){
-    let web_res = res;
-    let full_path = path.to_owned() + name;
-    let content = web_res.bytes().await.unwrap();
-    tokio::fs::write(full_path, content).await.unwrap();
- 
-}
 
 impl ModPackDownloader {
     pub fn new() -> ModPackDownloader {
         ModPackDownloader {
             pack: None,
             path: "".to_string(),
+            n_threads: 0
+        }
+    }
+
+    pub fn new_with_threads(n_threads: usize) -> ModPackDownloader {
+        ModPackDownloader {
+            pack: None,
+            path: "".to_string(),
+            n_threads
         }
     }
 
@@ -86,6 +66,15 @@ impl ModPackDownloader {
     }
 
     pub async fn start<'a>(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        println!("Running {} threads!", self.n_threads);
+        if self.n_threads != 0 {
+            Ok(self.limited_pool().await)
+        } else {
+            self.unlimited_pool().await
+        }
+    } 
+
+    pub async fn unlimited_pool(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let minecraft_mods: &Vec<Mods>;
         let responses: Vec<JoinHandle<Result<Response, _>>>;
         match &self.pack {
@@ -95,8 +84,31 @@ impl ModPackDownloader {
             },
             None => panic!("No modpack !")
         }
+        self.download_and_write(responses, minecraft_mods).await.unwrap();
+        Ok(())
+    }
 
+    // In case the user want to run Uranium with N threads
+    pub async fn limited_pool(&mut self){
+        let modpack_mods;
+        match &self.pack {
+            Some(modpack) => {
+                modpack_mods = modpack.mods();
+            }
+            None => panic!("No modpack!")
+        } 
+        
+        // Chunk the modpack_mods vector into chunks of n_threads elements
+        let chunks = modpack_mods.chunks(self.n_threads).collect::<Vec<&[Mods]>>();
+        
+        for chunk in chunks {
+            let vec_chunk = chunk.to_vec();
+            let responses = request_maker(&vec_chunk).await;
+            self.download_and_write(responses, &vec_chunk).await.unwrap();
+        }
+    }
 
+    async fn download_and_write(&self, responses: Vec<JoinHandle<Result<Response, reqwest::Error>>>, minecraft_mods: &Vec<Mods>) -> Result<(), std::fmt::Error>{
         // Start the pool request
         let mut pool = async_pool::AsyncPool::new();
         pool.push_request_vec(responses);
@@ -108,13 +120,20 @@ impl ModPackDownloader {
         .flatten()
         .collect();
 
+        let mod_names: Vec<String> = minecraft_mods.
+            iter()
+            .map(|m| m.get_file_name())
+            .collect::<Vec<String>>();
+ 
+        
+
         // Start the writting pool
-        let writters: Vec<JoinHandle<()>> = writters_maker(self.path.clone(), responses, minecraft_mods);
+        let writters: Vec<JoinHandle<()>> = get_writters(responses, mod_names, &self.path.clone()).await;
         let mut pool = async_pool::AsyncPool::new();
         pool.push_request_vec(writters);
         pool.start().await;
  
         Ok(())
-    } 
 
+    }
 }

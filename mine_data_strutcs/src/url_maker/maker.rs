@@ -88,8 +88,8 @@ impl Curse{
         )
     }
 
-    pub fn hash(hash: &str) -> String {
-        format!("{}/v1/fingerprint",
+    pub fn hash() -> String {
+        format!("{}/v1/fingerprints",
             BASE_CUR_URL
         )
     }

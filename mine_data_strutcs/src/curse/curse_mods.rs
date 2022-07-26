@@ -17,7 +17,7 @@ struct Logo {
 /// This struct contains the data about the specific file of a mod
 pub struct CurseFile {
     id: usize,
-    gameId: usize,
+    gameId: Option<usize>,
     modId: usize,
     displayName: String,
     fileName: String,
@@ -28,6 +28,27 @@ pub struct CurseFile {
 
 impl CurseFile {
     
+    pub fn get_id(&self) -> usize {
+        self.id
+    }
+
+    pub fn get_gameId(&self) -> usize {
+        self.gameId.clone().unwrap_or_default()
+    }
+
+    pub fn get_modId(&self) -> usize {
+        self.modId
+    }
+
+    pub fn get_gameVersions(&self) -> &Vec<String> {
+        &self.gameVersions
+    }
+    
+
+    pub fn get_displayName(&self) -> String{
+        self.displayName.clone()
+    }
+
     pub fn get_fileName(&self) -> String {
         self.fileName.clone()
     }
@@ -37,6 +58,11 @@ impl CurseFile {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct FingerPrintInfo{
+    id: usize,
+    pub file: CurseFile
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 /// This struct contains the data about the request of a fingerprint
@@ -47,7 +73,13 @@ impl CurseFile {
 ///:    \]
 ///:}
 pub struct CurseFingerPrint {
-    pub exactMatches: Vec<CurseFile>
+    exactMatches: Vec<FingerPrintInfo>
+}
+
+impl CurseFingerPrint {
+    pub fn get_file(&self) -> &CurseFile {
+        &self.exactMatches[0].file
+    }
 }
 
 

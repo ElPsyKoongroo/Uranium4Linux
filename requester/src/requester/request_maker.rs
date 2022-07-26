@@ -8,18 +8,13 @@ pub enum CurseMethod{
 } 
 pub struct CurseRequester{ 
     cliente: reqwest::Client, 
-    headers: HeaderMap 
 } 
 
-type Coso = JoinHandle<Result<reqwest::Response, reqwest::Error>>;
 
 impl CurseRequester { 
     pub fn new() -> CurseRequester { 
-        let mut headers = HeaderMap::new(); 
-        load_headers::load_headers("CURSE", &mut headers); 
         CurseRequester{ 
             cliente: reqwest::Client::new(), 
-            headers: headers 
         } 
     } 
     
@@ -30,11 +25,13 @@ impl CurseRequester {
         
         let mut new_header = HeaderMap::new();
         new_header.insert("x-api-key", "$2a$10$6mO.gbGdm7elhecL3XMcxOby5RrftY2ufGTZxg3gocM1kDlF1UCuK".parse().unwrap());
+        new_header.insert("Content-Type", "application/json".parse().unwrap());
+        new_header.insert("Accept", "application/json".parse().unwrap());
 
         let a_func; 
         match method {
             CurseMethod::GET  => a_func = self.cliente.get(&url).headers(new_header).send(), 
-            CurseMethod::POST => a_func = self.cliente.post(&url).body(body).send()
+            CurseMethod::POST => a_func = self.cliente.post(&url).headers(new_header).body(body).send()
         }
 
         let task = spawn(a_func);
@@ -62,9 +59,14 @@ impl Requester {
         let body = body.to_owned();
         let mut headers = HeaderMap::new();
         load_headers::load_headers("CURSE", &mut headers);
+        headers.insert("Content-Type", "application/json".parse().unwrap());
+        headers.insert("Accept", "application/json".parse().unwrap());
+
         match method {
             "post" => {
-                resp = self.cliente.post(url).headers(self.headers.clone().unwrap_or_default()).body(body).send().await?;
+                let a = self.cliente.post(url).headers(self.headers.clone().unwrap_or_default()).body(body);
+                println!("{:?}", a);
+                resp = a.send().await?;
             },
             "get" => {
                 resp = self.cliente.get(url).headers(self.headers.clone().unwrap_or_default()).send().await?; 
