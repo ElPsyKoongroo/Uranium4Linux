@@ -1,13 +1,12 @@
-use core::panic;
-use std::fs;
+use super::functions::*;
 use crate::code_functions::fix_path;
+use core::panic;
 use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
 use mine_data_strutcs::uranium_modpack::modpack_struct::*;
-use reqwest::Response;
 use requester::async_pool;
+use reqwest::Response;
+use std::fs;
 use tokio::task::{self, JoinHandle};
-use super::functions::*;
-
 
 #[allow(dead_code)]
 pub struct ModPackDownloader {
@@ -16,8 +15,11 @@ pub struct ModPackDownloader {
     n_threads: usize,
 }
 
-async fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Result<Response, reqwest::Error>>> {
-    let mut responses: Vec<JoinHandle<Result<Response, reqwest::Error>>> = Vec::new();
+async fn request_maker(
+    minecraft_mods: &Vec<Mods>,
+) -> Vec<JoinHandle<Result<Response, reqwest::Error>>> {
+    let mut responses: Vec<JoinHandle<Result<Response, reqwest::Error>>> =
+        Vec::with_capacity(minecraft_mods.len());
     let cliente = reqwest::Client::new();
     for minecraft_mod in minecraft_mods {
         let link = minecraft_mod.get_file();
@@ -30,13 +32,12 @@ async fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Result<Resp
     responses
 }
 
-
 impl ModPackDownloader {
     pub fn new() -> ModPackDownloader {
         ModPackDownloader {
             pack: None,
             path: "".to_string(),
-            n_threads: 0
+            n_threads: 0,
         }
     }
 
@@ -44,7 +45,7 @@ impl ModPackDownloader {
         ModPackDownloader {
             pack: None,
             path: "".to_string(),
-            n_threads
+            n_threads,
         }
     }
 
@@ -56,9 +57,8 @@ impl ModPackDownloader {
         // In case the user enter "/some/random/path" and forgot the last '/'
         _path = fix_path(&_path).to_owned();
         _path.push_str("mods/");
-              
 
-        if !std::path::Path::new(&_path).exists(){    
+        if !std::path::Path::new(&_path).exists() {
             fs::create_dir(&_path).unwrap();
         }
 
@@ -72,7 +72,7 @@ impl ModPackDownloader {
         } else {
             self.unlimited_pool().await
         }
-    } 
+    }
 
     pub async fn unlimited_pool(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let minecraft_mods: &Vec<Mods>;
@@ -81,59 +81,63 @@ impl ModPackDownloader {
             Some(modpack) => {
                 minecraft_mods = modpack.mods();
                 responses = request_maker(minecraft_mods).await;
-            },
-            None => panic!("No modpack !")
+            }
+            None => panic!("No modpack !"),
         }
-        self.download_and_write(responses, minecraft_mods).await.unwrap();
+        self.download_and_write(responses, minecraft_mods)
+            .await
+            .unwrap();
         Ok(())
     }
 
     // In case the user want to run Uranium with N threads
-    pub async fn limited_pool(&mut self){
+    pub async fn limited_pool(&mut self) {
         let modpack_mods;
         match &self.pack {
             Some(modpack) => {
                 modpack_mods = modpack.mods();
             }
-            None => panic!("No modpack!")
-        } 
-        
+            None => panic!("No modpack!"),
+        }
+
         // Chunk the modpack_mods vector into chunks of n_threads elements
-        let chunks = modpack_mods.chunks(self.n_threads).collect::<Vec<&[Mods]>>();
-        
+        let chunks = modpack_mods
+            .chunks(self.n_threads)
+            .collect::<Vec<&[Mods]>>();
+
         for chunk in chunks {
             let vec_chunk = chunk.to_vec();
             let responses = request_maker(&vec_chunk).await;
-            self.download_and_write(responses, &vec_chunk).await.unwrap();
+            self.download_and_write(responses, &vec_chunk)
+                .await
+                .unwrap();
         }
     }
 
-    async fn download_and_write(&self, responses: Vec<JoinHandle<Result<Response, reqwest::Error>>>, minecraft_mods: &Vec<Mods>) -> Result<(), std::fmt::Error>{
+    async fn download_and_write(
+        &self,
+        responses: Vec<JoinHandle<Result<Response, reqwest::Error>>>,
+        minecraft_mods: &Vec<Mods>,
+    ) -> Result<(), std::fmt::Error> {
         // Start the pool request
         let mut pool = async_pool::AsyncPool::new();
         pool.push_request_vec(responses);
         pool.start().await;
-        
-        let responses = pool
-        .get_done_request()
-        .into_iter()
-        .flatten()
-        .collect();
 
-        let mod_names: Vec<String> = minecraft_mods.
-            iter()
+        let responses = pool.get_done_request().into_iter().flatten().collect();
+
+        let mod_names: Vec<String> = minecraft_mods
+            .iter()
             .map(|m| m.get_file_name())
             .collect::<Vec<String>>();
- 
-        
 
         // Start the writting pool
-        let writters: Vec<JoinHandle<()>> = get_writters(responses, mod_names, &self.path.clone()).await;
+        let writters: Vec<JoinHandle<()>> =
+            get_writters(responses, mod_names, &self.path.clone()).await;
         let mut pool = async_pool::AsyncPool::new();
         pool.push_request_vec(writters);
         pool.start().await;
- 
-        Ok(())
 
+        Ok(())
     }
 }

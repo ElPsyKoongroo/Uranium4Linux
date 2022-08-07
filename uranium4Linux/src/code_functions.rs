@@ -19,7 +19,6 @@ pub async fn download_modpack<'a>(modpack: &str, path: &'a str, n_threads: usize
     Ok(())
 }
 
-
 pub async fn update(path: &str){
     update_modpack(path).await;
 }

@@ -1,37 +1,37 @@
 use reqwest::{header::HeaderMap, Response};
 use super::load_headers;
 use tokio::task::{JoinHandle, spawn};
+use crate::mod_searcher::Method;
 
-pub enum CurseMethod{
-    GET,
-    POST 
-} 
 pub struct CurseRequester{ 
     cliente: reqwest::Client, 
+    headers: HeaderMap,
 } 
-
 
 impl CurseRequester { 
     pub fn new() -> CurseRequester { 
-        CurseRequester{ 
+        let mut req = CurseRequester{ 
             cliente: reqwest::Client::new(), 
-        } 
+            headers: HeaderMap::new(),
+        };
+
+        req.headers.insert("x-api-key", "$2a$10$6mO.gbGdm7elhecL3XMcxOby5RrftY2ufGTZxg3gocM1kDlF1UCuK".parse().unwrap());
+        req.headers.insert("Content-Type", "application/json".parse().unwrap());
+        req.headers.insert("Accept", "application/json".parse().unwrap());
+        
+        req 
     } 
     
-    pub async fn get(&self, url: String, method: CurseMethod, body: &str) -> JoinHandle<Result<reqwest::Response, reqwest::Error>>
-{
+    pub fn get(&self, url: &str, method: Method, body: &str) 
+-> JoinHandle<Result<reqwest::Response, reqwest::Error>>{
+
         let url  = url.to_owned();
         let body = body.to_owned();
-        
-        let mut new_header = HeaderMap::new();
-        new_header.insert("x-api-key", "$2a$10$6mO.gbGdm7elhecL3XMcxOby5RrftY2ufGTZxg3gocM1kDlF1UCuK".parse().unwrap());
-        new_header.insert("Content-Type", "application/json".parse().unwrap());
-        new_header.insert("Accept", "application/json".parse().unwrap());
-
+    
         let a_func; 
         match method {
-            CurseMethod::GET  => a_func = self.cliente.get(&url).headers(new_header).send(), 
-            CurseMethod::POST => a_func = self.cliente.post(&url).headers(new_header).body(body).send()
+            Method::GET  => a_func = self.cliente.get(&url).headers(self.headers.clone()).send(), 
+            Method::POST => a_func = self.cliente.post(&url).headers(self.headers.clone()).body(body).send()
         }
 
         let task = spawn(a_func);

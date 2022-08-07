@@ -1,6 +1,31 @@
 use tokio::task;
 use mine_data_strutcs::url_maker::maker::ModRinth;
+use tokio::task::JoinHandle;
+use crate::requester::request_maker::CurseRequester;
 
+
+pub enum Method{
+    GET,
+    POST
+}
+
+pub struct RequestInfo {
+    pub url: String,
+    pub method: Method,
+    pub body: String,
+}
+
+pub fn search_with_client(requester: &CurseRequester, request: RequestInfo) 
+-> JoinHandle<Result<reqwest::Response, reqwest::Error>>{
+    match request.method {
+        Method::GET => {
+            requester.get(&request.url, Method::GET, "")
+        },
+        Method::POST => {
+            requester.get(&request.url, Method::POST, &request.body)
+        } 
+    } 
+}
 
 pub fn search_mod_by_id(id: &str) -> task::JoinHandle<reqwest::Response> {
     let url = ModRinth::mod_versions_by_id(id);

@@ -128,10 +128,9 @@ fn append_config_file(
 
     // Add the file to the zip
     zip.start_file(rel_path, option).unwrap();
-    checker::check(zip.write(&buffer), false, false, "Error while writing");
+    checker::check(zip.write_all(&buffer), false, false, "Error while writing");
 }
 
-/// ```path```: path to a minecraft directory <br><br>
 fn add_raw_mods(
     path: &str,
     zip: &mut ZipWriter<File>,

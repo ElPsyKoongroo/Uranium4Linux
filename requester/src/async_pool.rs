@@ -33,6 +33,7 @@ impl<T> AsyncPool<T> {
     pub async fn start(&mut self){
         self.items = self.request_pool.len();
         self.not_done_request = Vec::from_iter(0..self.items);
+        self.ordered_requests = HashMap::with_capacity(self.items);
         time::sleep(Duration::from_millis(PRE_TIME)).await;
         while !self.not_done_request.is_empty() {
             self.request_loop().await;
@@ -59,7 +60,7 @@ impl<T> AsyncPool<T> {
     }
 
     pub fn get_done_request(&mut self) -> Vec<T> {
-        let mut done_requests = Vec::new();
+        let mut done_requests = Vec::with_capacity(self.items);
         for i in 0..self.items{
             let value = self.ordered_requests.remove(&i).unwrap();
             done_requests.push(value);

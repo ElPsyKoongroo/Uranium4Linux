@@ -19,7 +19,7 @@ use modpack_downloader::curse_downloader::curse_modpack_downloader;
 #[tokio::main]
 async fn main() -> Result<(), ZipError> {
     let args: Vec<String> = env::args().collect();
-    let mut n_threads  = 0;
+    let mut n_threads  = 16; // ONG ONG, MAGIC !
     let mut curse_pack = false;
     let mut file_path = "".to_owned();
     let mut destination_path = "".to_owned();
@@ -31,6 +31,9 @@ async fn main() -> Result<(), ZipError> {
         None => {}
     }
 
+    // This is only going to be executed once while no other function
+    // is reading the value so it's actually safe
+    unsafe{N_THREADS = n_threads};
 
     // Get the file path
     match args.iter().position(|f| f == "-f") {
@@ -64,7 +67,7 @@ async fn main() -> Result<(), ZipError> {
             }
         },
         "-u" => update(args[2].as_str()).await,
-        "-m" => make_modpack(args[2].as_str()).await,
+        "-m" => make_modpack(&file_path, n_threads).await,
         "-h" => println!("{}", HELP),
         _    => println!("{}", "Invalid arguments")
     }

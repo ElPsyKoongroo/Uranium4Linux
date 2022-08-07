@@ -8,7 +8,7 @@ pub fn load_headers(api: &str, headers: &mut HeaderMap) {
         RINTH => {
             headers.insert(
                 AUTHORIZATION,
-                "Bearer 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" 
+                "Bearer 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"
                     .parse()
                     .unwrap(),
             );
