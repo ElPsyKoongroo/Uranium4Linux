@@ -28,9 +28,4 @@ Uranium4Linux is a blazingly fast minecraft modpack manager capable of making, d
 
 Avalible repositories: <br>
 - RINTH
-
-
-We also have a Windows version with GUI, you can download [here]. <br> 
-
-
-[here]: https://github.com/ElPsyKoongroo/MinecraftModDownloader
+- CURSE
