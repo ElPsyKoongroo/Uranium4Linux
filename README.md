@@ -1,9 +1,13 @@
+[![rust badge](https://img.shields.io/static/v1?label=Made%20with&message=Rust&style=for-the-badge&logo=rust&labelColor=e82833&color=b11522)](https://www.rust-lang.org/)
+
 
 ![Uranium](pic/uranium4linux.png)
 <br>
+<p> Wanna play or wanna wait ? <p>
+<br>
+<br>
 
-<h2>What is Uranium4Linux ?</h2>
-
+<h1>What is Uranium4Linux ?</h1>
 <p>
 Uranium4Linux is a blazingly fast minecraft modpack manager capable of making, downloading and updating modpacks.
 
