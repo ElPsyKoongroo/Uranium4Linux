@@ -1,7 +1,6 @@
 use super::uranium_structs::UraniumFile;
-
-use crate::code_functions::fix_path;
 use crate::checker::check;
+use crate::code_functions::fix_path;
 use crate::zipper::uranium_structs::FileType;
 use crate::{checker, variables::constants};
 use std::{
@@ -12,7 +11,6 @@ use std::{
 use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 
 pub fn compress_pack(name: &str, path: &str, raw_mods: Vec<String>) -> ZipResult<()> {
-
     let path = &fix_path(path);
 
     let zip_file = File::create(name.to_owned() + constants::EXTENSION).unwrap();
@@ -69,16 +67,17 @@ fn get_new_files(path: &str, relative_path: &str) -> Vec<UraniumFile> {
         false,
         true,
         &format!("Error al leer {}", path),
-    ).unwrap();
+    )
+    .unwrap();
 
     let sub_config_files: Vec<UraniumFile> = sub_directory
-        .map(|file| 
+        .map(|file| {
             UraniumFile::new(
                 relative_path,
                 file.unwrap().file_name().to_str().unwrap(),
                 FileType::Other,
             )
-        )
+        })
         .collect();
     sub_config_files
 }
@@ -90,7 +89,7 @@ fn add_files_to_zip(
     options: FileOptions,
 ) {
     for file in config_files {
-       match_file(minecraft_path, zip, options, file);
+        match_file(minecraft_path, zip, options, file);
     }
 }
 
@@ -98,8 +97,8 @@ fn match_file(
     root_path: &str,
     zip: &mut ZipWriter<File>,
     options: FileOptions,
-    file: &mut UraniumFile
-){
+    file: &mut UraniumFile,
+) {
     match file.get_type() {
         FileType::Data => {
             let absolute_path = PathBuf::from(root_path.to_owned() + &file.get_absolute_path());
@@ -138,22 +137,22 @@ fn add_raw_mods(
     options: FileOptions,
 ) {
     zip.add_directory("mods", options).unwrap();
-    
+
     for jar_file in raw_mods.iter() {
         let file_name = "mods/".to_owned() + jar_file;
-        
+
         #[cfg(debug_assertions)]
         println!("Adding {}", file_name);
-        
+
         let buffer = std::fs::read((path.to_owned() + "mods/") + jar_file).unwrap();
-        
+
         zip.start_file(file_name, options).unwrap();
-        
+
         check(
             zip.write_all(&buffer),
             true,
             false,
-            &format!("Error while raw adding {}", jar_file)
+            &format!("Error while raw adding {}", jar_file),
         );
     }
 }

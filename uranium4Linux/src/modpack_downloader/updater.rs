@@ -1,26 +1,24 @@
-use mine_data_strutcs::rinth::rinth_mods::{RinthVersions, RinthVersion};
+use mine_data_strutcs::rinth::rinth_mods::{RinthVersion, RinthVersions};
 use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
 use mine_data_strutcs::uranium_modpack::modpack_struct::*;
-
+use crate::variables::constants::{EXTENSION, TEMP_DIR};
+use crate::zipper::pack_unzipper::unzip_temp_pack;
 use regex::Regex;
 use requester::async_pool::AsyncPool;
 use requester::mod_searcher::{search_mod_by_id, search_version_by_id};
 use std::collections::VecDeque;
-use crate::variables::constants::{EXTENSION, TEMP_DIR};
-use crate::zipper::pack_unzipper::unzip_temp_pack;
 
 pub async fn update_modpack(modpack_path: &str) {
-    unzip_temp_pack(modpack_path); 
+    unzip_temp_pack(modpack_path);
 
     let json_name = TEMP_DIR.to_owned() + &modpack_path.replace(EXTENSION, ".json");
 
-
-    let old_modpack: ModPack = load_pack(&json_name).unwrap();
+    let old_modpack: UraniumPack = load_pack(&json_name).unwrap();
     let identifiers = get_project_identifiers(&old_modpack);
 
     let mods_to_update: VecDeque<Mods> = get_updates(&identifiers).await;
 
-    let mut updated_modpack = ModPack::new();
+    let mut updated_modpack = UraniumPack::new();
     make_updates(mods_to_update, &mut updated_modpack);
 
     updated_modpack.set_name(old_modpack.get_name());
@@ -30,7 +28,7 @@ pub async fn update_modpack(modpack_path: &str) {
 
 /// Update the old versions of the mods with the new ones. <br>
 /// Consumes mods_to_update.
-fn make_updates(mods_to_update: VecDeque<Mods>, updated_modpack: &mut ModPack) {
+fn make_updates(mods_to_update: VecDeque<Mods>, updated_modpack: &mut UraniumPack) {
     mods_to_update
         .into_iter()
         .for_each(|m| updated_modpack.push_mod(m));
@@ -41,7 +39,7 @@ fn sort_mods(mods: RinthVersions, identifiers: &Vec<String>) -> RinthVersions {
     let mut sorted_mods: RinthVersions = RinthVersions::new();
 
     for identifier in identifiers {
-        for mod_ in mods.mods(){
+        for mod_ in mods.mods() {
             if mod_.get_project_id() == *identifier {
                 sorted_mods.push(mod_.clone());
             }
@@ -61,9 +59,7 @@ async fn get_updates(identifiers: &Vec<String>) -> VecDeque<Mods> {
     resolve_dependencies(&mut mods_lastests_versions).await;
 
     for i in 0..mods_lastests_versions.len() {
-        updated_mods.push_back(Mods::from_RinthVersion(
-            mods_lastests_versions.mod_at(i).clone(),
-        ));
+        updated_mods.push_back(Mods::from_RinthVersion(mods_lastests_versions.mod_at(i)));
     }
     updated_mods
 }
@@ -86,7 +82,8 @@ async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersio
     let done_responses = pool.get_done_request();
     for response in done_responses {
         let value = response.text().await.unwrap();
-        let versions: Result<Vec<RinthVersion>, serde_json::Error> = serde_json::from_str(value.as_str());
+        let versions: Result<Vec<RinthVersion>, serde_json::Error> =
+            serde_json::from_str(value.as_str());
         match versions {
             Ok(t) => {
                 // TODO: Check if the version is the lastest
@@ -99,8 +96,7 @@ async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersio
     }
 }
 
-
-fn get_project_identifiers(modpack: &ModPack) -> Vec<String> {
+fn get_project_identifiers(modpack: &UraniumPack) -> Vec<String> {
     let re = Regex::new("data/(.{8})").unwrap(); // MAGIC !!
     let mut identifiers = Vec::new();
 
@@ -112,28 +108,32 @@ fn get_project_identifiers(modpack: &ModPack) -> Vec<String> {
     identifiers
 }
 
-async fn resolve_dependencies(mods: &mut RinthVersions){ 
+async fn resolve_dependencies(mods: &mut RinthVersions) {
     let mut dep_vector = Vec::new();
-       
+
     for mine_mod in mods.mods() {
-        if !mine_mod.had_dependencies(){ continue; }
+        if !mine_mod.had_dependencies() {
+            continue;
+        }
         // For each dependency check if it is already in the pack, if not, add it
         for dependency in mine_mod.get_dependencies() {
             if !mods.has(dependency.get_project_id()) {
-                let response = search_version_by_id(
-                    dependency.get_version_id()
-                ).await.unwrap();
+                let response = search_version_by_id(dependency.get_version_id())
+                    .await
+                    .unwrap();
                 let version: RinthVersion = response.json().await.unwrap();
 
                 #[cfg(debug_assertions)]
-                println!("The following dependency was added: {} by {}", version.get_name(),mine_mod.get_name());
+                println!(
+                    "The following dependency was added: {} by {}",
+                    version.get_name(),
+                    mine_mod.get_name()
+                );
 
                 dep_vector.push(version);
             }
         }
     }
-    
+
     dep_vector.into_iter().for_each(|dep| mods.push(dep));
-
 }
-

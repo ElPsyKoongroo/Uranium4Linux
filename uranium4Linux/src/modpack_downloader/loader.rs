@@ -10,7 +10,7 @@ use tokio::task::{self, JoinHandle};
 
 #[allow(dead_code)]
 pub struct ModPackDownloader {
-    pack: Option<ModPack>,
+    pack: Option<UraniumPack>,
     path: String,
     n_threads: usize,
 }

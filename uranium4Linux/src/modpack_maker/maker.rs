@@ -1,9 +1,10 @@
-use crate::code_functions::into_chunks;
 use crate::hashes::{curse_hash, rinth_hash};
 use crate::{checker::check, easy_input, zipper::pack_zipper::compress_pack};
+use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
+use mine_data_strutcs::uranium_modpack::modpack_struct::UraniumPack;
 use mine_data_strutcs::{
     curse::curse_mods::{CurseFingerPrint, CurseResponse},
-    rinth::rinth_mods::{RinthVersion, RinthVersions},
+    rinth::rinth_mods::RinthVersion,
     url_maker::maker,
 };
 use requester::async_pool::AsyncPool;
@@ -11,7 +12,6 @@ use requester::mod_searcher::Method;
 use requester::requester::request_maker::CurseRequester;
 use std::fs::read_dir;
 use std::path::Path;
-use crate::variables::constants::N_THREADS;
 
 struct ModHashes {
     pub rinth_hash: String,
@@ -21,9 +21,13 @@ struct ModHashes {
 pub async fn make_modpack(path: &str, n_threads: usize) {
     let hash_filename = get_mods(Path::new(path)).unwrap();
 
-    let mut responses: RinthVersions = RinthVersions::new();
-    let mut not_found_mods: Vec<String> = Vec::new();
-    search_mods_for_modpack(hash_filename, &mut responses, &mut not_found_mods, n_threads).await;
+    // let mut responses: RinthVersions = RinthVersions::new();
+    // let mut not_found_mods: Vec<String> = Vec::new();
+    let mut uranium_pack = search_mods_for_modpack(
+        hash_filename,
+        n_threads,
+    )
+    .await;
 
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
@@ -32,13 +36,13 @@ pub async fn make_modpack(path: &str, n_threads: usize) {
     let mut json_name = mp_name.clone();
     fix_name(&mut json_name);
 
-    let mp = mine_data_strutcs::uranium_modpack::modpack_struct::ModPack::modpack_from_RinthVers(
-        &mp_name, mp_version, mp_author, responses,
-    );
+    uranium_pack.set_name(mp_name.clone());
+    uranium_pack.set_version(mp_version);
+    uranium_pack.set_author(mp_author);
 
-    mp.write_mod_pack_with_name(&json_name);
+    uranium_pack.write_mod_pack_with_name(&json_name);
 
-    compress_pack(&mp_name, path, not_found_mods).unwrap();
+    compress_pack(&mp_name, path, Vec::new() /*not_found_mods*/ ).unwrap();
 
     std::fs::remove_file(json_name).unwrap();
 }
@@ -85,32 +89,26 @@ fn get_mods(minecraft_path: &Path) -> Option<Vec<(ModHashes, String)>> {
 /// add them raw to the modpack.
 async fn search_mods_for_modpack(
     hash_filename: Vec<(ModHashes, String)>,
-    responses: &mut RinthVersions,
-    not_found_mods: &mut Vec<String>,
-    n_threads: usize
-) {
+    n_threads: usize,
+) -> UraniumPack {
     let mut mods = search_mod(&hash_filename, n_threads).await;
-
-    // Add the mod to responses if Ok, else add the file name to
-    // not found mods for later add it as raw mod
-    for i in 0..mods.len() {
-        match mods.pop().unwrap() {
-            Some(e) => responses.push(e),
-            None => {
-                println!("Not found {} !", hash_filename[i].1.to_owned());
-                not_found_mods.push(hash_filename[i].1.to_owned())
-            }
-        }
-    }
+    let mut uranium_pack = UraniumPack::new();
+    uranium_pack.append_mods(&mut mods);
+    uranium_pack    
 }
 
-async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Option<RinthVersion>> {
+async fn search_mod(
+    item: &Vec<(ModHashes, String)>,
+    n_threads: usize,
+) -> Vec<Mods> {
     let n_mods = item.len();
 
     let curse_requester = CurseRequester::new();
     let cliente = reqwest::Client::new();
 
-    let chunks = item.chunks(n_threads).collect::<Vec<&[(ModHashes, String)]>>();
+    let chunks = item
+        .chunks(n_threads)
+        .collect::<Vec<&[(ModHashes, String)]>>();
 
     // Get curse responses by chunks
     let mut curse_responses = Vec::new();
@@ -171,30 +169,20 @@ async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Op
 
     // Get the each mod info or None in
     // case neither Rinth or Curse has the mod
-    let mut final_data = Vec::with_capacity(n_mods);
+    let mut mods_data = Vec::with_capacity(n_mods);
     for (rinth, curse) in rinth_parses.into_iter().zip(curse_parses.into_iter()) {
         // First try to add from Rinth
         if rinth.is_some() {
-            final_data.push(rinth)
+            mods_data.push(Mods::from_RinthVersion(&rinth.unwrap()))
         }
         // If Rinth isnt avaliable, try with curse
         else {
             if curse.is_some() {
-                let rinth_parse =
-                    RinthVersion::from_CurseFile(curse.unwrap().data.get_file().clone());
-                //We need to check if the url is empty bcs sometimes the curse
-                //api returns empty download links
-                if rinth_parse.get_file_url() != "" {
-                    final_data.push(Some(rinth_parse));
-                } else {
-                    final_data.push(None);
-                }
+                mods_data.push(Mods::from_CurseVersion(curse.unwrap().data.get_file()));
             }
         }
     }
-
-    println!("{}", final_data.len());
-    final_data
+    mods_data
 }
 
 fn get_curse_body(id: &str) -> String {
