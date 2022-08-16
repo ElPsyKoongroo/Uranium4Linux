@@ -21,13 +21,7 @@ struct ModHashes {
 pub async fn make_modpack(path: &str, n_threads: usize) {
     let hash_filename = get_mods(Path::new(path)).unwrap();
 
-    // let mut responses: RinthVersions = RinthVersions::new();
-    // let mut not_found_mods: Vec<String> = Vec::new();
-    let mut uranium_pack = search_mods_for_modpack(
-        hash_filename,
-        n_threads,
-    )
-    .await;
+    let mut uranium_pack = search_mods_for_modpack(hash_filename, n_threads).await;
 
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
@@ -42,7 +36,7 @@ pub async fn make_modpack(path: &str, n_threads: usize) {
 
     uranium_pack.write_mod_pack_with_name(&json_name);
 
-    compress_pack(&mp_name, path, Vec::new() /*not_found_mods*/ ).unwrap();
+    compress_pack(&mp_name, path, Vec::new() /*not_found_mods*/).unwrap();
 
     std::fs::remove_file(json_name).unwrap();
 }
@@ -94,13 +88,10 @@ async fn search_mods_for_modpack(
     let mut mods = search_mod(&hash_filename, n_threads).await;
     let mut uranium_pack = UraniumPack::new();
     uranium_pack.append_mods(&mut mods);
-    uranium_pack    
+    uranium_pack
 }
 
-async fn search_mod(
-    item: &Vec<(ModHashes, String)>,
-    n_threads: usize,
-) -> Vec<Mods> {
+async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Mods> {
     let n_mods = item.len();
 
     let curse_requester = CurseRequester::new();

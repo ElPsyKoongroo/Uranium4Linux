@@ -27,7 +27,7 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str, n_thre
     // Get the info of each mod to get the url and download it
     let responses: Vec<Response> = get_mod_responses(&curse_req, files_ids, n_threads).await;
     let mut names = Vec::new();
-
+  
     let mods_path = destination_path.to_owned() + "mods/";
 
     let download_urls = get_download_urls(&curse_req, responses, &mut names).await;

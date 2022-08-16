@@ -5,6 +5,7 @@ mod easy_input;
 mod hashes;
 mod modpack_downloader;
 mod modpack_maker;
+mod searcher;
 mod variables;
 mod zipper;
 
@@ -12,10 +13,29 @@ use code_functions::{fix_path, update};
 use modpack_downloader::curse_downloader::curse_modpack_downloader;
 use modpack_downloader::rinth_downloader::download_rinth_pack;
 use modpack_maker::maker::make_modpack;
+use searcher::rinth::SEARCH_TYPE;
 use std::env;
 use variables::constants::*;
 use zip::result::ZipError;
 use zipper::pack_unzipper::unzip_pack;
+
+fn request_arg_parser(args: &Vec<String>) -> Option<SEARCH_TYPE> {
+    match args.iter().position(|f| f == "--request") {
+        Some(index) => match args[index + 1].as_str() {
+            "--querry" => Some(SEARCH_TYPE::QUERRY(args[index + 2].clone())),
+            "--for" => Some(SEARCH_TYPE::FOR(
+                args[index + 2].parse().unwrap(),
+                args[index + 3].parse().unwrap(),
+            )),
+            "--version" => Some(SEARCH_TYPE::VERSION(args[index + 1].clone())),
+            "--versions" => Some(SEARCH_TYPE::VERSIONS(args[index + 1].clone())),
+            "--mod" => Some(SEARCH_TYPE::MOD(args[index + 1].clone())),
+            "--project" => Some(SEARCH_TYPE::PROJECT(args[index + 1].clone())),
+            _ => None,
+        },
+        None => None,
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<(), ZipError> {
@@ -70,8 +90,9 @@ async fn main() -> Result<(), ZipError> {
                     .unwrap();
             }
         }
-        "-u" => update(args[2].as_str()).await,
+        //"-u" => update(args[2].as_str()).await,
         "-m" => make_modpack(&file_path, n_threads).await,
+        "--request" => searcher::rinth::search(request_arg_parser(&args).unwrap()).await,
         "-h" => println!("{}", HELP),
         _ => println!("{}", "Invalid arguments"),
     }
