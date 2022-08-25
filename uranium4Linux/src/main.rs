@@ -9,12 +9,13 @@ mod searcher;
 mod variables;
 mod zipper;
 
-use code_functions::{fix_path, update};
+use code_functions::{fix_path, update, get_parse_element, get_bool_element};
 use modpack_downloader::curse_downloader::curse_modpack_downloader;
 use modpack_downloader::rinth_downloader::download_rinth_pack;
-use modpack_maker::maker::make_modpack;
+use modpack_maker::maker::{make_modpack, ModAttributes};
 use searcher::rinth::SEARCH_TYPE;
 use std::env;
+use std::str::FromStr;
 use variables::constants::*;
 use zip::result::ZipError;
 use zipper::pack_unzipper::unzip_pack;
@@ -47,34 +48,16 @@ async fn main() -> Result<(), ZipError> {
     let mut destination_path = "".to_owned();
 
     // Get the number of threads that would be executed
-    match args.iter().position(|f| f == "-t") {
-        Some(index) => n_threads = args[index + 1].parse().unwrap_or(0),
-        None => {}
-    }
-
+    n_threads = get_parse_element(&args, "-t").unwrap_or(0);
     // Get the file path
-    match args.iter().position(|f| f == "-f") {
-        Some(index) => file_path = args[index + 1].clone(),
-        None => {}
-    }
-
+    file_path = get_parse_element(&args, "-f").unwrap_or("".to_owned());
     // Get the destination path
-    match args.iter().position(|f| f == "-m") {
-        Some(index) => destination_path = args[index + 1].clone(),
-        None => {}
-    }
-
+    destination_path = get_parse_element(&args, "-m").unwrap_or("".to_owned());
     // If the modpack is a curse modpack True
-    match args.iter().position(|f| f == "-c") {
-        Some(_) => curse_pack = true,
-        None => {}
-    }
+    curse_pack = get_bool_element(&args, "-c");
+    // If the modpack is a rinth modpack True
+    rinth_pack = get_bool_element(&args, "-r");
 
-    // If the modpack is a curse modpack True
-    match args.iter().position(|f| f == "-r") {
-        Some(_) => rinth_pack = true,
-        None => {}
-    }
 
     destination_path = fix_path(&destination_path);
 
@@ -91,7 +74,7 @@ async fn main() -> Result<(), ZipError> {
             }
         }
         //"-u" => update(args[2].as_str()).await,
-        "-m" => make_modpack(&file_path, n_threads).await,
+        "--make" => make_modpack(&file_path, n_threads).await,
         "--request" => searcher::rinth::search(request_arg_parser(&args).unwrap()).await,
         "-h" => println!("{}", HELP),
         _ => println!("{}", "Invalid arguments"),

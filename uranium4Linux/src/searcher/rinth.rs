@@ -44,5 +44,7 @@ async fn get_data<T: DeserializeOwned>(url: &str) -> T {
 
 async fn write_data<T: Serialize>(data: T) {
     let bytes = serde_json::to_vec(&data).unwrap();
+    let coso = serde_json::to_string_pretty(&data).unwrap();
+    println!("{}", coso);
     tokio::fs::write("response.json", bytes).await.unwrap();
 }

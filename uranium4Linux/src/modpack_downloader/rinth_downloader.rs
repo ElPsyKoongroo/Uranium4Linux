@@ -30,7 +30,7 @@ async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
 
     let chunks = links.chunks(n_threads).collect::<Vec<&[String]>>();
     let mut final_data = Vec::with_capacity(links.len());
-
+    let mut percent: f32 = 0.0;
     for chunk in chunks {
         let mut pool = AsyncPool::new();
         let mut tasks = Vec::with_capacity(chunk.len());
@@ -41,6 +41,11 @@ async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
 
         pool.push_request_vec(tasks);
         pool.start().await;
+
+        percent += chunk.len() as f32 / links.len() as f32 * 100.0;
+        #[cfg(feature = "console_output")]
+        println!("{:0.2}%", percent);
+
 
         final_data.append(&mut pool.get_done_request());
     }

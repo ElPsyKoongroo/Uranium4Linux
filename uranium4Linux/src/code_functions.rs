@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, str::FromStr, fmt::Debug};
 use crate::modpack_downloader::{loader::ModPackDownloader, updater::update_modpack};
 
 pub async fn download_modpack<'a>(modpack: &str, path: &'a str, n_threads: usize) -> Result<(), usize> {
@@ -29,4 +29,19 @@ pub fn fix_path(path: &str) -> String{
         return path.to_owned() + "/"
     }
     path.to_owned()
+}
+
+pub fn get_bool_element(args: &Vec<String>, flag: &str) -> bool { 
+    match args.iter().position(|f| f == flag) {
+        Some(index) => true,
+        None => false,
+    }
+}
+
+pub fn get_parse_element<T: FromStr>(args: &Vec<String>, flag: &str) -> Option<T>  
+where T: FromStr, <T as FromStr>::Err: Debug {
+    match args.iter().position(|f| f == flag) {
+        Some(index) => Some(args[index + 1].parse().unwrap()),
+        None => None,
+    }
 }

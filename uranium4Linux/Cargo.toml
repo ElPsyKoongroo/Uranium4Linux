@@ -7,6 +7,9 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+console_output = []
+
 [dependencies]
 mine_data_strutcs = {path = "../mine_data_strutcs"}
 requester = {path = "../requester"}

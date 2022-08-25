@@ -18,6 +18,37 @@ struct ModHashes {
     pub curse_hash: String,
 }
 
+pub struct ModAttributes {
+    pub name: String,
+    pub author: String,
+    pub version: String
+}
+
+#[cfg(feature = "console_input")]
+pub async fn make_modpack(path: &str, n_threads: usize, attr: ModAttributes) {
+    let hash_filename = get_mods(Path::new(path)).unwrap();
+
+    let mut uranium_pack = search_mods_for_modpack(hash_filename, n_threads).await;
+
+    let mp_name = easy_input::input("Modpack name: ", String::from("Modpack"));
+    let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
+    let mp_author = easy_input::input("Modpack author: ", String::from("Anonimous"));
+
+    let mut json_name = mp_name.clone();
+    fix_name(&mut json_name);
+
+    uranium_pack.set_name(attr.name);
+    uranium_pack.set_version(attr.version);
+    uranium_pack.set_author(attr.author);
+
+    uranium_pack.write_mod_pack_with_name(&json_name);
+
+    compress_pack(&mp_name, path, Vec::new() /*not_found_mods*/).unwrap();
+
+    std::fs::remove_file(json_name).unwrap();
+}
+
+#[cfg(not(feature = "console_input"))]
 pub async fn make_modpack(path: &str, n_threads: usize) {
     let hash_filename = get_mods(Path::new(path)).unwrap();
 
