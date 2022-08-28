@@ -195,7 +195,10 @@ async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Mo
     for (rinth, curse) in rinth_parses.into_iter().zip(curse_parses.into_iter()) {
         // First try to add from Rinth
         if rinth.is_some() {
-            mods_data.push(Mods::from_RinthVersion(&rinth.unwrap()))
+            let aux = Mods::from_RinthVersion(&rinth.unwrap());
+            #[cfg(feature = "console_output")]
+            println!("MAKER {} OK", aux.get_file_name());
+            mods_data.push(aux);
         }
         // If Rinth isnt avaliable, try with curse
         else {

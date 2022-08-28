@@ -42,9 +42,10 @@ async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
         pool.push_request_vec(tasks);
         pool.start().await;
 
+        #[cfg(feature = "console_output")]{
         percent += chunk.len() as f32 / links.len() as f32 * 100.0;
-        #[cfg(feature = "console_output")]
         println!("{:0.2}%", percent);
+        }
 
 
         final_data.append(&mut pool.get_done_request());

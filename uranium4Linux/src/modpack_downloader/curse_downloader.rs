@@ -31,7 +31,7 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str, n_thre
     let mods_path = destination_path.to_owned() + "mods/";
 
     let download_urls = get_download_urls(&curse_req, responses, &mut names).await;
-    let responses = download_mods(&curse_req, download_urls, n_threads).await;
+    let responses = download_mods(&curse_req, download_urls, &names, &mods_path, n_threads).await;
     let writters = get_writters(responses, names, &mods_path).await;
     let mut pool = AsyncPool::new();
     pool.push_request_vec(writters);
@@ -118,18 +118,21 @@ async fn get_download_urls(
 async fn download_mods(
     curse_req: &CurseRequester,
     download_urls: Vec<String>,
+    names: &Vec<String>,
+    mods_path: &str,
     n_threads: usize,
 ) -> Vec<Response> {
     let chunks = download_urls.chunks(n_threads).collect::<Vec<&[String]>>();
+    let names_chunks = names.chunks(n_threads).collect::<Vec<&[String]>>();
     let mut responses = Vec::with_capacity(download_urls.len());
 
     // Get all the files in chunks of n_threads elements
-    for chunk in chunks {
+    for (chunk, names_c) in chunks.iter().zip(names_chunks.iter()) {
         let mut tareas = Vec::with_capacity(chunk.len());
         let mut pool = AsyncPool::new();
 
         // Add the tasks for this chunk
-        for download_url in chunk {
+        for download_url in *chunk {
             let tarea = curse_req.get(download_url, Method::GET, "");
             tareas.push(tarea);
         }
@@ -139,6 +142,12 @@ async fn download_mods(
         // Collect the responses and then push them into responses vector
         let mut chunk_responses: Vec<Response> =
             pool.get_done_request().into_iter().flatten().collect();
+
+        // Experimental 
+        /*let writters = get_writters(chunk_responses, names_c.to_vec(), &mods_path).await;
+        let mut pool = AsyncPool::new();
+        pool.push_request_vec(writters);
+        pool.start().await;        */
 
         responses.append(&mut chunk_responses);
     }
