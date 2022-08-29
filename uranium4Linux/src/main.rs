@@ -21,9 +21,9 @@ use zip::result::ZipError;
 use zipper::pack_unzipper::unzip_pack;
 
 fn request_arg_parser(args: &Vec<String>) -> Option<SEARCH_TYPE> {
-    match args.iter().position(|f| f == "--request") {
+    match args.iter().position(|f| f == REQUEST) {
         Some(index) => match args[index + 1].as_str() {
-            "--querry" => Some(SEARCH_TYPE::QUERRY(args[index + 2].clone())),
+            "--query" => Some(SEARCH_TYPE::QUERRY(args[index + 2].clone())),
             "--for" => Some(SEARCH_TYPE::FOR(
                 args[index + 2].parse().unwrap(),
                 args[index + 3].parse().unwrap(),

@@ -17,7 +17,7 @@ pub const HELP_MSG: &str =
 REQUESTS TYPES 
 ---------------------------
 
---querry <string>
+--query <string>
 --for <limit> <offset> 
 --version <id>
 --versions <id>
