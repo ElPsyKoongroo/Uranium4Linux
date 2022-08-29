@@ -1,13 +1,11 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 
-
 const BASE_CUR_URL: &str = "https://api.curseforge.com";
 const BASE_MRN_URL: &str = "https://api.modrinth.com/api/v1/mod";
 const BASE_MRN_URL2: &str = "https://api.modrinth.com/v2";
 
 use crate::rinth::rinth_mods::*;
-
 
 pub struct ModRinth;
 
@@ -22,11 +20,7 @@ impl ModRinth {
 
     pub fn get_mod_info_by_id(id: &str) -> String {
         // https://api.modrinth.com/v2/project/6AQIaxuO
-        format!(
-            "{}/project/{}",
-            BASE_MRN_URL2,
-            id
-        )
+        format!("{}/project/{}", BASE_MRN_URL2, id)
     }
 
     pub fn mod_versions(minecraft_mod: &RinthProject) -> String {
@@ -40,30 +34,26 @@ impl ModRinth {
 
     pub fn mod_versions_by_id(id: &str) -> String {
         // https://api.modrinth.com/v2/project/AANobbMI/version
-        format!(
-            "{}/project/{}/version",
-            BASE_MRN_URL2,
-            id
-        )
+        format!("{}/project/{}/version", BASE_MRN_URL2, id)
     }
 
-    pub fn modpacks() -> String{
+    pub fn modpacks() -> String {
         format!(
             "{}/search?facets=[[\"project_type:modpack\"]]",
-            BASE_MRN_URL2, 
+            BASE_MRN_URL2,
         )
-    
     }
 
-
-
-    pub fn mod_version_by_id(id: &str) -> String{
-        // https://api.modrinth.com/v2/version/{id}
+    pub fn resourcepacks() -> String {
         format!(
-            "{}/version/{}",
+            "{}/search?facets=[[\"project_type:resourcepack\"]]",
             BASE_MRN_URL2,
-            id
         )
+    }
+
+    pub fn mod_version_by_id(id: &str) -> String {
+        // https://api.modrinth.com/v2/version/{id}
+        format!("{}/version/{}", BASE_MRN_URL2, id)
     }
 
     pub fn querry(q: &str) -> String {
@@ -75,22 +65,14 @@ impl ModRinth {
     }
 }
 
-
 pub struct Curse;
 
-impl Curse{
-
+impl Curse {
     pub fn file(modId: &str, fileId: &str) -> String {
-        format!("{}/v1/mods/{}/files/{}",
-            BASE_CUR_URL,
-            modId,
-            fileId
-        )
+        format!("{}/v1/mods/{}/files/{}", BASE_CUR_URL, modId, fileId)
     }
 
     pub fn hash() -> String {
-        format!("{}/v1/fingerprints",
-            BASE_CUR_URL
-        )
+        format!("{}/v1/fingerprints", BASE_CUR_URL)
     }
 }
