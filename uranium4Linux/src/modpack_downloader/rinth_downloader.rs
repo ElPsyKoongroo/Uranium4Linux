@@ -47,7 +47,6 @@ async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
         println!("{:0.2}%", percent);
         }
 
-
         final_data.append(&mut pool.get_done_request());
     }
 

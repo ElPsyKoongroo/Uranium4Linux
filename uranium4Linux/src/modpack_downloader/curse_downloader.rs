@@ -1,3 +1,4 @@
+use crate::code_functions::N_THREADS;
 use crate::variables::constants::TEMP_DIR;
 use crate::zipper::pack_unzipper::unzip_temp_pack;
 use mine_data_strutcs::url_maker::maker::Curse;
@@ -9,8 +10,7 @@ use requester::{
 use super::functions::*;
 use reqwest::Response;
 
-pub async fn curse_modpack_downloader(path: &str, destination_path: &str, n_threads: usize) {
-    println!("{path}");
+pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
     unzip_temp_pack(path);
 
     let curse_pack =
@@ -25,13 +25,13 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str, n_thre
     let curse_req = CurseRequester::new();
 
     // Get the info of each mod to get the url and download it
-    let responses: Vec<Response> = get_mod_responses(&curse_req, files_ids, n_threads).await;
+    let responses: Vec<Response> = get_mod_responses(&curse_req, files_ids).await;
     let mut names = Vec::new();
-  
+
     let mods_path = destination_path.to_owned() + "mods/";
 
     let download_urls = get_download_urls(&curse_req, responses, &mut names).await;
-    let responses = download_mods(&curse_req, download_urls, &names, &mods_path, n_threads).await;
+    let responses = download_mods(&curse_req, download_urls, &names, &mods_path).await;
     let writters = get_writters(responses, names, &mods_path).await;
     let mut pool = AsyncPool::new();
     pool.push_request_vec(writters);
@@ -39,16 +39,12 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str, n_thre
     overrides(destination_path, "overrides");
 }
 
-async fn get_mod_responses(
-    curse_req: &CurseRequester,
-    files_ids: Vec<String>,
-    n_threads: usize,
-) -> Vec<Response> {
+async fn get_mod_responses(curse_req: &CurseRequester, files_ids: Vec<String>) -> Vec<Response> {
     let mut responses: Vec<Response> = Vec::with_capacity(files_ids.len());
 
     // Split the files ids into chunks so Uranium dont spawn
     // 5784923543 threads
-    for chunk in files_ids.chunks(n_threads) {
+    for chunk in files_ids.chunks(N_THREADS()) {
         let mut requests = Vec::new();
         for url in chunk {
             let tarea = curse_req.get(url, Method::GET, "");
@@ -93,23 +89,20 @@ async fn get_download_urls(
     for response in responses {
         // Parse the response into a CurseResponse<CurseFile>
         let curse_file = response.json::<CurseResponse<CurseFile>>().await;
+        match curse_file {
+            Ok(file) => {
+                let download_url = file.data.get_downloadUrl();
 
-        // If everything ok
-        if curse_file.is_ok() {
-            let curse_file = curse_file.unwrap();
-            let download_url = curse_file.data.get_downloadUrl();
-
-            // In case the download link its empty, because CurseApi could give
-            // a right response but with empty download link... -.-
-            if download_url.is_empty() {
-                println!(
-                    "There is no download link for {}",
-                    curse_file.data.get_fileName()
-                );
-            } else {
-                names.push(curse_file.data.get_fileName());
-                download_urls.push(download_url);
+                // In case the download link its empty, because CurseApi could give
+                // a right response but with empty download link... -.-
+                if download_url.is_empty() {
+                    println!("There is no download link for {}", file.data.get_fileName());
+                } else {
+                    names.push(file.data.get_fileName());
+                    download_urls.push(download_url);
+                }
             }
+            Err(_) => {}
         }
     }
     download_urls
@@ -120,19 +113,21 @@ async fn download_mods(
     download_urls: Vec<String>,
     names: &Vec<String>,
     mods_path: &str,
-    n_threads: usize,
 ) -> Vec<Response> {
-    let chunks = download_urls.chunks(n_threads).collect::<Vec<&[String]>>();
-    let names_chunks = names.chunks(n_threads).collect::<Vec<&[String]>>();
+    let chunks = download_urls
+        .chunks(N_THREADS())
+        .collect::<Vec<&[String]>>();
+    let names_chunks = names.chunks(N_THREADS()).collect::<Vec<&[String]>>();
     let mut responses = Vec::with_capacity(download_urls.len());
 
     // Get all the files in chunks of n_threads elements
-    for (chunk, names_c) in chunks.iter().zip(names_chunks.iter()) {
+    //for (chunk, names_c) in chunks.iter().zip(names_chunks.iter()) {
+    for chunk in chunks.into_iter() {
         let mut tareas = Vec::with_capacity(chunk.len());
         let mut pool = AsyncPool::new();
 
         // Add the tasks for this chunk
-        for download_url in *chunk {
+        for download_url in chunk {
             let tarea = curse_req.get(download_url, Method::GET, "");
             tareas.push(tarea);
         }
@@ -140,16 +135,18 @@ async fn download_mods(
         pool.start().await;
 
         // Collect the responses and then push them into responses vector
-        let mut chunk_responses: Vec<Response> =
-            pool.get_done_request().into_iter().flatten().collect();
+        let mut chunk_res: Vec<Response> = pool.get_done_request().into_iter().flatten().collect();
 
-        // Experimental 
-        /*let writters = get_writters(chunk_responses, names_c.to_vec(), &mods_path).await;
+        // EXPERIMENTAL
+        // Write the mods right after getting them so we can safe memory.
+        /*
+        let writters = get_writters(chunk_responses, names_c.to_vec(), &mods_path).await;
         let mut pool = AsyncPool::new();
         pool.push_request_vec(writters);
-        pool.start().await;        */
+        pool.start().await;
+        */
 
-        responses.append(&mut chunk_responses);
+        responses.append(&mut chunk_res);
     }
     responses
 }

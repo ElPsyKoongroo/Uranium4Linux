@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use regex::Regex;
-use crate::{rinth::rinth_mods::*, curse::curse_mods::{CurseVersion, CurseFile}};
+use crate::{rinth::rinth_mods::*, curse::curse_mods::CurseFile};
 
 #[derive(Clone, Deserialize, Serialize)]
 pub enum Repo{

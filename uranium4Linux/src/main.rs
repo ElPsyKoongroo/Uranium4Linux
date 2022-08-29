@@ -41,30 +41,30 @@ fn request_arg_parser(args: &Vec<String>) -> Option<SEARCH_TYPE> {
 #[tokio::main]
 async fn main() -> Result<(), ZipError> {
     let args: Vec<String> = env::args().collect();
-    let mut n_threads = 16; // ONG ONG, MAGIC !
-    let mut curse_pack = false;
-    let mut rinth_pack = false;
-    let mut file_path = "".to_owned();
-    let mut destination_path = "".to_owned();
+    let mut curse_pack;
+    let mut rinth_pack;
+    let mut file_path;
+    let mut destination_path;
 
     // Get the number of threads that would be executed
-    n_threads = get_parse_element(&args, "-t").unwrap_or(0);
+    let mut aux = NTHREADS.write().unwrap();
+    *aux = get_parse_element(&args, THREADS_FLAG).unwrap_or(DEFAULT_NTHREADS);
     // Get the file path
-    file_path = get_parse_element(&args, "-f").unwrap_or("".to_owned());
+    file_path = get_parse_element(&args, FILE_FLAG).unwrap_or("".to_owned());
     // Get the destination path
-    destination_path = get_parse_element(&args, "-m").unwrap_or("".to_owned());
+    destination_path = get_parse_element(&args, ROOT_FLAG).unwrap_or("".to_owned());
     // If the modpack is a curse modpack True
-    curse_pack = get_bool_element(&args, "-c");
+    curse_pack = get_bool_element(&args, CURSE_FLAG);
     // If the modpack is a rinth modpack True
-    rinth_pack = get_bool_element(&args, "-r");
+    rinth_pack = get_bool_element(&args, RINTH_FLAG);
 
 
     destination_path = fix_path(&destination_path);
 
     match args[1].as_str() {
-        "-d" => {
+        DOWNLOAD => {
             if curse_pack {
-                curse_modpack_downloader(&file_path, &destination_path, n_threads).await;
+                curse_modpack_downloader(&file_path, &destination_path).await;
             } else if rinth_pack {
                 download_rinth_pack(&file_path, &destination_path, n_threads).await;
             } else {
@@ -73,10 +73,10 @@ async fn main() -> Result<(), ZipError> {
                     .unwrap();
             }
         }
-        //"-u" => update(args[2].as_str()).await,
-        "--make" => make_modpack(&file_path, n_threads).await,
-        "--request" => searcher::rinth::search(request_arg_parser(&args).unwrap()).await,
-        "-h" => println!("{}", HELP),
+        "-u" => update(args[2].as_str()).await,
+        MAKE => make_modpack(&file_path, n_threads).await,
+        REQUEST => searcher::rinth::search(request_arg_parser(&args).unwrap()).await,
+        HELP => println!("{}", HELP_MSG),
         _ => println!("{}", "Invalid arguments"),
     }
     Ok(())

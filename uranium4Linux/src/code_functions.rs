@@ -1,4 +1,5 @@
 use std::{path::Path, str::FromStr, fmt::Debug};
+use crate::variables::constants::*;
 use crate::modpack_downloader::{loader::ModPackDownloader, updater::update_modpack};
 
 pub async fn download_modpack<'a>(modpack: &str, path: &'a str, n_threads: usize) -> Result<(), usize> {
@@ -36,6 +37,13 @@ pub fn get_bool_element(args: &Vec<String>, flag: &str) -> bool {
         Some(index) => true,
         None => false,
     }
+}
+
+pub fn N_THREADS() -> usize {
+    match NTHREADS.read() {
+        Ok(e) => *e,
+        Err(_) => DEFAULT_NTHREADS
+    }    
 }
 
 pub fn get_parse_element<T: FromStr>(args: &Vec<String>, flag: &str) -> Option<T>  
