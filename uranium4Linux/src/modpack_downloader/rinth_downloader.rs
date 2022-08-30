@@ -1,5 +1,5 @@
 use super::functions::get_writters;
-use crate::{variables::constants::TEMP_DIR, zipper::pack_unzipper::unzip_temp_pack};
+use crate::{variables::constants::{TEMP_DIR, RINTH_JSON_NAME}, zipper::pack_unzipper::unzip_temp_pack};
 use mine_data_strutcs::rinth::rinth_packs::*;
 use requester::async_pool::AsyncPool;
 use reqwest::Response;
@@ -7,7 +7,7 @@ use reqwest::Response;
 pub async fn download_rinth_pack(path: &str, destination_path: &str, n_threads: usize) {
     unzip_temp_pack(path);
 
-    let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + "modrinth.index.json")).unwrap();
+    let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON_NAME)).unwrap();
 
     let file_links: Vec<String> = rinth_pack
         .get_files()
@@ -42,9 +42,10 @@ async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
         pool.push_request_vec(tasks);
         pool.start().await;
 
-        #[cfg(feature = "console_output")]{
-        percent += chunk.len() as f32 / links.len() as f32 * 100.0;
-        println!("{:0.2}%", percent);
+        #[cfg(feature = "console_output")]
+        {
+            percent += chunk.len() as f32 / links.len() as f32 * 100.0;
+            println!("{:0.2}%", percent);
         }
 
         final_data.append(&mut pool.get_done_request());
@@ -56,7 +57,6 @@ async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
 async fn write_mods(responses: Vec<Response>, names: Vec<String>, destination_path: &str) {
     let writters = get_writters(responses, names, &(destination_path.to_owned() + "mods/")).await;
     let mut pool = AsyncPool::new();
-
     pool.push_request_vec(writters);
     pool.start().await;
 }

@@ -23,6 +23,7 @@ REQUESTS TYPES
 --versions <id>
 --mod <id>
 --project <id>
+--resourcepacks <limit> <offset>
 
 ";
 
@@ -48,7 +49,16 @@ pub const CURSE_FLAG: &str = "-c";
 pub const FILE_FLAG: &str = "-f";
 pub const ROOT_FLAG: &str = "-m";
 
+// REQUESTS TYPES
+pub const QUERY: &str = "--query";
+pub const FOR: &str = "--for";
+pub const VERSION: &str = "--version";
+pub const VERSIONS: &str = "--versions";
+pub const MOD: &str = "--mod";
+pub const PROJECT: &str = "--project";
+pub const RESOURCEPACKS: &str = "--resourcepacks";
 
+pub const RINTH_JSON_NAME: &str = "modrinth.index.json";
 
 
 

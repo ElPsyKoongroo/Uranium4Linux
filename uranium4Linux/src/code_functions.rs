@@ -34,7 +34,7 @@ pub fn fix_path(path: &str) -> String{
 
 pub fn get_bool_element(args: &Vec<String>, flag: &str) -> bool { 
     match args.iter().position(|f| f == flag) {
-        Some(index) => true,
+        Some(_) => true,
         None => false,
     }
 }

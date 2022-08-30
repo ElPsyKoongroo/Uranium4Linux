@@ -44,10 +44,12 @@ impl ModRinth {
         )
     }
 
-    pub fn resourcepacks() -> String {
+    pub fn resourcepacks(limit: u32, offset: u32) -> String {
         format!(
-            "{}/search?facets=[[\"project_type:resourcepack\"]]",
+            "{}/search?limit={}&offset={}&facets=[[\"project_type:resourcepack\"]]",
             BASE_MRN_URL2,
+            limit,
+            offset,
         )
     }
 

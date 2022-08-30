@@ -8,7 +8,8 @@ pub enum SEARCH_TYPE {
     MOD(String),
     PROJECT(String),
     VERSION(String),
-    VERSIONS(String)
+    VERSIONS(String),
+    RESOURCEPACKS(u32, u32)
 }
 
 
@@ -19,8 +20,15 @@ pub async fn search(search: SEARCH_TYPE) {
         SEARCH_TYPE::MOD(_) => {},
         SEARCH_TYPE::PROJECT(_) => {},
         SEARCH_TYPE::VERSION(id) => {search_version(&id).await},
-        SEARCH_TYPE::VERSIONS(_) => {}
+        SEARCH_TYPE::VERSIONS(_) => {},
+        SEARCH_TYPE::RESOURCEPACKS(limit, offset) => {search_sourcepacks(limit, offset).await}
     }
+}
+
+async fn search_sourcepacks(limit: u32, offset: u32) {
+    let url = maker::ModRinth::resourcepacks(limit, offset);
+    let data = get_data::<RinthResponse>(&url).await;
+    write_data(data).await;
 }
 
 async fn search_version(id: &str) {
