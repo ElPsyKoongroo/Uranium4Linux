@@ -6,14 +6,12 @@ where
     T: FromStr,
 {
     let mut s = String::new();
-    let result: T;
     print!("{}", msg);
-    let _ = stdout().flush();
+    stdout().flush().unwrap();
     stdin().read_line(&mut s).expect("Did not enter a correct string");
     let trimmed = s.trim();
     match trimmed.parse::<T>() {
-        Ok(i) => result = i,
-        Err(_) => result = default,
+        Ok(i) => i,
+        Err(_) => default,
     }
-    result
 }

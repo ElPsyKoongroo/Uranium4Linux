@@ -1,10 +1,14 @@
 use super::functions::get_writters;
-use crate::{variables::constants::{TEMP_DIR, RINTH_JSON_NAME}, zipper::pack_unzipper::unzip_temp_pack};
+use crate::code_functions::N_THREADS;
+use crate::{
+    variables::constants::{RINTH_JSON_NAME, TEMP_DIR},
+    zipper::pack_unzipper::unzip_temp_pack,
+};
 use mine_data_strutcs::rinth::rinth_packs::*;
 use requester::async_pool::AsyncPool;
 use reqwest::Response;
 
-pub async fn download_rinth_pack(path: &str, destination_path: &str, n_threads: usize) {
+pub async fn download_rinth_pack(path: &str, destination_path: &str) {
     unzip_temp_pack(path);
 
     let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON_NAME)).unwrap();
@@ -12,26 +16,28 @@ pub async fn download_rinth_pack(path: &str, destination_path: &str, n_threads: 
     let file_links: Vec<String> = rinth_pack
         .get_files()
         .iter()
-        .map(|f| f.get_download_link())
+        .map(RinthMdFiles::get_download_link)
         .collect();
 
     let file_names: Vec<String> = rinth_pack
         .get_files()
         .iter()
-        .map(|f| f.get_name())
+        .map(RinthMdFiles::get_name)
         .collect();
 
-    let responses = download_mods(file_links, n_threads).await;
+    let responses = download_mods(file_links).await;
     write_mods(responses, file_names, destination_path).await;
 }
 
-async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
+async fn download_mods(links: Vec<String>) -> Vec<Response> {
     let requester = reqwest::Client::new();
 
-    let chunks = links.chunks(n_threads).collect::<Vec<&[String]>>();
     let mut final_data = Vec::with_capacity(links.len());
+
+    #[cfg(feature = "console_output")]
     let mut percent: f32 = 0.0;
-    for chunk in chunks {
+
+    for chunk in links.chunks(N_THREADS()) {
         let mut pool = AsyncPool::new();
         let mut tasks = Vec::with_capacity(chunk.len());
 
@@ -52,6 +58,27 @@ async fn download_mods(links: Vec<String>, n_threads: usize) -> Vec<Response> {
     }
 
     final_data.into_iter().flatten().collect()
+}
+
+#[allow(unused)]
+async fn download_memory_perf(links: Vec<String>, names: Vec<String>, destination_path: &str) {
+    let requester = reqwest::Client::new();
+
+    for (url_chunk, name_chunk) in names.chunks(N_THREADS()).zip(names.chunks(N_THREADS())) {
+        let mut pool = AsyncPool::new();
+        let mut tasks = Vec::with_capacity(url_chunk.len());
+
+        url_chunk
+            .iter()
+            .for_each(|f| tasks.push(tokio::task::spawn(requester.get(f).send())));
+
+        pool.push_request_vec(tasks);
+        pool.start().await;
+
+        let done_requests = pool.get_done_request().into_iter().flatten().collect();
+
+        write_mods(done_requests, name_chunk.to_vec(), destination_path).await;
+    }
 }
 
 async fn write_mods(responses: Vec<Response>, names: Vec<String>, destination_path: &str) {

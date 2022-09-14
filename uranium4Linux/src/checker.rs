@@ -2,7 +2,7 @@ use std::{fmt::Debug, process::exit};
 
 /// Given a Result<T, E> it checks if Ok() or Err(), 
 /// if Ok it returns T
-/// if Err it calls manage_error
+/// if Err it calls `manage_error`
 pub fn check<T, E>(value: Result<T, E>, panic: bool, show_error: bool, msg: &str) -> Option<T>
 where
     E: Debug,
@@ -11,10 +11,10 @@ where
         Ok(e) => Some(e),
         Err(error) => {
             manage_error(error, show_error, msg);
-            if !panic {
-                None
-            } else {
+            if panic {
                 exit(0);
+            } else {
+                None
             }
         }
     }

@@ -1,12 +1,16 @@
-use std::{path::Path, str::FromStr, fmt::Debug};
-use crate::variables::constants::*;
 use crate::modpack_downloader::{loader::ModPackDownloader, updater::update_modpack};
+use crate::variables::constants::*;
+use std::{fmt::Debug, path::Path, str::FromStr};
 
-pub async fn download_modpack<'a>(modpack: &str, path: &'a str, n_threads: usize) -> Result<(), usize> {
+pub async fn download_modpack<'a>(
+    modpack: &str,
+    path: &'a str,
+    n_threads: usize,
+) -> Result<(), usize> {
     if !Path::new(path).exists() {
-        return Err(1)
+        return Err(1);
     };
-    
+
     let mut modpack_loader: ModPackDownloader;
     if n_threads == 0 {
         modpack_loader = ModPackDownloader::new();
@@ -20,36 +24,35 @@ pub async fn download_modpack<'a>(modpack: &str, path: &'a str, n_threads: usize
     Ok(())
 }
 
-pub async fn update(path: &str){
+pub async fn update(path: &str) {
     update_modpack(path).await;
 }
 
-///Add '/' at the end of the path if it isnt already in it. 
-pub fn fix_path(path: &str) -> String{
+///Add '/' at the end of the path if it isnt already in it.
+pub fn fix_path(path: &str) -> String {
     if !path.ends_with('/') {
-        return path.to_owned() + "/"
+        return path.to_owned() + "/";
     }
     path.to_owned()
 }
 
-pub fn get_bool_element(args: &Vec<String>, flag: &str) -> bool { 
-    match args.iter().position(|f| f == flag) {
-        Some(_) => true,
-        None => false,
-    }
+pub fn get_bool_element(args: &[String], flag: &str) -> bool {
+    args.iter().any(|f| f == flag)
 }
 
 pub fn N_THREADS() -> usize {
     match NTHREADS.read() {
         Ok(e) => *e,
-        Err(_) => DEFAULT_NTHREADS
-    }    
+        Err(_) => DEFAULT_NTHREADS,
+    }
 }
 
-pub fn get_parse_element<T: FromStr>(args: &Vec<String>, flag: &str) -> Option<T>  
-where T: FromStr, <T as FromStr>::Err: Debug {
-    match args.iter().position(|f| f == flag) {
-        Some(index) => Some(args[index + 1].parse().unwrap()),
-        None => None,
-    }
+pub fn get_parse_element<T>(args: &[String], flag: &str) -> Option<T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    args.iter()
+        .position(|f| f == flag)
+        .map(|index| args[index + 1].parse().unwrap())
 }

@@ -48,10 +48,10 @@ pub fn load_curse_pack(pack_path: &str) -> Option<CursePack> {
     };
 
     match deserializ_pack(pack_path) {
-        Ok(e) => return Some(e),
+        Ok(e) => Some(e),
         Err(error) => {
             eprintln!("Error deserializing the pack \n\n{error}");
-            return None;
+            None
         }
     }
 }

@@ -60,14 +60,13 @@ async fn get_mod_responses(curse_req: &CurseRequester, files_ids: Vec<String>) -
             &mut pool
                 .get_done_request()
                 .into_iter()
-                .map(|f| match f {
+                .filter_map(|f| match f {
                     Ok(val) => Some(val),
                     Err(e) => {
                         println!("{:?}", e);
                         None
                     }
                 })
-                .flatten()
                 .collect(),
         );
     }
@@ -89,20 +88,17 @@ async fn get_download_urls(
     for response in responses {
         // Parse the response into a CurseResponse<CurseFile>
         let curse_file = response.json::<CurseResponse<CurseFile>>().await;
-        match curse_file {
-            Ok(file) => {
-                let download_url = file.data.get_downloadUrl();
+        if let Ok(file) = curse_file {
+            let download_url = file.data.get_downloadUrl();
 
-                // In case the download link its empty, because CurseApi could give
-                // a right response but with empty download link... -.-
-                if download_url.is_empty() {
-                    println!("There is no download link for {}", file.data.get_fileName());
-                } else {
-                    names.push(file.data.get_fileName());
-                    download_urls.push(download_url);
-                }
+            // In case the download link its empty, because CurseApi could give
+            // a right response but with empty download link... -.-
+            if download_url.is_empty() {
+                println!("There is no download link for {}", file.data.get_fileName());
+            } else {
+                names.push(file.data.get_fileName());
+                download_urls.push(download_url);
             }
-            Err(_) => {}
         }
     }
     download_urls
@@ -111,18 +107,16 @@ async fn get_download_urls(
 async fn download_mods(
     curse_req: &CurseRequester,
     download_urls: Vec<String>,
-    names: &Vec<String>,
-    mods_path: &str,
+    names: &[String],
+    _mods_path: &str,
 ) -> Vec<Response> {
-    let chunks = download_urls
-        .chunks(N_THREADS())
-        .collect::<Vec<&[String]>>();
-    let names_chunks = names.chunks(N_THREADS()).collect::<Vec<&[String]>>();
+
+    let _names_chunks = names.chunks(N_THREADS()).collect::<Vec<&[String]>>();
     let mut responses = Vec::with_capacity(download_urls.len());
 
     // Get all the files in chunks of n_threads elements
     //for (chunk, names_c) in chunks.iter().zip(names_chunks.iter()) {
-    for chunk in chunks.into_iter() {
+    for chunk in download_urls.chunks(N_THREADS()) {
         let mut tareas = Vec::with_capacity(chunk.len());
         let mut pool = AsyncPool::new();
 

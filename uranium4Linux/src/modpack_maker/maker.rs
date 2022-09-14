@@ -10,6 +10,7 @@ use mine_data_strutcs::{
 use requester::async_pool::AsyncPool;
 use requester::mod_searcher::Method;
 use requester::requester::request_maker::CurseRequester;
+use core::panic;
 use std::fs::read_dir;
 use std::path::Path;
 
@@ -21,7 +22,7 @@ struct ModHashes {
 pub struct ModAttributes {
     pub name: String,
     pub author: String,
-    pub version: String
+    pub version: String,
 }
 
 #[cfg(feature = "console_input")]
@@ -43,14 +44,14 @@ pub async fn make_modpack(path: &str, n_threads: usize, attr: ModAttributes) {
 
     uranium_pack.write_mod_pack_with_name(&json_name);
 
-    compress_pack(&mp_name, path, Vec::new() /*not_found_mods*/).unwrap();
+    compress_pack(&mp_name, path, &Vec::new() /*not_found_mods*/).unwrap();
 
     std::fs::remove_file(json_name).unwrap();
 }
 
 #[cfg(not(feature = "console_input"))]
 pub async fn make_modpack(path: &str, n_threads: usize) {
-    let hash_filename = get_mods(Path::new(path)).unwrap();
+    let hash_filename = get_mods(Path::new(path));
 
     let mut uranium_pack = search_mods_for_modpack(hash_filename, n_threads).await;
 
@@ -67,32 +68,28 @@ pub async fn make_modpack(path: &str, n_threads: usize) {
 
     uranium_pack.write_mod_pack_with_name(&json_name);
 
-    compress_pack(&mp_name, path, Vec::new() /*not_found_mods*/).unwrap();
+    compress_pack(&mp_name, path, &Vec::new() /*not_found_mods*/).unwrap();
 
     std::fs::remove_file(json_name).unwrap();
 }
 
-fn get_mods(minecraft_path: &Path) -> Option<Vec<(ModHashes, String)>> {
+fn get_mods(minecraft_path: &Path) -> Vec<(ModHashes, String)> {
     let mut hashes_names = Vec::new();
-    let mods;
-
     if !minecraft_path.is_dir() {
-        return None;
+        panic!("{:?} is not a dir", minecraft_path)
     }
     let mods_path = minecraft_path.join("mods/");
 
-    match read_dir(&mods_path) {
-        Ok(e) => {
-            mods = e
-                .into_iter()
-                .map(|f| f.unwrap().path().to_str().unwrap().to_owned())
-                .collect::<Vec<String>>()
-        }
+    let mods = match read_dir(&mods_path) {
+        Ok(e) => e
+            .into_iter()
+            .map(|f| f.unwrap().path().to_str().unwrap().to_owned())
+            .collect::<Vec<String>>(),
         Err(error) => {
             eprintln!("Error reading the directore: {}", error);
-            return None;
+            panic!("")
         }
-    }
+    };
 
     // Push all the (has, file_name) to the vector
     for path in mods {
@@ -102,15 +99,15 @@ fn get_mods(minecraft_path: &Path) -> Option<Vec<(ModHashes, String)>> {
             rinth_hash: rinth,
             curse_hash: curse,
         };
-        let file_name = path.split("/").last().unwrap().to_owned();
+        let file_name = path.split('/').last().unwrap().to_owned();
         hashes_names.push((hashes, file_name));
     }
 
-    Some(hashes_names)
+    hashes_names
 }
 
-/// Search the mods in mods/ in RinthAPI by hash,
-/// if cant find it, add it to not_found_mods and later
+/// Search the mods in mods/ in `RinthAPI` by hash,
+/// if cant find it, add it to `not_found_mods` and later
 /// add them raw to the modpack.
 async fn search_mods_for_modpack(
     hash_filename: Vec<(ModHashes, String)>,
@@ -122,7 +119,7 @@ async fn search_mods_for_modpack(
     uranium_pack
 }
 
-async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Mods> {
+async fn search_mod(item: &[(ModHashes, String)], n_threads: usize) -> Vec<Mods> {
     let n_mods = item.len();
 
     let curse_requester = CurseRequester::new();
@@ -134,7 +131,7 @@ async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Mo
 
     // Get curse responses by chunks
     let mut curse_responses = Vec::new();
-    for chunk in chunks.iter() {
+    for chunk in &chunks {
         let mut pool = AsyncPool::new();
         let reqs = chunk
             .iter()
@@ -153,7 +150,7 @@ async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Mo
 
     // Get rinth_responses
     let mut rinth_responses = Vec::new();
-    for chunk in chunks.iter() {
+    for chunk in &chunks {
         let mut pool = AsyncPool::new();
         let reqs = chunk
             .iter()
@@ -201,10 +198,8 @@ async fn search_mod(item: &Vec<(ModHashes, String)>, n_threads: usize) -> Vec<Mo
             mods_data.push(aux);
         }
         // If Rinth isnt avaliable, try with curse
-        else {
-            if curse.is_some() {
-                mods_data.push(Mods::from_CurseVersion(curse.unwrap().data.get_file()));
-            }
+        else if curse.is_some() {
+            mods_data.push(Mods::from_CurseVersion(curse.unwrap().data.get_file()));
         }
     }
     mods_data

@@ -36,9 +36,8 @@ impl UraniumFile {
         self.path.clone() + &self.name
     }
 
-    //setter for type_file
-    pub fn set_type(&mut self, _file_type: FileType) {
-        self.file_type = _file_type;
+    pub fn set_type(&mut self, new_file_type: FileType) {
+        self.file_type = new_file_type;
     }
 
     pub fn get_type(&self) -> FileType {

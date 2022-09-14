@@ -13,19 +13,18 @@ pub enum Attributes {
 }
 
 // This structures pretends be the same format as
-// Rinth API json responses so in order to easily mantein 
-// the code all the attributes should be private so if 
+// Rinth API json responses so in order to easily mantein
+// the code all the attributes should be private so if
 // somewhen the name of an attributes change only the
-// attribute inside the structure will change but the setter/getter 
+// attribute inside the structure will change but the setter/getter
 // will be the same.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchProjects {
-    hits: Vec<RinthProject>
+    hits: Vec<RinthProject>,
 }
 
-
 /// RinthMod pretends to be the structure for the response of
-/// https://api.modrinth.com/v2/project/{id | slug} 
+/// https://api.modrinth.com/v2/project/{id | slug}
 /// This type is also usable when requesting searchs for rinth api
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RinthProject {
@@ -37,7 +36,6 @@ pub struct RinthProject {
     categories: Vec<String>,
     icon_url: String,
 }
-
 
 impl RinthProject {
     pub fn get_id(&self) -> String {
@@ -62,10 +60,10 @@ impl RinthProject {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Dependency{
+pub struct Dependency {
     version_id: Option<String>,
     project_id: Option<String>,
-    dependency_type: String
+    dependency_type: String,
 }
 
 impl Dependency {
@@ -75,7 +73,7 @@ impl Dependency {
             None => "",
         }
     }
-    
+
     pub fn get_version_id(&self) -> &str {
         match self.version_id {
             Some(ref id) => id,
@@ -84,11 +82,10 @@ impl Dependency {
     }
 }
 
-
 /// RinthProject pretends to be the response for:
 /// https://api.modrinth.com/v2/version/{version id}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RinthVersion{
+pub struct RinthVersion {
     id: String,
     project_id: String,
     name: String,
@@ -100,13 +97,13 @@ pub struct RinthVersion{
     loaders: Vec<String>,
 }
 
-impl RinthVersion{ 
+impl RinthVersion {
     pub fn get_name(&self) -> String {
         self.name.clone()
     }
 
     pub fn from_CurseFile(curse_file: CurseFile) -> RinthVersion {
-        RinthVersion{
+        RinthVersion {
             id: curse_file.get_modId().to_string(),
             project_id: curse_file.get_id().to_string(),
             name: curse_file.get_displayName(),
@@ -115,12 +112,11 @@ impl RinthVersion{
             game_versions: curse_file.get_gameVersions().clone(),
             loaders: Vec::new(),
             downloads: 0,
-            files: vec![RinthFile{
-                url: curse_file.get_downloadUrl(), 
+            files: vec![RinthFile {
+                url: curse_file.get_downloadUrl(),
                 filename: curse_file.get_fileName(),
-            }]
+            }],
         }
-    
     }
 
     pub fn get_versions(&self) -> &Vec<String> {
@@ -135,7 +131,7 @@ impl RinthVersion{
         self.files[0].filename.clone()
     }
 
-    pub fn get_id(&self) -> String{
+    pub fn get_id(&self) -> String {
         self.id.clone()
     }
 
@@ -152,7 +148,7 @@ impl RinthVersion{
     }
 
     pub fn had_dependencies(&self) -> bool {
-        self.dependencies.len() > 0
+        !self.dependencies.is_empty()
     }
 
     pub fn get_dependencies(&self) -> &Vec<Dependency> {
@@ -162,8 +158,8 @@ impl RinthVersion{
 
 /// Rinthversions pretends to parse the response of:
 /// https://api.modrinth.com/v2/project/{id | slug}/version
-/// This structure is commonly use 
-#[derive(Debug, Serialize, Deserialize)]
+/// This structure is commonly use
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct RinthVersions {
     pub versions: Vec<RinthVersion>,
 }
@@ -173,27 +169,29 @@ impl RinthVersions {
         &self.versions[i]
     }
 
-        pub fn new() -> RinthVersions {
-            RinthVersions { versions: Vec::new() }
+    pub fn new() -> RinthVersions {
+        RinthVersions {
+            versions: Vec::new(),
         }
+    }
 
-        pub fn len(&self) -> usize {
-            self.versions.len()
-        }
+    pub fn len(&self) -> usize {
+        self.versions.len()
+    }
 
-        pub fn push(&mut self, version: RinthVersion) {
-            self.versions.push(version);
-        }
+    pub fn push(&mut self, version: RinthVersion) {
+        self.versions.push(version);
+    }
 
-        pub fn last(&self) -> &RinthVersion {
-            self.versions.last().unwrap()
-        }
+    pub fn last(&self) -> &RinthVersion {
+        self.versions.last().unwrap()
+    }
 
-        pub fn first(&self) -> &RinthVersion {
-            self.versions.first().unwrap()
-        }
+    pub fn first(&self) -> &RinthVersion {
+        self.versions.first().unwrap()
+    }
 
-        pub fn mod_at(&self, i: usize) -> &RinthVersion{
+    pub fn mod_at(&self, i: usize) -> &RinthVersion {
         &self.versions[i]
     }
 
@@ -203,48 +201,38 @@ impl RinthVersions {
 
     pub fn filter_by(&self, attribute: Attributes, content: &str) -> Vec<RinthVersion> {
         match attribute {
-            Attributes::Loader => {
-                self.versions
-                    .iter()
-                    .filter(|x| x.loaders.contains(&content.to_string()))
-                    .map(|x| x.clone())
-                    .collect::<Vec<RinthVersion>>()
-            }
+            Attributes::Loader => self
+                .versions
+                .iter()
+                .filter(|x| x.loaders.contains(&content.to_string()))
+                .cloned()
+                .collect::<Vec<RinthVersion>>(),
 
-            Attributes::Name => {
-                self.versions
-                    .iter()
-                    .filter(|x| x.name.contains(&content.to_string()))
-                    .map(|x| x.clone())
-                    .collect::<Vec<RinthVersion>>()
-            }
+            Attributes::Name => self
+                .versions
+                .iter()
+                .filter(|x| x.name.contains(&content.to_string()))
+                .cloned()
+                .collect::<Vec<RinthVersion>>(),
 
-            Attributes::VersionType => {
-                self.versions
-                    .iter()
-                    .filter(|x| x.version_type.contains(&content.to_string()))
-                    .map(|x| x.clone())
-                    .collect::<Vec<RinthVersion>>()
-            }
+            Attributes::VersionType => self
+                .versions
+                .iter()
+                .filter(|x| x.version_type.contains(&content.to_string()))
+                .cloned()
+                .collect::<Vec<RinthVersion>>(),
         }
     }
 
-    pub fn has(&self, id: &str) -> bool{
+    pub fn has(&self, id: &str) -> bool {
         self.versions.iter().any(|x| x.project_id == id)
     }
 }
 
-impl Default for RinthVersions {
-    fn default() -> Self {
-        RinthVersions { versions: Vec::new() }
-    }
-}
-    
 impl fmt::Display for RinthVersions {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut max_width = {
-            self
-                .versions
+            self.versions
                 .iter()
                 .map(|x| x.name.clone().len())
                 .max()
@@ -263,9 +251,9 @@ impl fmt::Display for RinthVersions {
         )?;
 
         for (index, version) in self.versions.iter().enumerate() {
-            write!(
+            writeln!(
                 f,
-                "{index:^5}\t{:<max_width$}\t{:^12}\t{:>9}\n",
+                "{index:^5}\t{:<max_width$}\t{:^12}\t{:>9}",
                 version.name, version.version_type, version.downloads
             )?;
         }
@@ -279,10 +267,9 @@ struct RinthFile {
     pub filename: String,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RinthResponse {
-    pub hits: Vec<RinthProject>, 
+    pub hits: Vec<RinthProject>,
     offset: u32,
     limit: u32,
     total_hits: u64,
@@ -316,24 +303,18 @@ impl std::default::Default for RinthResponse {
 impl std::fmt::Display for RinthResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         for (index, minecraft_mod) in self.hits.iter().enumerate() {
-            write!(f, "{:2}: {}\n", index, minecraft_mod.to_string())?;
+            writeln!(f, "{:2}: {}", index, minecraft_mod.to_string())?;
         }
         write!(f, "")
     }
 }
 
-        
-        
-        
-        
-
-
 /// If a is newer -1, if b is newer 1, if they are the same 0
-pub fn compare_versions(a: &RinthProject, b: &RinthProject) -> i8{
+pub fn compare_versions(a: &RinthProject, b: &RinthProject) -> i8 {
     let a_version = a.get_versions()[0].clone();
-    let b_version = b.get_versions()[0].clone();   
+    let b_version = b.get_versions()[0].clone();
     eprintln!("{} - {}", a_version, b_version);
-    for (a_number, b_number) in a_version.split(".").zip(b_version.split(".")) {
+    for (a_number, b_number) in a_version.split('.').zip(b_version.split('.')) {
         if a_number == b_number {
             continue;
         }
@@ -347,5 +328,5 @@ pub fn compare_versions(a: &RinthProject, b: &RinthProject) -> i8{
             return 1;
         }
     }
-    return 0;
+    0
 }

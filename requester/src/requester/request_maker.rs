@@ -1,41 +1,54 @@
-use reqwest::{header::HeaderMap, Response};
 use super::load_headers;
-use tokio::task::{JoinHandle, spawn};
 use crate::mod_searcher::Method;
+use reqwest::{header::HeaderMap, Response};
+use tokio::task::{spawn, JoinHandle};
 
-pub struct CurseRequester{ 
-    cliente: reqwest::Client, 
+pub struct CurseRequester {
+    cliente: reqwest::Client,
     headers: HeaderMap,
-} 
+}
 
-impl CurseRequester { 
-    pub fn new() -> CurseRequester { 
-        let mut req = CurseRequester{ 
-            cliente: reqwest::Client::new(), 
+impl CurseRequester {
+    pub fn new() -> CurseRequester {
+        let mut req = CurseRequester {
+            cliente: reqwest::Client::new(),
             headers: HeaderMap::new(),
         };
 
-        req.headers.insert("x-api-key", "$2a$10$6mO.gbGdm7elhecL3XMcxOby5RrftY2ufGTZxg3gocM1kDlF1UCuK".parse().unwrap());
-        req.headers.insert("Content-Type", "application/json".parse().unwrap());
-        req.headers.insert("Accept", "application/json".parse().unwrap());
-        
-        req 
-    } 
-    
-    pub fn get(&self, url: &str, method: Method, body: &str) 
--> JoinHandle<Result<reqwest::Response, reqwest::Error>>{
+        req.headers.insert(
+            "x-api-key",
+            "$2a$10$6mO.gbGdm7elhecL3XMcxOby5RrftY2ufGTZxg3gocM1kDlF1UCuK"
+                .parse()
+                .unwrap(),
+        );
+        req.headers
+            .insert("Content-Type", "application/json".parse().unwrap());
+        req.headers
+            .insert("Accept", "application/json".parse().unwrap());
 
-        let url  = url.to_owned();
+        req
+    }
+
+    pub fn get(
+        &self,
+        url: &str,
+        method: Method,
+        body: &str,
+    ) -> JoinHandle<Result<reqwest::Response, reqwest::Error>> {
+        let url = url.to_owned();
         let body = body.to_owned();
-    
-        let a_func; 
-        match method {
-            Method::GET  => a_func = self.cliente.get(&url).headers(self.headers.clone()).send(), 
-            Method::POST => a_func = self.cliente.post(&url).headers(self.headers.clone()).body(body).send()
-        }
 
-        let task = spawn(a_func);
-        task
+        let a_func = match method {
+            Method::GET => self.cliente.get(&url).headers(self.headers.clone()).send(),
+            Method::POST => self
+                .cliente
+                .post(&url)
+                .headers(self.headers.clone())
+                .body(body)
+                .send(),
+        };
+
+        spawn(a_func)
     }
 }
 
@@ -54,44 +67,52 @@ impl Requester {
         }
     }
 
-     pub async fn get_curse(&self, url: String, method: &str, body: &str) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
-        let resp: Response;
+    pub async fn get_curse(
+        &self,
+        url: String,
+        method: &str,
+        body: &str,
+    ) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
         let body = body.to_owned();
         let mut headers = HeaderMap::new();
         load_headers::load_headers("CURSE", &mut headers);
         headers.insert("Content-Type", "application/json".parse().unwrap());
         headers.insert("Accept", "application/json".parse().unwrap());
 
-        match method {
+        let resp = match method {
             "post" => {
-                let a = self.cliente.post(url).headers(self.headers.clone().unwrap_or_default()).body(body);
+                let a = self
+                    .cliente
+                    .post(url)
+                    .headers(self.headers.clone().unwrap_or_default())
+                    .body(body);
                 println!("{:?}", a);
-                resp = a.send().await?;
-            },
-            "get" => {
-                resp = self.cliente.get(url).headers(self.headers.clone().unwrap_or_default()).send().await?; 
-            },
-            _ => {
-                resp =  self.cliente.get(url).headers(self.headers.clone().unwrap_or_default()).send().await?;  
+                a.send().await?
             }
-        }
-       Ok(resp)    
-     }
- 
-    
+            "get" => {
+                self.cliente
+                    .get(url)
+                    .headers(self.headers.clone().unwrap_or_default())
+                    .send()
+                    .await?
+            }
+            _ => {
+                self.cliente
+                    .get(url)
+                    .headers(self.headers.clone().unwrap_or_default())
+                    .send()
+                    .await?
+            }
+        };
+        Ok(resp)
+    }
 
     pub async fn get(&self, url: String) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
-        let resp: Response;
-        match self.headers.clone() {
-            Some(h) => {
-                resp = self.cliente.get(url).headers(h).send().await?;
-            }
-            None => {
-                resp = self.cliente.get(url).send().await?;
-            }
-        }
+        let resp = match self.headers.clone() {
+            Some(h) => self.cliente.get(url).headers(h).send().await?,
+            None => self.cliente.get(url).send().await?,
+        };
         Ok(resp)
-        
     }
 
     #[allow(dead_code)]

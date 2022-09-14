@@ -1,7 +1,6 @@
-use std::{sync::RwLock, cell::Cell};
+use std::sync::RwLock;
 
-pub const HELP_MSG: &str = 
-"
+pub const HELP_MSG: &str = "
 -d Download the specified modpack in the specified route
 -u Upgrade the specified modpack
 --make Make a modpack file from specified route
@@ -59,15 +58,3 @@ pub const PROJECT: &str = "--project";
 pub const RESOURCEPACKS: &str = "--resourcepacks";
 
 pub const RINTH_JSON_NAME: &str = "modrinth.index.json";
-
-
-
-
-
-
-
-
-
-
-
-

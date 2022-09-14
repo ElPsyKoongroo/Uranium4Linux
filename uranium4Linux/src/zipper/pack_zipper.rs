@@ -10,7 +10,7 @@ use std::{
 };
 use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 
-pub fn compress_pack(name: &str, path: &str, raw_mods: Vec<String>) -> ZipResult<()> {
+pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<()> {
     let path = &fix_path(path);
 
     let zip_file = File::create(name.to_owned() + constants::EXTENSION).unwrap();
@@ -34,7 +34,7 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: Vec<String>) -> ZipResult
 
     // Finally add the modpack.json file
     zip.start_file(name.to_owned() + ".json", options)?;
-    zip.write(&modpack_bytes)?;
+    zip.write_all(&modpack_bytes)?;
     zip.finish()?;
 
     Ok(())
@@ -46,14 +46,14 @@ fn search_files(minecraft_path: &str, relative_path: &str, config_files: &mut Ve
         get_new_files(&(minecraft_path.to_owned() + relative_path), relative_path);
 
     // Go through the sub_config_files vector and set the right tipe to each file. Then add them to config_files
-    for config_file in sub_config_files.iter_mut() {
+    for config_file in &mut sub_config_files {
         let path: PathBuf = (minecraft_path.to_owned() + &config_file.get_absolute_path()).into();
         if Path::is_file(&path) {
             (*config_file).set_type(FileType::Data);
-            config_files.push(config_file.to_owned());
+            config_files.push(config_file.clone());
         } else {
             (*config_file).set_type(FileType::Dir);
-            config_files.push(config_file.to_owned());
+            config_files.push(config_file.clone());
             let new_path = relative_path.to_owned() + &config_file.get_name() + "/";
             search_files(minecraft_path, &new_path, config_files);
         }
@@ -103,7 +103,7 @@ fn match_file(
         FileType::Data => {
             let absolute_path = PathBuf::from(root_path.to_owned() + &file.get_absolute_path());
             let rel_path = file.get_absolute_path();
-            append_config_file(absolute_path, &rel_path, zip, options);
+            append_config_file(&absolute_path, &rel_path, zip, options);
         }
 
         FileType::Dir => {
@@ -111,12 +111,12 @@ fn match_file(
                 .unwrap();
         }
 
-        _ => {}
+        FileType::Other => {}
     }
 }
 
 fn append_config_file(
-    absolute_path: PathBuf,
+    absolute_path: &PathBuf,
     rel_path: &str,
     zip: &mut ZipWriter<File>,
     option: FileOptions,
@@ -133,12 +133,12 @@ fn append_config_file(
 fn add_raw_mods(
     path: &str,
     zip: &mut ZipWriter<File>,
-    raw_mods: Vec<String>,
+    raw_mods: &[String],
     options: FileOptions,
 ) {
     zip.add_directory("mods", options).unwrap();
 
-    for jar_file in raw_mods.iter() {
+    for jar_file in raw_mods {
         let file_name = "mods/".to_owned() + jar_file;
 
         #[cfg(debug_assertions)]

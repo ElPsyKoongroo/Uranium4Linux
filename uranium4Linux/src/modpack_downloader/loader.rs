@@ -1,8 +1,8 @@
-use super::functions::*;
+use super::functions::get_writters;
 use crate::code_functions::fix_path;
 use core::panic;
 use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
-use mine_data_strutcs::uranium_modpack::modpack_struct::*;
+use mine_data_strutcs::uranium_modpack::modpack_struct::{UraniumPack, load_pack};
 use requester::async_pool;
 use reqwest::Response;
 use std::fs;
@@ -15,9 +15,7 @@ pub struct ModPackDownloader {
     n_threads: usize,
 }
 
-async fn request_maker(
-    minecraft_mods: &Vec<Mods>,
-) -> Vec<JoinHandle<Result<Response, reqwest::Error>>> {
+fn request_maker(minecraft_mods: &Vec<Mods>) -> Vec<JoinHandle<Result<Response, reqwest::Error>>> {
     let mut responses: Vec<JoinHandle<Result<Response, reqwest::Error>>> =
         Vec::with_capacity(minecraft_mods.len());
     let cliente = reqwest::Client::new();
@@ -53,24 +51,24 @@ impl ModPackDownloader {
         self.pack = load_pack(pack_path);
     }
 
-    pub fn set_path(&mut self, mut _path: String) {
+    pub fn set_path(&mut self, mut new_path: String) {
         // In case the user enter "/some/random/path" and forgot the last '/'
-        _path = fix_path(&_path).to_owned();
-        _path.push_str("mods/");
+        new_path = fix_path(&new_path);
+        new_path.push_str("mods/");
 
-        if !std::path::Path::new(&_path).exists() {
-            fs::create_dir(&_path).unwrap();
+        if !std::path::Path::new(&new_path).exists() {
+            fs::create_dir(&new_path).unwrap();
         }
 
-        self.path = _path;
+        self.path = new_path;
     }
 
     pub async fn start<'a>(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("Running {} threads!", self.n_threads);
-        if self.n_threads != 0 {
-            Ok(self.limited_pool().await)
-        } else {
+        if self.n_threads == 0 {
             self.unlimited_pool().await
+        } else {
+            Ok(self.limited_pool().await)
         }
     }
 
@@ -80,7 +78,7 @@ impl ModPackDownloader {
         match &self.pack {
             Some(modpack) => {
                 minecraft_mods = modpack.mods();
-                responses = request_maker(minecraft_mods).await;
+                responses = request_maker(minecraft_mods);
             }
             None => panic!("No modpack !"),
         }
@@ -92,13 +90,10 @@ impl ModPackDownloader {
 
     // In case the user want to run Uranium with N threads
     pub async fn limited_pool(&mut self) {
-        let modpack_mods;
-        match &self.pack {
-            Some(modpack) => {
-                modpack_mods = modpack.mods();
-            }
+        let modpack_mods = match &self.pack {
+            Some(modpack) => modpack.mods(),
             None => panic!("No modpack!"),
-        }
+        };
 
         // Chunk the modpack_mods vector into chunks of n_threads elements
         let chunks = modpack_mods
@@ -107,7 +102,7 @@ impl ModPackDownloader {
 
         for chunk in chunks {
             let vec_chunk = chunk.to_vec();
-            let responses = request_maker(&vec_chunk).await;
+            let responses = request_maker(&vec_chunk);
             self.download_and_write(responses, &vec_chunk)
                 .await
                 .unwrap();
@@ -117,7 +112,7 @@ impl ModPackDownloader {
     async fn download_and_write(
         &self,
         responses: Vec<JoinHandle<Result<Response, reqwest::Error>>>,
-        minecraft_mods: &Vec<Mods>,
+        minecraft_mods: &[Mods],
     ) -> Result<(), std::fmt::Error> {
         // Start the pool request
         let mut pool = async_pool::AsyncPool::new();
@@ -128,7 +123,7 @@ impl ModPackDownloader {
 
         let mod_names: Vec<String> = minecraft_mods
             .iter()
-            .map(|m| m.get_file_name())
+            .map(Mods::get_file)
             .collect::<Vec<String>>();
 
         // Start the writting pool

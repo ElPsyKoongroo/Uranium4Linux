@@ -33,7 +33,7 @@ impl CurseFile {
     }
 
     pub fn get_gameId(&self) -> usize {
-        self.gameId.clone().unwrap_or_default()
+        self.gameId.unwrap_or_default()
     }
 
     pub fn get_modId(&self) -> usize {

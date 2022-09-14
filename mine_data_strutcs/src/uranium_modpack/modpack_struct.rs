@@ -32,7 +32,7 @@ impl UraniumPack {
         let mod_vec = mods
             .versions
             .iter()
-            .map(|x| Mods::from_RinthVersion(x))
+            .map(Mods::from_RinthVersion)
             .collect::<Vec<Mods>>();
 
         UraniumPack {
@@ -110,10 +110,10 @@ pub fn load_pack(pack_path: &str) -> Option<UraniumPack> {
     };
 
     match deserializ_pack(pack_path) {
-        Ok(e) => return Some(e),
+        Ok(e) => Some(e),
         Err(error) => {
             eprintln!("Error deserializing the pack \n\n{error}");
-            return None;
+            None
         }
     }
 }

@@ -11,7 +11,7 @@ pub struct ModRinth;
 
 impl ModRinth {
     pub fn search() -> String {
-        format!("{}", BASE_MRN_URL)
+        BASE_MRN_URL2.to_string()
     }
 
     pub fn search_for(limit: u32, offset: u32) -> String {

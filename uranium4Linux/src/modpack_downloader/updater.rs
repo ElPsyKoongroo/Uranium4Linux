@@ -27,7 +27,7 @@ pub async fn update_modpack(modpack_path: &str) {
 }
 
 /// Update the old versions of the mods with the new ones. <br>
-/// Consumes mods_to_update.
+/// Consumes `mods_to_update`.
 fn make_updates(mods_to_update: VecDeque<Mods>, updated_modpack: &mut UraniumPack) {
     mods_to_update
         .into_iter()
@@ -35,7 +35,7 @@ fn make_updates(mods_to_update: VecDeque<Mods>, updated_modpack: &mut UraniumPac
 }
 
 /// Sorts the modpack mods by their identifiers
-fn sort_mods(mods: RinthVersions, identifiers: &Vec<String>) -> RinthVersions {
+fn sort_mods(mods: RinthVersions, identifiers: &[String]) -> RinthVersions {
     let mut sorted_mods: RinthVersions = RinthVersions::new();
 
     for identifier in identifiers {
@@ -49,7 +49,7 @@ fn sort_mods(mods: RinthVersions, identifiers: &Vec<String>) -> RinthVersions {
 }
 
 /// Compare every mod of the old modpack with the last version found.
-async fn get_updates(identifiers: &Vec<String>) -> VecDeque<Mods> {
+async fn get_updates(identifiers: &[String]) -> VecDeque<Mods> {
     let mut mods_lastests_versions: RinthVersions = RinthVersions::new();
     let mut updated_mods: VecDeque<Mods> = VecDeque::new();
 
@@ -71,7 +71,7 @@ fn is_newest(old_mod: &Mods, new_mod: &Mods) -> bool {
 }
 
 /// Get the latest versions of all the idetifiers
-async fn get_new_versions(identifiers: &Vec<String>, mods_info: &mut RinthVersions) {
+async fn get_new_versions(identifiers: &[String], mods_info: &mut RinthVersions) {
     let mut pool = AsyncPool::new();
     for id in identifiers.iter() {
         let task = search_mod_by_id(id);

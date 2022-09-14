@@ -10,7 +10,7 @@ use crate::variables::constants::TEMP_DIR;
 
 
 pub async fn unzip_pack(file_path: &str, minecraft_root: &str, n_threads: usize) -> ZipResult<()>{
-    let json_name = file_path.split("/").last().unwrap().strip_suffix(EXTENSION).unwrap().to_owned() + ".json";
+    let json_name = file_path.split('/').last().unwrap().strip_suffix(EXTENSION).unwrap().to_owned() + ".json";
 
     unzip_temp_pack(file_path);
 
