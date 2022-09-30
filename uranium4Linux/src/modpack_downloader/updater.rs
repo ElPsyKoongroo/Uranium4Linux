@@ -1,14 +1,27 @@
-use mine_data_strutcs::rinth::rinth_mods::{RinthVersion, RinthVersions};
-use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
-use mine_data_strutcs::uranium_modpack::modpack_struct::*;
-use crate::variables::constants::{EXTENSION, TEMP_DIR};
-use crate::zipper::pack_unzipper::unzip_temp_pack;
-use regex::Regex;
+use crate::code_functions::N_THREADS;
+use crate::hashes::rinth_hash;
+use mine_data_strutcs::rinth::rinth_mods::{Attributes, RinthVersion, RinthVersions};
+use mine_data_strutcs::url_maker::maker::ModRinth;
 use requester::async_pool::AsyncPool;
-use requester::mod_searcher::{search_mod_by_id, search_version_by_id};
-use std::collections::VecDeque;
+use requester::mod_searcher::search_by_url;
 
-pub async fn update_modpack(modpack_path: &str) {
+pub async fn update_modpack(minecraft_path: &str) {
+    let mods_path = minecraft_path.to_owned() + "mods/";
+    let mods_names = std::fs::read_dir(&mods_path).unwrap();
+    let mods_hashes = mods_names
+        .map(|f| rinth_hash(f.unwrap().path().to_str().unwrap()))
+        .collect::<Vec<String>>();
+
+    let mods_ids = get_identifiers_from_hashes(&mods_hashes).await;
+
+    /* TODO
+     *
+     * 1. Get mods_lastests_version for the current minecraft version
+     * 2. Compare if the installed one is the new one
+     * 3. Update
+     */
+
+    /*
     unzip_temp_pack(modpack_path);
 
     let json_name = TEMP_DIR.to_owned() + &modpack_path.replace(EXTENSION, ".json");
@@ -24,8 +37,89 @@ pub async fn update_modpack(modpack_path: &str) {
     updated_modpack.set_name(old_modpack.get_name());
     updated_modpack.set_version(old_modpack.get_version());
     updated_modpack.write_mod_pack();
+    */
 }
 
+async fn get_identifiers_from_hashes(mods_hashes: &[String]) -> Vec<String> {
+    let client = reqwest::Client::new();
+    let mut ids: Vec<String> = Vec::with_capacity(mods_hashes.len());
+    for chunk in mods_hashes.chunks(N_THREADS()) {
+        let mut pool = AsyncPool::new();
+        let mut tasks = Vec::with_capacity(N_THREADS());
+
+        chunk
+            .into_iter()
+            .for_each(|hash| tasks.push(search_by_url(&client, &ModRinth::hash(&hash))));
+
+        pool.push_request_vec(tasks);
+        pool.start().await;
+        let responses: Vec<reqwest::Response> =
+            pool.get_done_request().into_iter().flatten().collect();
+        let rinth_versions = get_parsed_response::<RinthVersion>(responses).await;
+        let mut rinth_ids = rinth_versions
+            .iter()
+            .map(RinthVersion::get_project_id)
+            .collect::<Vec<String>>();
+        ids.append(&mut rinth_ids);
+    }
+    ids
+}
+
+async fn get_parsed_response<'a, T>(responses: Vec<reqwest::Response>) -> Vec<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let mut parsed_vec = Vec::with_capacity(responses.len());
+
+    for response in responses.into_iter() {
+        parsed_vec.push(response.json::<T>().await.unwrap())
+    }
+    parsed_vec
+}
+
+async fn get_updated_mods(ids: &[String]) {
+    let mut lastests_versions = Vec::with_capacity(ids.len());
+    let cliente = reqwest::Client::new();
+    for id_chunk in ids.chunks(N_THREADS()) {
+        let mut pool = AsyncPool::new();
+        let mut tasks = Vec::with_capacity(id_chunk.len());
+
+        id_chunk
+            .into_iter()
+            .for_each(|id| tasks.push(search_by_url(&cliente, &ModRinth::mod_versions_by_id(id))));
+
+        pool.push_request_vec(tasks);
+        pool.start().await;
+
+        let responses: Vec<reqwest::Response> =
+            pool.get_done_request().into_iter().flatten().collect();
+
+        let rinth_versions: Vec<RinthVersions> = get_parsed_response(responses).await;
+    }
+}
+
+fn get_lastest_versions(rinth_versions: &[RinthVersions], minecraft_versions: usize){
+    let fabric_versions: Vec<&[RinthVersion]> = rinth_versions.iter().map(|v| v.filter_by(Attributes::Loader, "fabric").as_slice()).collect();
+    
+    for mod_versions in fabric_versions {
+        if mod_versions.iter().any(|mod_v| mod_v.get_versions_usize().iter().any(|v| *v == minecraft_versions)) {
+            todo!()
+        }
+    }
+    
+}
+
+fn get_lastest_version(mod_versions: &[RinthVersion], minecraft_version: usize) -> RinthVersion{
+    let lastest_version_index = 0;
+
+    for version in mod_versions {
+        if version.get_versions_usize().iter().any(|v| *v == minecraft_version) {
+            return version
+        }
+    }
+}
+
+/*
 /// Update the old versions of the mods with the new ones. <br>
 /// Consumes `mods_to_update`.
 fn make_updates(mods_to_update: VecDeque<Mods>, updated_modpack: &mut UraniumPack) {
@@ -65,9 +159,9 @@ async fn get_updates(identifiers: &[String]) -> VecDeque<Mods> {
 }
 
 #[allow(dead_code)]
-/// True if old_mod is not the lastest version of the mod
+/// True if `old_mod` is not the lastest version of the mod
 fn is_newest(old_mod: &Mods, new_mod: &Mods) -> bool {
-    return old_mod.get_file() != new_mod.get_file();
+    old_mod.get_file() != new_mod.get_file()
 }
 
 /// Get the latest versions of all the idetifiers
@@ -102,7 +196,7 @@ fn get_project_identifiers(modpack: &UraniumPack) -> Vec<String> {
 
     for minecraft_mod in modpack.mods() {
         for cap in re.captures_iter(minecraft_mod.get_file().as_str()) {
-            identifiers.push(cap[1].to_owned())
+            identifiers.push(cap[1].to_owned());
         }
     }
     identifiers
@@ -137,3 +231,4 @@ async fn resolve_dependencies(mods: &mut RinthVersions) {
 
     dep_vector.into_iter().for_each(|dep| mods.push(dep));
 }
+*/

@@ -2,7 +2,7 @@ use mine_data_strutcs::rinth::rinth_mods::*;
 use mine_data_strutcs::url_maker::maker;
 use serde::{de::DeserializeOwned, Serialize};
 
-pub enum SEARCH_TYPE {
+pub enum SearchType {
     QUERRY(String),
     FOR(u32, u32),
     MOD(String),
@@ -12,15 +12,15 @@ pub enum SEARCH_TYPE {
     RESOURCEPACKS(u32, u32),
 }
 
-pub async fn search(search: SEARCH_TYPE) {
+pub async fn search(search: SearchType) {
     match search {
-        SEARCH_TYPE::QUERRY(_) => {todo!()}
-        SEARCH_TYPE::FOR(limit, offset) => search_for(limit, offset).await,
-        SEARCH_TYPE::MOD(_) => {todo!()}
-        SEARCH_TYPE::PROJECT(_) => {todo!()}
-        SEARCH_TYPE::VERSION(id) => search_version(&id).await,
-        SEARCH_TYPE::VERSIONS(_) => {todo!()}
-        SEARCH_TYPE::RESOURCEPACKS(limit, offset) => search_sourcepacks(limit, offset).await,
+        SearchType::QUERRY(_) => {todo!()}
+        SearchType::FOR(limit, offset) => search_for(limit, offset).await,
+        SearchType::MOD(_) => {todo!()}
+        SearchType::PROJECT(_) => {todo!()}
+        SearchType::VERSION(id) => search_version(&id).await,
+        SearchType::VERSIONS(_) => {todo!()}
+        SearchType::RESOURCEPACKS(limit, offset) => search_sourcepacks(limit, offset).await,
     }
 }
 
@@ -29,7 +29,7 @@ async fn get(id: &str) {
     let url = maker::ModRinth::mod_version_by_id(id);
     let version = get_data::<RinthVersion>(&url).await;
     let data = get_data::<Vec<u8>>(&version.get_file_url()).await;
-    write_file(data).await;
+    write_file(&version.get_file_name(), data).await;
 }
 
 async fn search_sourcepacks(limit: u32, offset: u32) {
@@ -63,6 +63,6 @@ async fn write_data<T: Serialize>(data: T) {
     tokio::fs::write("response.json", bytes).await.unwrap();
 }
 
-async fn write_file(data: Vec<u8>) {
-    tokio::fs::write("mod.jar", data).await.unwrap();
+async fn write_file(file_name: &str, data: Vec<u8>) {
+    tokio::fs::write(file_name, data).await.unwrap();
 }

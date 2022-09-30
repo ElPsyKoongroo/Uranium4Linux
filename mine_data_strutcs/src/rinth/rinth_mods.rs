@@ -23,7 +23,7 @@ pub struct SearchProjects {
     hits: Vec<RinthProject>,
 }
 
-/// RinthMod pretends to be the structure for the response of
+/// `RinthMod` pretends to be the structure for the response of
 /// https://api.modrinth.com/v2/project/{id | slug}
 /// This type is also usable when requesting searchs for rinth api
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -121,6 +121,13 @@ impl RinthVersion {
 
     pub fn get_versions(&self) -> &Vec<String> {
         &self.game_versions
+    }
+
+    pub fn get_versions_usize(&self) -> Vec<usize> {
+        self.game_versions
+            .iter()
+            .flat_map(|v| v.replace('.', "").parse::<usize>())
+            .collect()
     }
 
     pub fn get_file_url(&self) -> String {
@@ -324,9 +331,8 @@ pub fn compare_versions(a: &RinthProject, b: &RinthProject) -> i8 {
 
         if a_number > b_number {
             return -1;
-        } else {
-            return 1;
         }
+        return 1;
     }
     0
 }

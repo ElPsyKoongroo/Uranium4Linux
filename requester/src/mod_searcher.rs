@@ -42,11 +42,7 @@ pub fn search_version_by_id(id: &str) -> task::JoinHandle<reqwest::Response> {
     task::spawn(a_func)
 }
 
-pub fn search_by_url(url: &str) -> task::JoinHandle<reqwest::Response> {
+pub fn search_by_url(cliente: &reqwest::Client, url: &str) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
     let url = url.to_owned();
-    let a_func = async move {
-        let cliente = reqwest::Client::new();
-        cliente.get(&url).send().await.unwrap()
-    };
-    task::spawn(a_func)
+    tokio::task::spawn(cliente.get(&url).send())
 }

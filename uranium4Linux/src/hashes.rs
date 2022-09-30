@@ -4,7 +4,7 @@ use std::fs;
 use std::io::Read;
 use murmurhash32::murmurhash2;
 
-fn get_sha1_from_file(file_path: &String) -> String {
+fn get_sha1_from_file(file_path: &str) -> String {
     let mut hasher = Sha1::new();
     let mut file = fs::File::open(file_path).unwrap();
     let metadata = fs::metadata(file_path).expect("unable to read metadata");
@@ -16,7 +16,7 @@ fn get_sha1_from_file(file_path: &String) -> String {
     temp.encode_hex::<String>()
 }
 
-pub fn rinth_hash(path: &String) -> String {
+pub fn rinth_hash(path: &str) -> String {
     get_sha1_from_file(path)
 }
 

@@ -11,7 +11,7 @@ use reqwest::Response;
 pub async fn download_rinth_pack(path: &str, destination_path: &str) {
     unzip_temp_pack(path);
 
-    let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON_NAME)).unwrap();
+    let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON_NAME));
 
     let file_links: Vec<String> = rinth_pack
         .get_files()

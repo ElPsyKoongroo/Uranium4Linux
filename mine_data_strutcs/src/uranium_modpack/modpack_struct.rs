@@ -62,7 +62,7 @@ impl UraniumPack {
     }
 
     pub fn append_mods(&mut self, mine_mods: &mut Vec<Mods>) {
-        self.mods.append(mine_mods)
+        self.mods.append(mine_mods);
     }
 
     pub fn set_name(&mut self, name: String) {

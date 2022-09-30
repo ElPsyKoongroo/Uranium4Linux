@@ -2,7 +2,6 @@
 #![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
-use serde_json::Error;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RinthModpack {
@@ -42,26 +41,20 @@ impl RinthMdFiles {
 }
 
 
-fn deserializ_pack(path: &str) -> Result<RinthModpack, Error> {
+fn deserializ_pack(path: &str) -> RinthModpack {
     let j = read_to_string(path).unwrap();
     let pack: RinthModpack = serde_json::from_str(&j).unwrap();
-    Ok(pack)
+    pack
 }
 
-pub fn load_rinth_pack(pack_path: &str) -> Option<RinthModpack> {
+pub fn load_rinth_pack(pack_path: &str) -> RinthModpack {
     match read_to_string(pack_path) {
         Ok(_) => {}
         Err(error) => {
             eprintln!("Error reading the pack \n\n{error}");
-            return None;
+            panic!();
         }
     };
 
-    match deserializ_pack(pack_path) {
-        Ok(e) => Some(e),
-        Err(error) => {
-            eprintln!("Error deserializing the pack \n\n{error}");
-            None
-        }
-    }
+    deserializ_pack(pack_path) 
 }

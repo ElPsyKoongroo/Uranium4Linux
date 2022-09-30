@@ -26,13 +26,13 @@ impl<T> AsyncPool<T> {
         self.request_pool.push(request);
     }
 
-    pub fn push_request_vec(&mut self, mut _requests: Vec<JoinHandle<T>>){
-        self.request_pool.append(&mut _requests);
+    pub fn push_request_vec(&mut self, mut new_requests: Vec<JoinHandle<T>>){
+        self.request_pool.append(&mut new_requests);
     }
 
     pub async fn start(&mut self){
         self.items = self.request_pool.len();
-        self.not_done_request = Vec::from_iter(0..self.items);
+        self.not_done_request = (0..self.items).collect();
         self.ordered_requests = HashMap::with_capacity(self.items);
         time::sleep(Duration::from_millis(PRE_TIME)).await;
         while !self.not_done_request.is_empty() {
@@ -42,7 +42,7 @@ impl<T> AsyncPool<T> {
 
     async fn request_loop(&mut self) {
 
-        for i in self.not_done_request.clone().into_iter() {
+        for i in self.not_done_request.clone() {
             let sleep = time::sleep(Duration::from_millis(20));
             tokio::pin!(sleep);
 

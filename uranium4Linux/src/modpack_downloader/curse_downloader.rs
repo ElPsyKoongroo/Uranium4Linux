@@ -7,7 +7,7 @@ use requester::{
     async_pool::AsyncPool, mod_searcher::Method, requester::request_maker::CurseRequester,
 };
 
-use super::functions::*;
+use super::functions::{get_writters, overrides};
 use reqwest::Response;
 
 pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {

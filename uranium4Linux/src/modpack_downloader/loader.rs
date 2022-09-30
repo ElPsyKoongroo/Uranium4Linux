@@ -68,7 +68,8 @@ impl ModPackDownloader {
         if self.n_threads == 0 {
             self.unlimited_pool().await
         } else {
-            Ok(self.limited_pool().await)
+            self.limited_pool().await;
+            Ok(())
         }
     }
 

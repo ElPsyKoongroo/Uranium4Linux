@@ -1,6 +1,6 @@
 use super::load_headers;
 use crate::mod_searcher::Method;
-use reqwest::{header::HeaderMap, Response};
+use reqwest::header::HeaderMap;
 use tokio::task::{spawn, JoinHandle};
 
 pub struct CurseRequester {

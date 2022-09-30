@@ -1,4 +1,3 @@
-#![warn(clippy::pedantic)]
 #![allow(non_snake_case)]
 mod checker;
 mod code_functions;
@@ -14,7 +13,7 @@ use code_functions::{fix_path, get_bool_element, get_parse_element, update, N_TH
 use modpack_downloader::curse_downloader::curse_modpack_downloader;
 use modpack_downloader::rinth_downloader::download_rinth_pack;
 use modpack_maker::maker::make_modpack;
-use searcher::rinth::SEARCH_TYPE;
+use searcher::rinth::SearchType;
 use std::env;
 use variables::constants::{
     CURSE_FLAG, DEFAULT_NTHREADS, DOWNLOAD, FILE_FLAG, FOR, HELP, HELP_MSG, MAKE, MOD, NTHREADS,
@@ -23,19 +22,19 @@ use variables::constants::{
 use zip::result::ZipError;
 use zipper::pack_unzipper::unzip_pack;
 
-fn request_arg_parser(args: &[String]) -> Option<SEARCH_TYPE> {
+fn request_arg_parser(args: &[String]) -> Option<SearchType> {
     match args.iter().position(|f| f == REQUEST) {
         Some(index) => match args[index + 1].as_str() {
-            QUERY => Some(SEARCH_TYPE::QUERRY(args[index + 2].clone())),
-            FOR => Some(SEARCH_TYPE::FOR(
+            QUERY => Some(SearchType::QUERRY(args[index + 2].clone())),
+            FOR => Some(SearchType::FOR(
                 args[index + 2].parse().unwrap(),
                 args[index + 3].parse().unwrap(),
             )),
-            VERSION => Some(SEARCH_TYPE::VERSION(args[index + 1].clone())),
-            VERSIONS => Some(SEARCH_TYPE::VERSIONS(args[index + 1].clone())),
-            MOD => Some(SEARCH_TYPE::MOD(args[index + 1].clone())),
-            PROJECT => Some(SEARCH_TYPE::PROJECT(args[index + 1].clone())),
-            RESOURCEPACKS => Some(SEARCH_TYPE::RESOURCEPACKS(
+            VERSION => Some(SearchType::VERSION(args[index + 1].clone())),
+            VERSIONS => Some(SearchType::VERSIONS(args[index + 1].clone())),
+            MOD => Some(SearchType::MOD(args[index + 1].clone())),
+            PROJECT => Some(SearchType::PROJECT(args[index + 1].clone())),
+            RESOURCEPACKS => Some(SearchType::RESOURCEPACKS(
                 args[index + 2].parse().unwrap(),
                 args[index + 3].parse().unwrap(),
             )),

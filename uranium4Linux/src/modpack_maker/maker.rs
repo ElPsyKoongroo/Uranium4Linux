@@ -75,9 +75,8 @@ pub async fn make_modpack(path: &str, n_threads: usize) {
 
 fn get_mods(minecraft_path: &Path) -> Vec<(ModHashes, String)> {
     let mut hashes_names = Vec::new();
-    if !minecraft_path.is_dir() {
-        panic!("{:?} is not a dir", minecraft_path)
-    }
+    assert!(minecraft_path.is_dir(), "{:?} is not a dir", minecraft_path);
+
     let mods_path = minecraft_path.join("mods/");
 
     let mods = match read_dir(&mods_path) {
