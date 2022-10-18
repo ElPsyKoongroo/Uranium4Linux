@@ -159,25 +159,17 @@ async fn search_mod(item: &[(ModHashes, String)], n_threads: usize) -> (Vec<Mods
 
     for (i, rinth) in rinth_parses.into_iter().enumerate() {
         match rinth {
-            Some(m) => mods_data.push(Mods::from_RinthVersion(&m)),
-            None => {raw_mods.push(item[i].1.clone())}
+            Some(m) => { 
+                println!("{} OK", item[i].1);
+                mods_data.push(Mods::from_RinthVersion(&m))
+            },
+            None => {
+                println!("{} OK", item[i].1);
+                raw_mods.push(item[i].1.clone())
+            }
         }
     }
 
-    /*
-    for (rinth, curse) in rinth_parses.into_iter().zip(curse_parses.into_iter()) {
-        // First try to add from Rinth
-        if rinth.is_some() {
-            let aux = Mods::from_RinthVersion(&rinth.unwrap());
-            #[cfg(feature = "console_output")]
-            println!("MAKER {} OK", aux.get_file_name());
-            mods_data.push(aux);
-        }
-        // If Rinth isnt avaliable, try with curse
-        else if curse.is_some() {
-            mods_data.push(Mods::from_CurseVersion(curse.unwrap().data.get_file()));
-        }
-    }*/
     (mods_data,raw_mods)
 }
 
