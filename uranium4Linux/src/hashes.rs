@@ -8,7 +8,7 @@ fn get_sha1_from_file(file_path: &str) -> String {
     let mut hasher = Sha1::new();
     let mut file = fs::File::open(file_path).unwrap();
     let metadata = fs::metadata(file_path).expect("unable to read metadata");
-    let mut buffer = vec![0; metadata.len() as usize];
+    let mut buffer = Vec::with_capacity(metadata.len() as usize); //vec![0; metadata.len() as usize];
     file.read_to_end(&mut buffer).expect("buffer overflow");
 
     hasher.update(buffer);

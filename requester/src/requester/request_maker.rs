@@ -2,6 +2,39 @@ use super::load_headers;
 use crate::mod_searcher::Method;
 use reqwest::header::HeaderMap;
 use tokio::task::{spawn, JoinHandle};
+use tokio::task;
+
+
+pub struct RinthRequester {
+    cliente: reqwest::Client,
+    headers: HeaderMap
+}
+
+impl RinthRequester {
+    pub fn new() -> RinthRequester {
+        let mut req = RinthRequester {
+            cliente: reqwest::Client::new(),
+            headers: HeaderMap::new(),
+        };
+
+        req.headers.insert(
+            "x-api-key",
+            "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"
+                .parse()
+                .unwrap(),
+        );
+        req.headers
+            .insert("Content-Type", "application/json".parse().unwrap());
+        req.headers
+            .insert("Accept", "application/json".parse().unwrap());
+
+        req
+    }
+    pub fn search_by_url(&self, url: &str) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
+        let url = url.to_owned();
+        tokio::task::spawn(self.cliente.get(&url).headers(self.headers.clone()).send())
+    }
+}
 
 pub struct CurseRequester {
     cliente: reqwest::Client,

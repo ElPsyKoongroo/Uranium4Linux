@@ -2,7 +2,7 @@ use super::functions::get_writters;
 use crate::code_functions::fix_path;
 use core::panic;
 use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
-use mine_data_strutcs::uranium_modpack::modpack_struct::{UraniumPack, load_pack};
+use mine_data_strutcs::uranium_modpack::modpack_struct::{load_pack, UraniumPack};
 use requester::async_pool;
 use reqwest::Response;
 use std::fs;
@@ -124,7 +124,7 @@ impl ModPackDownloader {
 
         let mod_names: Vec<String> = minecraft_mods
             .iter()
-            .map(Mods::get_file)
+            .map(Mods::get_file_name)
             .collect::<Vec<String>>();
 
         // Start the writting pool

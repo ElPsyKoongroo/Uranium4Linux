@@ -17,9 +17,9 @@ pub async fn search(search: SearchType) {
         SearchType::QUERRY(_) => {todo!()}
         SearchType::FOR(limit, offset) => search_for(limit, offset).await,
         SearchType::MOD(_) => {todo!()}
-        SearchType::PROJECT(_) => {todo!()}
+        SearchType::PROJECT(id) => search_project(&id).await,
         SearchType::VERSION(id) => search_version(&id).await,
-        SearchType::VERSIONS(_) => {todo!()}
+        SearchType::VERSIONS(id) => search_versions(&id).await,
         SearchType::RESOURCEPACKS(limit, offset) => search_sourcepacks(limit, offset).await,
     }
 }
@@ -30,6 +30,18 @@ async fn get(id: &str) {
     let version = get_data::<RinthVersion>(&url).await;
     let data = get_data::<Vec<u8>>(&version.get_file_url()).await;
     write_file(&version.get_file_name(), data).await;
+}
+
+async fn search_project(id: &str) {
+    let url = maker::ModRinth::get_project_by_id(id);
+    let data = get_data::<RinthProject>(&url).await;
+    write_data(data).await;
+}
+
+async fn search_versions(id: &str) { 
+    let url = maker::ModRinth::mod_version_by_id(id);
+    let data = get_data::<RinthVersion>(&url).await;
+    write_data(data).await;
 }
 
 async fn search_sourcepacks(limit: u32, offset: u32) {

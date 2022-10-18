@@ -59,7 +59,7 @@ impl RinthProject {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Dependency {
     version_id: Option<String>,
     project_id: Option<String>,
@@ -84,7 +84,7 @@ impl Dependency {
 
 /// RinthProject pretends to be the response for:
 /// https://api.modrinth.com/v2/version/{version id}
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct RinthVersion {
     id: String,
     project_id: String,
@@ -268,7 +268,7 @@ impl fmt::Display for RinthVersions {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct RinthFile {
     pub url: String,
     pub filename: String,

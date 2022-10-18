@@ -53,7 +53,7 @@ pub async fn make_modpack(path: &str, n_threads: usize, attr: ModAttributes) {
 pub async fn make_modpack(path: &str, n_threads: usize) {
     let hash_filename = get_mods(Path::new(path));
 
-    let mut uranium_pack = search_mods_for_modpack(hash_filename, n_threads).await;
+    let (mut uranium_pack, raw_mods) = search_mods_for_modpack(hash_filename, n_threads).await;
 
     let mp_name = easy_input::input("Modpack name: ", String::from("Modpack"));
     let mp_version = easy_input::input("Modpack version: ", String::from("1.0"));
@@ -68,7 +68,7 @@ pub async fn make_modpack(path: &str, n_threads: usize) {
 
     uranium_pack.write_mod_pack_with_name(&json_name);
 
-    compress_pack(&mp_name, path, &Vec::new() /*not_found_mods*/).unwrap();
+    compress_pack(&mp_name, path, &raw_mods /*not_found_mods*/).unwrap();
 
     std::fs::remove_file(json_name).unwrap();
 }
@@ -111,41 +111,24 @@ fn get_mods(minecraft_path: &Path) -> Vec<(ModHashes, String)> {
 async fn search_mods_for_modpack(
     hash_filename: Vec<(ModHashes, String)>,
     n_threads: usize,
-) -> UraniumPack {
-    let mut mods = search_mod(&hash_filename, n_threads).await;
+) -> (UraniumPack, Vec<String>) {
+    let (mut mods, raw) = search_mod(&hash_filename, n_threads).await;
     let mut uranium_pack = UraniumPack::new();
     uranium_pack.append_mods(&mut mods);
-    uranium_pack
+    (uranium_pack, raw)
 }
 
-async fn search_mod(item: &[(ModHashes, String)], n_threads: usize) -> Vec<Mods> {
+/// Returns a tuple of Vectos, the first one with the mods found in Rinth Repo
+/// and the second one the names of the raw mods 
+async fn search_mod(item: &[(ModHashes, String)], n_threads: usize) -> (Vec<Mods>, Vec<String>) {
     let n_mods = item.len();
 
-    let curse_requester = CurseRequester::new();
     let cliente = reqwest::Client::new();
 
     let chunks = item
         .chunks(n_threads)
         .collect::<Vec<&[(ModHashes, String)]>>();
 
-    // Get curse responses by chunks
-    let mut curse_responses = Vec::new();
-    for chunk in &chunks {
-        let mut pool = AsyncPool::new();
-        let reqs = chunk
-            .iter()
-            .map(|f| {
-                curse_requester.get(
-                    &maker::Curse::hash(),
-                    Method::POST,
-                    &get_curse_body(&f.0.curse_hash),
-                )
-            })
-            .collect();
-        pool.push_request_vec(reqs);
-        pool.start().await;
-        curse_responses.append(&mut pool.get_done_request());
-    }
 
     // Get rinth_responses
     let mut rinth_responses = Vec::new();
@@ -160,20 +143,6 @@ async fn search_mod(item: &[(ModHashes, String)], n_threads: usize) -> Vec<Mods>
         rinth_responses.append(&mut pool.get_done_request());
     }
 
-    // Get curse parses
-    let mut curse_parses = Vec::with_capacity(n_mods);
-    for response in curse_responses {
-        curse_parses.push(check(
-            response
-                .unwrap()
-                .json::<CurseResponse<CurseFingerPrint>>()
-                .await,
-            false,
-            false,
-            "",
-        ));
-    }
-
     // Get rinth parses
     let mut rinth_parses = Vec::with_capacity(n_mods);
     for response in rinth_responses {
@@ -185,9 +154,17 @@ async fn search_mod(item: &[(ModHashes, String)], n_threads: usize) -> Vec<Mods>
         ));
     }
 
-    // Get the each mod info or None in
-    // case neither Rinth or Curse has the mod
     let mut mods_data = Vec::with_capacity(n_mods);
+    let mut raw_mods = Vec::new();
+
+    for (i, rinth) in rinth_parses.into_iter().enumerate() {
+        match rinth {
+            Some(m) => mods_data.push(Mods::from_RinthVersion(&m)),
+            None => {raw_mods.push(item[i].1.clone())}
+        }
+    }
+
+    /*
     for (rinth, curse) in rinth_parses.into_iter().zip(curse_parses.into_iter()) {
         // First try to add from Rinth
         if rinth.is_some() {
@@ -200,8 +177,8 @@ async fn search_mod(item: &[(ModHashes, String)], n_threads: usize) -> Vec<Mods>
         else if curse.is_some() {
             mods_data.push(Mods::from_CurseVersion(curse.unwrap().data.get_file()));
         }
-    }
-    mods_data
+    }*/
+    (mods_data,raw_mods)
 }
 
 fn get_curse_body(id: &str) -> String {

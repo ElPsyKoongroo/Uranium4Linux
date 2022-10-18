@@ -8,7 +8,14 @@ pub async fn write_mod(path: &str, res: Response, name: &str) {
     let web_res = res;
     let full_path = path.to_owned() + name;
     let content = web_res.bytes().await.unwrap();
-    tokio::fs::write(full_path, content).await.unwrap();
+
+    match tokio::fs::write(&full_path, content).await {
+        Ok(_) => {},
+        Err(e) => {
+            eprintln!("{}", full_path);
+            eprintln!("{}", e);
+        }
+    }
 }
 
 pub async fn get_writters(

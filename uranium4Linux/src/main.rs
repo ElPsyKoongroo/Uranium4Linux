@@ -10,7 +10,7 @@ mod variables;
 mod zipper;
 
 use code_functions::{fix_path, get_bool_element, get_parse_element, update, N_THREADS};
-use modpack_downloader::curse_downloader::curse_modpack_downloader;
+use modpack_downloader::{curse_downloader::curse_modpack_downloader, updater::update_modpack};
 use modpack_downloader::rinth_downloader::download_rinth_pack;
 use modpack_maker::maker::make_modpack;
 use searcher::rinth::SearchType;
@@ -73,7 +73,7 @@ async fn main() -> Result<(), ZipError> {
                     .unwrap();
             }
         }
-        "-u" => update(args[2].as_str()).await,
+        "-u" => update(&file_path).await,
         MAKE => make_modpack(&file_path, N_THREADS()).await,
         REQUEST => searcher::rinth::search(request_arg_parser(&args).unwrap()).await,
         HELP => println!("{}", HELP_MSG),
