@@ -28,4 +28,9 @@ Uranium4Linux is a blazingly fast minecraft modpack manager capable of making, d
 
 Avalible repositories: <br>
 - RINTH
-- CURSE
+- CURSE*
+
+*As a personal desition im thinking about removing support for Curse repository. Curse is a privative platform with some shitty policies about the management of their content. Also I really appreciate what ModRinth is doing
+with the minecraft mod community so I think the best way to support with this project is to fully focus on their
+modpack format !
+
