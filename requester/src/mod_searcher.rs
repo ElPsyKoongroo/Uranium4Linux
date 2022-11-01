@@ -16,11 +16,11 @@ pub struct RequestInfo {
 
 pub fn search_with_client(
     requester: &CurseRequester,
-    request: RequestInfo,
+    request: &RequestInfo,
 ) -> JoinHandle<Result<reqwest::Response, reqwest::Error>> {
     match request.method {
-        Method::GET => requester.get(&request.url, Method::GET, ""),
-        Method::POST => requester.get(&request.url, Method::POST, &request.body),
+        Method::GET => requester.get(&request.url, &Method::GET, ""),
+        Method::POST => requester.get(&request.url, &Method::POST, &request.body),
     }
 }
 

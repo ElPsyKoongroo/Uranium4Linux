@@ -65,7 +65,7 @@ impl CurseRequester {
     pub fn get(
         &self,
         url: &str,
-        method: Method,
+        method: &Method,
         body: &str,
     ) -> JoinHandle<Result<reqwest::Response, reqwest::Error>> {
         let url = url.to_owned();

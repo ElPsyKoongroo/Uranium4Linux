@@ -37,13 +37,15 @@ pub struct RinthProject {
     icon_url: String,
 }
 
+impl std::fmt::Display for RinthProject {
+    fn fmt(&self, f: &mut std::fmt::Formatter ) -> Result<(), fmt::Error> {
+        write!(f, "Mod name: {}", self.title)
+    }
+}
+
 impl RinthProject {
     pub fn get_id(&self) -> String {
         self.project_id.clone().unwrap()
-    }
-
-    pub fn to_string(&self) -> String {
-        format!("Mod name: {}", self.title)
     }
 
     pub fn get_versions(&self) -> &Vec<String> {

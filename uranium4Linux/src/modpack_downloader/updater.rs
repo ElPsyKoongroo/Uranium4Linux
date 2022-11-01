@@ -3,8 +3,7 @@ use crate::hashes::rinth_hash;
 use mine_data_strutcs::rinth::rinth_mods::{Attributes, RinthVersion, RinthVersions};
 use mine_data_strutcs::url_maker::maker::ModRinth;
 use requester::async_pool::AsyncPool;
-use requester::mod_searcher::{search_by_url, search_version_by_id};
-use requester::requester::request_maker::RinthRequester;
+use requester::mod_searcher::search_by_url;
 
 
 pub async fn update_modpack(minecraft_path: &str) {
@@ -56,8 +55,8 @@ async fn get_identifiers_from_hashes(mods_hashes: &[String]) -> Vec<String> {
 
 
         chunk
-            .into_iter()
-            .for_each(|hash| tasks.push(search_by_url(&client, &ModRinth::hash(&hash))));
+            .iter()
+            .for_each(|hash| tasks.push(search_by_url(&client, &ModRinth::hash(hash))));
 
         pool.push_request_vec(tasks);
         pool.start().await;
@@ -88,7 +87,7 @@ async fn get_updated_mods(ids: &[String]) {
 
 
         id_chunk
-            .into_iter()
+            .iter()
             .for_each(|id| tasks.push(search_by_url(&cliente, &ModRinth::mod_versions_by_id(id))));
 
         pool.push_request_vec(tasks);
@@ -152,12 +151,11 @@ fn select_version(mod_versions: &[RinthVersion], minecraft_version: usize) -> Op
 
 async fn get_parsed_response<T>(responses: Vec<reqwest::Response>) -> Vec<T>
 where
-    T: serde::de::DeserializeOwned,
-    T: Default
+    T: serde::de::DeserializeOwned + Default,
 {
     let mut parsed_vec = Vec::with_capacity(responses.len());
 
-    for response in responses.into_iter() {
+    for response in responses {
         match response.text().await {
             Ok(version) => { 
                 println!("{}\n\n", version);

@@ -27,7 +27,7 @@ impl UraniumPack {
         modpack_name: &str,
         modpack_version: String,
         modpack_author: String,
-    mods: RinthVersions,
+        mods: RinthVersions,
     ) -> UraniumPack {
         let mod_vec = mods
             .versions
@@ -96,8 +96,8 @@ impl UraniumPack {
 
 fn deserializ_pack(path: &str) -> Result<UraniumPack, Error> {
     let j = fs::read_to_string(path).unwrap();
-    let pack: UraniumPack = serde_json::from_str(&j).unwrap();
-    Ok(pack)
+    let pack = serde_json::from_str(&j);
+    pack
 }
 
 pub fn load_pack(pack_path: &str) -> Option<UraniumPack> {

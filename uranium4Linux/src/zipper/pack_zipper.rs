@@ -17,7 +17,9 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<(
     let mut zip = zip::ZipWriter::new(zip_file);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
-    zip.add_directory("config", options).unwrap();
+    zip.add_directory("overrides", options).unwrap();
+
+    zip.add_directory("overrides/config", options).unwrap();
     let mut config_files: Vec<UraniumFile> = Vec::new();
 
     // Iter through all the files and sub-directories in "config/" and set the file type.
@@ -26,7 +28,7 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<(
     add_files_to_zip(path, &mut config_files, &mut zip, options);
 
     // Add the modpack_temp.json file
-    let modpack_json = File::open(name.to_owned() + "_temp.json").unwrap();
+    let modpack_json = File::open(constants::RINTH_JSON).unwrap();
     let modpack_bytes = modpack_json.bytes().flatten().collect::<Vec<u8>>();
 
     // Add the hardcoded .jar mods
@@ -102,12 +104,12 @@ fn match_file(
     match file.get_type() {
         FileType::Data => {
             let absolute_path = PathBuf::from(root_path.to_owned() + &file.get_absolute_path());
-            let rel_path = file.get_absolute_path();
+            let rel_path = "overrides/".to_owned() +  &file.get_absolute_path();
             append_config_file(&absolute_path, &rel_path, zip, options);
         }
 
         FileType::Dir => {
-            zip.add_directory(file.get_path() + &file.get_name(), options)
+            zip.add_directory("overrides/".to_owned() + &file.get_path() + &file.get_name(), options)
                 .unwrap();
         }
 
@@ -136,14 +138,16 @@ fn add_raw_mods(
     raw_mods: &[String],
     options: FileOptions,
 ) {
-    zip.add_directory("mods", options).unwrap();
+    zip.add_directory("overrides/mods", options).unwrap();
 
     for jar_file in raw_mods {
-        let file_name = "mods/".to_owned() + jar_file;
+        let file_name = "overrides/mods/".to_owned() + jar_file;
 
         #[cfg(debug_assertions)]
         println!("Adding {}", file_name);
 
+
+        println!("{}", (path.to_owned() + "mods/") + jar_file);
         let buffer = std::fs::read((path.to_owned() + "mods/") + jar_file).unwrap();
 
         zip.start_file(file_name, options).unwrap();

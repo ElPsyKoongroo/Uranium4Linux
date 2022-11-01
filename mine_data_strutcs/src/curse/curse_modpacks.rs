@@ -33,9 +33,8 @@ impl CursePack{
 }
 
 fn deserializ_pack(path: &str) -> Result<CursePack, Error> {
-    let j = read_to_string(path).unwrap();
-    let pack: CursePack = serde_json::from_str(&j).unwrap();
-    Ok(pack)
+    let aux = read_to_string(path).unwrap();
+    serde_json::from_str(&aux)
 }
 
 pub fn load_curse_pack(pack_path: &str) -> Option<CursePack> {

@@ -29,6 +29,7 @@ REQUESTS TYPES
 pub const EXTENSION: &str = ".zip";
 pub const TEMP_DIR: &str = "./temp_dir/";
 pub const DEFAULT_NTHREADS: usize = 32;
+pub const RINTH_JSON: &str = "modrinth.index.json";
 
 // TODO! Look the possibilitie to add this constant so pass the number
 // of threads to every function wont be necesary anymore
@@ -56,5 +57,3 @@ pub const VERSIONS: &str = "--versions";
 pub const MOD: &str = "--mod";
 pub const PROJECT: &str = "--project";
 pub const RESOURCEPACKS: &str = "--resourcepacks";
-
-pub const RINTH_JSON_NAME: &str = "modrinth.index.json";

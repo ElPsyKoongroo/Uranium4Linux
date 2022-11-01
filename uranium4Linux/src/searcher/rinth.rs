@@ -1,4 +1,4 @@
-use mine_data_strutcs::rinth::rinth_mods::*;
+use mine_data_strutcs::rinth::rinth_mods::{RinthProject, RinthResponse, RinthVersion};
 use mine_data_strutcs::url_maker::maker;
 use serde::{de::DeserializeOwned, Serialize};
 

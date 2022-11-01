@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
+use super::rinth_mods::RinthVersion;
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 
@@ -13,6 +14,16 @@ pub struct RinthModpack {
 }
 
 impl RinthModpack {
+    pub fn new() -> RinthModpack {
+        RinthModpack {
+            formatVersion: 1,
+            game: "minecraft".to_owned(),
+            versionId: "0.0.0".to_owned(),
+            name: "example".to_owned(),
+            files: Vec::new(),
+        }
+    }
+
     pub fn get_name(&self) -> String {
         self.name.clone()
     }
@@ -20,6 +31,16 @@ impl RinthModpack {
     pub fn get_files(&self) -> &Vec<RinthMdFiles> {
         &self.files
     }
+
+    pub fn add_mod(&mut self, new_mod: RinthMdFiles) {
+        self.files.push(new_mod)
+    }
+
+    pub fn write_mod_pack_with_name(&self) {
+        let j = serde_json::to_string_pretty(self).unwrap();
+        std::fs::write("modrinth.index.json", j).unwrap();
+    }
+
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +49,16 @@ pub struct RinthMdFiles {
     //hashes: Vec<String>,
     downloads: Vec<String>,
     fileSize: usize,
+}
+
+impl std::convert::From<RinthVersion> for RinthMdFiles {
+    fn from(version: RinthVersion) -> RinthMdFiles {
+        RinthMdFiles {
+            path: "mods/".to_owned() + &version.get_file_name(),
+            downloads: vec![version.get_file_url()],
+            fileSize: 9999, //TODO! Fix this place holder
+        }
+    }
 }
 
 impl RinthMdFiles {
@@ -39,7 +70,6 @@ impl RinthMdFiles {
         self.path.strip_prefix("mods/").unwrap().to_owned()
     }
 }
-
 
 fn deserializ_pack(path: &str) -> RinthModpack {
     let j = read_to_string(path).unwrap();
@@ -56,5 +86,5 @@ pub fn load_rinth_pack(pack_path: &str) -> RinthModpack {
         }
     };
 
-    deserializ_pack(pack_path) 
+    deserializ_pack(pack_path)
 }

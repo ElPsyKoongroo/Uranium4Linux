@@ -1,17 +1,20 @@
 use super::functions::get_writters;
 use crate::code_functions::N_THREADS;
 use crate::{
-    variables::constants::{RINTH_JSON_NAME, TEMP_DIR},
+    variables::constants::{RINTH_JSON, TEMP_DIR},
     zipper::pack_unzipper::unzip_temp_pack,
 };
-use mine_data_strutcs::rinth::rinth_packs::*;
+use mine_data_strutcs::rinth::rinth_packs::{
+    load_rinth_pack,
+    RinthMdFiles
+};
 use requester::async_pool::AsyncPool;
 use reqwest::Response;
 
 pub async fn download_rinth_pack(path: &str, destination_path: &str) {
     unzip_temp_pack(path);
 
-    let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON_NAME));
+    let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON));
 
     let file_links: Vec<String> = rinth_pack
         .get_files()

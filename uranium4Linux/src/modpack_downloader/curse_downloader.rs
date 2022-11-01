@@ -47,7 +47,7 @@ async fn get_mod_responses(curse_req: &CurseRequester, files_ids: Vec<String>) -
     for chunk in files_ids.chunks(N_THREADS()) {
         let mut requests = Vec::new();
         for url in chunk {
-            let tarea = curse_req.get(url, Method::GET, "");
+            let tarea = curse_req.get(url, &Method::GET, "");
             requests.push(tarea);
         }
         let mut pool = AsyncPool::new();
@@ -122,7 +122,7 @@ async fn download_mods(
 
         // Add the tasks for this chunk
         for download_url in chunk {
-            let tarea = curse_req.get(download_url, Method::GET, "");
+            let tarea = curse_req.get(download_url, &Method::GET, "");
             tareas.push(tarea);
         }
         pool.push_request_vec(tareas);
