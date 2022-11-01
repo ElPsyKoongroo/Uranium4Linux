@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
-use super::rinth_mods::RinthVersion;
+use super::rinth_mods::{RinthVersion, Hashes};
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 
@@ -33,7 +33,7 @@ impl RinthModpack {
     }
 
     pub fn add_mod(&mut self, new_mod: RinthMdFiles) {
-        self.files.push(new_mod)
+        self.files.push(new_mod);
     }
 
     pub fn write_mod_pack_with_name(&self) {
@@ -46,7 +46,7 @@ impl RinthModpack {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RinthMdFiles {
     path: String,
-    //hashes: Vec<String>,
+    hashes: Hashes,
     downloads: Vec<String>,
     fileSize: usize,
 }
@@ -55,8 +55,9 @@ impl std::convert::From<RinthVersion> for RinthMdFiles {
     fn from(version: RinthVersion) -> RinthMdFiles {
         RinthMdFiles {
             path: "mods/".to_owned() + &version.get_file_name(),
+            hashes: version.get_hashes().clone(),
             downloads: vec![version.get_file_url()],
-            fileSize: 9999, //TODO! Fix this place holder
+            fileSize: version.get_size()
         }
     }
 }

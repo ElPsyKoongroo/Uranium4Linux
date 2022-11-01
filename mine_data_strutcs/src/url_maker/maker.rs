@@ -5,7 +5,7 @@ const BASE_CUR_URL: &str = "https://api.curseforge.com";
 const BASE_MRN_URL: &str = "https://api.modrinth.com/api/v1/mod";
 const BASE_MRN_URL2: &str = "https://api.modrinth.com/v2";
 
-use crate::rinth::rinth_mods::*;
+use crate::rinth::rinth_mods::RinthProject;
 
 pub struct ModRinth;
 
@@ -65,6 +65,10 @@ impl ModRinth {
 
     pub fn hash(hash: &str) -> String {
         format!("{}/version_file/{}", BASE_MRN_URL2, hash)
+    }
+
+    pub fn update_by_hash_post() -> String {
+        format!("{}/version_files/update", BASE_MRN_URL2)
     }
 }
 

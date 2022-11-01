@@ -65,12 +65,8 @@ async fn main() -> Result<(), ZipError> {
         DOWNLOAD => {
             if curse_pack {
                 curse_modpack_downloader(&file_path, &destination_path).await;
-            } else if rinth_pack {
-                download_rinth_pack(&file_path, &destination_path).await;
             } else {
-                unzip_pack(&file_path, &destination_path, N_THREADS())
-                    .await
-                    .unwrap();
+                download_rinth_pack(&file_path, &destination_path).await;
             }
         }
         "-u" => update(&file_path).await,
@@ -81,4 +77,3 @@ async fn main() -> Result<(), ZipError> {
     }
     Ok(())
 }
-

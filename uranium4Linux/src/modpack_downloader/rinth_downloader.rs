@@ -4,10 +4,7 @@ use crate::{
     variables::constants::{RINTH_JSON, TEMP_DIR},
     zipper::pack_unzipper::unzip_temp_pack,
 };
-use mine_data_strutcs::rinth::rinth_packs::{
-    load_rinth_pack,
-    RinthMdFiles
-};
+use mine_data_strutcs::rinth::rinth_packs::{load_rinth_pack, RinthMdFiles};
 use requester::async_pool::AsyncPool;
 use reqwest::Response;
 

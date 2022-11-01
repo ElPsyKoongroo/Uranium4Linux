@@ -1,7 +1,8 @@
-use crate::modpack_downloader::{loader::ModPackDownloader, updater::update_modpack};
+use crate::modpack_downloader::updater::update_modpack;
 use crate::variables::constants::*;
-use std::{fmt::Debug, path::Path, str::FromStr};
+use std::{fmt::Debug, str::FromStr};
 
+/*
 pub async fn download_modpack<'a>(
     modpack: &str,
     path: &'a str,
@@ -23,6 +24,7 @@ pub async fn download_modpack<'a>(
     modpack_loader.start().await.unwrap();
     Ok(())
 }
+*/
 
 pub async fn update(path: &str) {
     update_modpack(path).await;

@@ -1,13 +1,12 @@
 use super::functions::get_writters;
 use crate::code_functions::fix_path;
 use core::panic;
-use mine_data_strutcs::uranium_modpack::modpack_mod::Mods;
-use mine_data_strutcs::uranium_modpack::modpack_struct::{load_pack, UraniumPack};
 use requester::async_pool;
 use reqwest::Response;
 use std::fs;
 use tokio::task::{self, JoinHandle};
 
+/*
 #[allow(dead_code)]
 pub struct ModPackDownloader {
     pack: Option<UraniumPack>,
@@ -137,3 +136,4 @@ impl ModPackDownloader {
         Ok(())
     }
 }
+*/

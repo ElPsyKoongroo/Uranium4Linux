@@ -35,7 +35,7 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<(
     add_raw_mods(path, &mut zip, raw_mods, options);
 
     // Finally add the modpack.json file
-    zip.start_file(name.to_owned() + ".json", options)?;
+    zip.start_file(constants::RINTH_JSON, options)?;
     zip.write_all(&modpack_bytes)?;
     zip.finish()?;
 

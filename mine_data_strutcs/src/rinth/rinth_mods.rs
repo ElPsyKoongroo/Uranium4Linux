@@ -24,7 +24,7 @@ pub struct SearchProjects {
 }
 
 /// `RinthMod` pretends to be the structure for the response of
-/// https://api.modrinth.com/v2/project/{id | slug}
+/// https://api.modrinth.com/v2/project/{id | slug} 
 /// This type is also usable when requesting searchs for rinth api
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RinthProject {
@@ -84,7 +84,7 @@ impl Dependency {
     }
 }
 
-/// RinthProject pretends to be the response for:
+/// `RinthProject` pretends to be the response for:
 /// https://api.modrinth.com/v2/version/{version id}
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct RinthVersion {
@@ -104,23 +104,6 @@ impl RinthVersion {
         self.name.clone()
     }
 
-    pub fn from_CurseFile(curse_file: CurseFile) -> RinthVersion {
-        RinthVersion {
-            id: curse_file.get_modId().to_string(),
-            project_id: curse_file.get_id().to_string(),
-            name: curse_file.get_displayName(),
-            version_type: "Curse".to_string(),
-            dependencies: Vec::new(),
-            game_versions: curse_file.get_gameVersions().clone(),
-            loaders: Vec::new(),
-            downloads: 0,
-            files: vec![RinthFile {
-                url: curse_file.get_downloadUrl(),
-                filename: curse_file.get_fileName(),
-            }],
-        }
-    }
-
     pub fn get_versions(&self) -> &Vec<String> {
         &self.game_versions
     }
@@ -138,6 +121,14 @@ impl RinthVersion {
 
     pub fn get_file_name(&self) -> String {
         self.files[0].filename.clone()
+    }
+
+    pub fn get_hashes(&self) -> &Hashes {
+        &self.files[0].hashes   
+    }
+
+    pub fn get_size(&self) -> usize {
+        self.files[0].size
     }
 
     pub fn get_id(&self) -> String {
@@ -173,15 +164,21 @@ pub struct RinthVersions {
     pub versions: Vec<RinthVersion>,
 }
 
-impl RinthVersions {
-    pub fn get_version(&self, i: usize) -> &RinthVersion {
-        &self.versions[i]
+impl std::convert::From<Vec<RinthVersion>> for RinthVersions  {
+    fn from(versions: Vec<RinthVersion>) -> RinthVersions {
+        RinthVersions { versions }
     }
+}
 
+impl RinthVersions {
     pub fn new() -> RinthVersions {
         RinthVersions {
             versions: Vec::new(),
         }
+    }
+
+    pub fn get_version(&self, i: usize) -> &RinthVersion {
+        &self.versions[i]
     }
 
     pub fn len(&self) -> usize {
@@ -204,7 +201,7 @@ impl RinthVersions {
         &self.versions[i]
     }
 
-    pub fn mods(&self) -> &Vec<RinthVersion> {
+    pub fn versions(&self) -> &Vec<RinthVersion> {
         &self.versions
     }
 
@@ -271,9 +268,17 @@ impl fmt::Display for RinthVersions {
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct Hashes {
+    pub sha512: String,
+    pub sha1: String
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct RinthFile {
+    pub hashes: Hashes,
     pub url: String,
     pub filename: String,
+    pub size: usize
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -312,7 +317,7 @@ impl std::default::Default for RinthResponse {
 impl std::fmt::Display for RinthResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         for (index, minecraft_mod) in self.hits.iter().enumerate() {
-            writeln!(f, "{:2}: {}", index, minecraft_mod.to_string())?;
+            writeln!(f, "{:2}: {}", index, minecraft_mod)?;
         }
         write!(f, "")
     }
