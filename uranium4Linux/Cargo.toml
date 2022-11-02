@@ -8,6 +8,13 @@ edition = "2021"
 [features]
 console_output = []
 
+[profile.dev]
+opt-level = 1
+overflow-checks = false
+debug = 2
+incremental = true
+debug-assertions = true
+
 [dependencies]
 mine_data_strutcs = {path = "../mine_data_strutcs"}
 requester = {path = "../requester"}

@@ -20,7 +20,6 @@ use variables::constants::{
     PROJECT, QUERY, REQUEST, RESOURCEPACKS, RINTH_FLAG, ROOT_FLAG, THREADS_FLAG, VERSION, VERSIONS,
 };
 use zip::result::ZipError;
-use zipper::pack_unzipper::unzip_pack;
 
 fn request_arg_parser(args: &[String]) -> Option<SearchType> {
     match args.iter().position(|f| f == REQUEST) {
@@ -47,6 +46,8 @@ fn request_arg_parser(args: &[String]) -> Option<SearchType> {
 
 #[tokio::main]
 async fn main() -> Result<(), ZipError> {
+    #[cfg(debug_assertions)] println!("Debug enable"); 
+
     let args: Vec<String> = env::args().collect();
 
     {

@@ -6,6 +6,7 @@ use crate::{
 };
 use mine_data_strutcs::rinth::rinth_packs::{load_rinth_pack, RinthMdFiles};
 use requester::async_pool::AsyncPool;
+use requester::mod_searcher::search_by_url;
 use reqwest::Response;
 
 pub async fn download_rinth_pack(path: &str, destination_path: &str) {
@@ -13,11 +14,24 @@ pub async fn download_rinth_pack(path: &str, destination_path: &str) {
 
     let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON));
 
+    #[cfg(debug_assertions)]
+    { 
+        println!("Pack loaded");
+    }
+
     let file_links: Vec<String> = rinth_pack
         .get_files()
         .iter()
         .map(RinthMdFiles::get_download_link)
         .collect();
+
+
+    #[cfg(debug_assertions)]
+    {
+        println!("File links: ");
+        file_links.iter().for_each(|l| println!("  {l}"));
+        println!("Downloading...");
+    }
 
     let file_names: Vec<String> = rinth_pack
         .get_files()
@@ -43,7 +57,7 @@ async fn download_mods(links: Vec<String>) -> Vec<Response> {
 
         chunk
             .iter()
-            .for_each(|f| tasks.push(tokio::task::spawn(requester.get(f).send())));
+            .for_each(|f| tasks.push(search_by_url(&requester, f)));
 
         pool.push_request_vec(tasks);
         pool.start().await;
@@ -55,6 +69,11 @@ async fn download_mods(links: Vec<String>) -> Vec<Response> {
         }
 
         final_data.append(&mut pool.get_done_request());
+        #[cfg(debug_assertions)]
+        {
+            println!("Chunk downloaded!");
+            chunk.iter().for_each(|l| println!("\t{l}"));
+        }
     }
 
     final_data.into_iter().flatten().collect()
@@ -70,7 +89,7 @@ async fn download_memory_perf(links: Vec<String>, names: Vec<String>, destinatio
 
         url_chunk
             .iter()
-            .for_each(|f| tasks.push(tokio::task::spawn(requester.get(f).send())));
+            .for_each(|f| tasks.push(search_by_url(&requester, f)));
 
         pool.push_request_vec(tasks);
         pool.start().await;
