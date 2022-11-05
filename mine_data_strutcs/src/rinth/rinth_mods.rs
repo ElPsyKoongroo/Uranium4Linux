@@ -1,10 +1,7 @@
-#![allow(dead_code)]
 #![allow(non_snake_case)]
 
 use core::fmt;
 use serde::{Deserialize, Serialize};
-
-use crate::curse::curse_mods::CurseFile;
 
 pub enum Attributes {
     Loader,
@@ -189,28 +186,28 @@ impl RinthVersions {
         self.versions.push(version);
     }
 
-    pub fn last(&self) -> &RinthVersion {
-        self.versions.last().unwrap()
+    pub fn last(&self) -> Option<&RinthVersion> {
+        self.versions.last()
     }
 
-    pub fn first(&self) -> &RinthVersion {
-        self.versions.first().unwrap()
+    pub fn first(&self) -> Option<&RinthVersion> {
+        self.versions.first()
     }
 
     pub fn mod_at(&self, i: usize) -> &RinthVersion {
         &self.versions[i]
     }
 
-    pub fn versions(&self) -> &Vec<RinthVersion> {
+    pub fn versions(&self) -> &[RinthVersion] {
         &self.versions
     }
 
-    pub fn filter_by(&self, attribute: Attributes, content: &str) -> Vec<RinthVersion> {
+    pub fn filter_by(&self, attribute: &Attributes, content: &str) -> Vec<RinthVersion> {
         match attribute {
             Attributes::Loader => self
                 .versions
                 .iter()
-                .filter(|x| x.loaders.contains(&content.to_string()))
+                .filter(|x| x.loaders.iter().any(|c| c == content))
                 .cloned()
                 .collect::<Vec<RinthVersion>>(),
 
