@@ -3,6 +3,9 @@
 <h4> Minecraft Console Mod Downloader</h4>
 
 
+
+<h2> PLEASE, CHECK URANIUM-235 BRANCH. THIS ONE IS PLANNED TO BE DEPRECATED <h2>
+
 Version 1.3.0 (Functional)
 
 
