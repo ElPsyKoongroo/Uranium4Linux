@@ -29,7 +29,9 @@ pub async fn download_rinth_pack(path: &str, destination_path: &str) {
     #[cfg(debug_assertions)]
     {
         println!("File links: ");
-        file_links.iter().for_each(|l| println!("  {l}"));
+        for link in file_links.iter() {
+            println!("  {link}");
+        }
         println!("Downloading...");
     }
 

@@ -49,7 +49,7 @@ pub fn overrides(destination_path: &str, overrides_folder: &str) {
             fs_extra::dir::copy(file.path(), destination_path, &options).unwrap();
         } else {
             let copy_status = fs_extra::file::copy(file.path(), destination_path, &file_options);
-            check(copy_status, false, false, "");
+            check(copy_status, false, &format!("Error coppying {:?}", file.path())).unwrap();
         }
          
     }

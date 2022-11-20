@@ -24,18 +24,18 @@ use zip::result::ZipError;
 fn request_arg_parser(args: &[String]) -> Option<SearchType> {
     match args.iter().position(|f| f == REQUEST) {
         Some(index) => match args[index + 1].as_str() {
-            QUERY => Some(SearchType::QUERRY(args[index + 2].clone())),
+            QUERY => Some(SearchType::QUERY(args[index + 2].clone())),
             FOR => Some(SearchType::FOR(
-                args[index + 2].parse().unwrap(),
-                args[index + 3].parse().unwrap(),
+                args[index + 2].parse().expect(&format!("{} not a number", args[index + 2])),
+                args[index + 3].parse().expect(&format!("{} not a number", args[index + 3])),
             )),
             VERSION => Some(SearchType::VERSION(args[index + 1].clone())),
             VERSIONS => Some(SearchType::VERSIONS(args[index + 1].clone())),
             MOD => Some(SearchType::MOD(args[index + 1].clone())),
             PROJECT => Some(SearchType::PROJECT(args[index + 1].clone())),
             RESOURCEPACKS => Some(SearchType::RESOURCEPACKS(
-                args[index + 2].parse().unwrap(),
-                args[index + 3].parse().unwrap(),
+                args[index + 2].parse().expect(&format!("{} not a number", args[index + 3])),
+                args[index + 3].parse().expect(&format!("{} not a number", args[index + 3])),
             )),
 
             _ => panic!("Invalid request type !"),
@@ -62,6 +62,7 @@ async fn main() -> Result<(), ZipError> {
 
     destination_path = fix_path(&destination_path);
 
+    // TODO! Replace manual argument parse with CLAP
     match args[1].as_str() {
         DOWNLOAD => {
             if curse_pack {

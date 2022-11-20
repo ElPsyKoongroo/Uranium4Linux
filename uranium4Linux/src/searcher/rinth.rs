@@ -3,7 +3,7 @@ use mine_data_strutcs::url_maker::maker;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub enum SearchType {
-    QUERRY(String),
+    QUERY(String),
     FOR(u32, u32),
     MOD(String),
     PROJECT(String),
@@ -14,7 +14,7 @@ pub enum SearchType {
 
 pub async fn search(search: SearchType) {
     match search {
-        SearchType::QUERRY(_) => {todo!()}
+        SearchType::QUERY(q) => query(&q).await,
         SearchType::FOR(limit, offset) => search_for(limit, offset).await,
         SearchType::MOD(_) => {todo!()}
         SearchType::PROJECT(id) => search_project(&id).await,
@@ -22,6 +22,14 @@ pub async fn search(search: SearchType) {
         SearchType::VERSIONS(id) => search_versions(&id).await,
         SearchType::RESOURCEPACKS(limit, offset) => search_sourcepacks(limit, offset).await,
     }
+}
+
+
+#[allow(unused)]
+async fn query(q: &str) {
+    let url = maker::ModRinth::querry(q);
+    let data = get_data::<RinthResponse>(&url).await;
+    write_data(data).await;
 }
 
 #[allow(unused)]
@@ -64,6 +72,10 @@ async fn search_for(limit: u32, offset: u32) {
 
 async fn get_data<T: DeserializeOwned>(url: &str) -> T {
     let client = reqwest::Client::new();
+
+    #[cfg(debug_assertions)]
+    println!("{}", url);
+
     let response = client.get(url).send().await.unwrap();
     response.json::<T>().await.unwrap()
 }
@@ -71,7 +83,10 @@ async fn get_data<T: DeserializeOwned>(url: &str) -> T {
 async fn write_data<T: Serialize>(data: T) {
     let bytes = serde_json::to_vec(&data).unwrap();
     let coso = serde_json::to_string_pretty(&data).unwrap();
+
+    #[cfg(debug_assertions)]
     println!("{}", coso);
+
     tokio::fs::write("response.json", bytes).await.unwrap();
 }
 

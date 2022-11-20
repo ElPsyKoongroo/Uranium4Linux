@@ -1,15 +1,28 @@
+use crate::checker::*;
 use hex::ToHex;
+use murmurhash32::murmurhash2;
 use sha1::{Digest, Sha1};
 use std::fs;
 use std::io::Read;
-use murmurhash32::murmurhash2;
 
 fn get_sha1_from_file(file_path: &str) -> String {
     let mut hasher = Sha1::new();
-    let mut file = fs::File::open(file_path).unwrap();
-    let metadata = fs::metadata(file_path).expect("unable to read metadata");
+    let mut file = check_panic(
+        fs::File::open(file_path),
+        true,
+        format!("hashes; Could not open {} for hashing", file_path),
+    );
+    let metadata = check_panic(
+        fs::metadata(file_path),
+        false,
+        format!("hashes; Unable to get metadata from {}", file_path),
+    );
     let mut buffer = Vec::with_capacity(metadata.len() as usize); //vec![0; metadata.len() as usize];
-    file.read_to_end(&mut buffer).expect("buffer overflow");
+    check_panic(
+        file.read_to_end(&mut buffer),
+        true,
+        format!("hashes; Unable to read {}", file_path),
+    );
 
     hasher.update(buffer);
     let temp = hasher.finalize().to_vec();
@@ -20,7 +33,8 @@ pub fn rinth_hash(path: &str) -> String {
     get_sha1_from_file(path)
 }
 
-pub fn curse_hash(path: &String) -> String {
+// TODO! Remove curse
+pub fn _curse_hash(path: &String) -> String {
     let mut file = std::fs::File::open(path).unwrap();
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();

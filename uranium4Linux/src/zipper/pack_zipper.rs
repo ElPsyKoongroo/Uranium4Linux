@@ -1,8 +1,8 @@
 use super::uranium_structs::UraniumFile;
-use crate::checker::check;
+use crate::checker::{check, check_panic};
 use crate::code_functions::fix_path;
+use crate::variables::constants;
 use crate::zipper::uranium_structs::FileType;
-use crate::{checker, variables::constants};
 use std::{
     fs::File,
     io::{Read, Write},
@@ -64,13 +64,7 @@ fn search_files(minecraft_path: &str, relative_path: &str, config_files: &mut Ve
 
 fn get_new_files(path: &str, relative_path: &str) -> Vec<UraniumFile> {
     let sub_directory = std::fs::read_dir(path);
-    let sub_directory = check(
-        sub_directory,
-        false,
-        true,
-        &format!("Error al leer {}", path),
-    )
-    .unwrap();
+    let sub_directory = check(sub_directory, true, format!("Error al leer {}", path)).unwrap();
 
     let sub_config_files: Vec<UraniumFile> = sub_directory
         .map(|file| {
@@ -104,13 +98,16 @@ fn match_file(
     match file.get_type() {
         FileType::Data => {
             let absolute_path = PathBuf::from(root_path.to_owned() + &file.get_absolute_path());
-            let rel_path = "overrides/".to_owned() +  &file.get_absolute_path();
+            let rel_path = "overrides/".to_owned() + &file.get_absolute_path();
             append_config_file(&absolute_path, &rel_path, zip, options);
         }
 
         FileType::Dir => {
-            zip.add_directory("overrides/".to_owned() + &file.get_path() + &file.get_name(), options)
-                .unwrap();
+            zip.add_directory(
+                "overrides/".to_owned() + &file.get_path() + &file.get_name(),
+                options,
+            )
+            .unwrap();
         }
 
         FileType::Other => {}
@@ -124,21 +121,40 @@ fn append_config_file(
     option: FileOptions,
 ) {
     // Read the file
-    let file = File::open(&absolute_path).unwrap();
+    let file = check_panic(
+        File::open(absolute_path),
+        false,
+        format!("zipper; Unable to open {:?}", absolute_path),
+    );
     let buffer = file.bytes().flatten().collect::<Vec<u8>>();
 
+    // Is a recoverable error reading 0 bytes from file ?
+    // In this case Uranium will just send a warning about it 
+    // and dont add the file
+    if buffer.is_empty() {
+        let _ = check::<(), _, _>(Err(format!("No bytes from {:?} ?", absolute_path)), true, "");
+        return 
+    }
+
     // Add the file to the zip
-    zip.start_file(rel_path, option).unwrap();
-    checker::check(zip.write_all(&buffer), false, false, "Error while writing");
+    check_panic(
+        zip.start_file(rel_path, option),
+        false,
+        format!("zipper; Unable to start zip file {}", rel_path),
+    );
+    check_panic(
+        zip.write_all(&buffer),
+        false,
+        "zipper; Error while writing zip file {}",
+    );
 }
 
-fn add_raw_mods(
-    path: &str,
-    zip: &mut ZipWriter<File>,
-    raw_mods: &[String],
-    options: FileOptions,
-) {
-    zip.add_directory("overrides/mods", options).unwrap();
+fn add_raw_mods(path: &str, zip: &mut ZipWriter<File>, raw_mods: &[String], options: FileOptions) {
+    check_panic(
+        zip.add_directory("overrides/mods", options),
+        false,
+        "zipper; Error adding raw mods dir",
+    );
 
     for jar_file in raw_mods {
         let file_name = "overrides/mods/".to_owned() + jar_file;
@@ -146,17 +162,23 @@ fn add_raw_mods(
         #[cfg(debug_assertions)]
         println!("Adding {}", file_name);
 
-
         println!("{}", (path.to_owned() + "mods/") + jar_file);
-        let buffer = std::fs::read((path.to_owned() + "mods/") + jar_file).unwrap();
-
-        zip.start_file(file_name, options).unwrap();
-
-        check(
-            zip.write_all(&buffer),
-            true,
+        let buffer = check_panic(
+            std::fs::read((path.to_owned() + "mods/") + jar_file),
             false,
-            &format!("Error while raw adding {}", jar_file),
+            format!("zipper; Unable to read {}", jar_file),
+        );
+
+        check_panic(
+            zip.start_file(file_name, options),
+            false,
+            "zipper; Error starting a file in .zip",
+        );
+
+        check_panic(
+            zip.write_all(&buffer),
+            false,
+            format!("Error while raw adding {}", jar_file),
         );
     }
 }

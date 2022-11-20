@@ -1,30 +1,55 @@
+use once_cell::sync::Lazy;
+use std::io::{BufWriter, Write};
+use std::sync::RwLock;
 use std::{fmt::Debug, process::exit};
 
-/// Given a Result<T, E> it checks if Ok() or Err(), 
-/// if Ok it returns T
-/// if Err it calls `manage_error`
-pub fn check<T, E>(value: Result<T, E>, panic: bool, show_error: bool, msg: &str) -> Option<T>
+static LOG_FILE: Lazy<RwLock<BufWriter<std::fs::File>>> =
+    Lazy::new(|| RwLock::new(BufWriter::new(std::fs::File::create("log.txt").unwrap())));
+
+/// # Given a Result<T, E> it checks if Ok() or Err()
+/// - If T => Return Result<T, <T, E>
+/// - If E => check will log the error in log.txt 
+/// 
+/// # Panics
+/// 
+///  If panic is true check will panic on E
+pub fn check_panic<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(value: Result<T, E>, show_error: bool, msg: M) -> T 
 where
     E: Debug,
 {
     match value {
-        Ok(e) => Some(e),
-        Err(error) => {
+        Ok(val) => val,
+        Err(ref error) => {
             manage_error(error, show_error, msg);
-            if panic {
-                exit(0);
-            } else {
-                None
-            }
+            panic!();
         }
     }
 }
 
-fn manage_error<E>(error: E, show_error: bool, msg: &str)
+
+pub fn check<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(value: Result<T, E>, show_error: bool, msg: M) -> Result<T, E>
 where
     E: Debug,
 {
-    eprintln!("{msg}");
+    match value {
+        Ok(ref _e) => value,
+        Err(ref error) => {
+            manage_error(error, show_error, msg);
+            value
+        }
+    }
+}
+
+
+
+fn manage_error<E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(error: E, show_error: bool, msg: M)
+where
+    E: Debug,
+{
+    let mut guard = LOG_FILE.write().unwrap();
+    let log_msg = format!("[ERROR] {} {:?}\n", msg, error);
+    guard.write_all(log_msg.as_bytes()).expect("Failed to log");
+    guard.flush().unwrap();
     if show_error {
         eprintln!("Next error ocurred in runtime: {:?}\n\n", error);
     }

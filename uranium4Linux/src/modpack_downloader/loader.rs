@@ -1,11 +1,3 @@
-use super::functions::get_writters;
-use crate::code_functions::fix_path;
-use core::panic;
-use requester::async_pool;
-use reqwest::Response;
-use std::fs;
-use tokio::task::{self, JoinHandle};
-
 /*
 #[allow(dead_code)]
 pub struct ModPackDownloader {
