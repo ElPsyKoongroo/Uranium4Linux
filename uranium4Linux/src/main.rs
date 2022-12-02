@@ -15,10 +15,7 @@ use modpack_downloader::rinth_downloader::download_rinth_pack;
 use modpack_maker::maker::make_modpack;
 use searcher::rinth::SearchType;
 use std::env;
-use variables::constants::{
-    CURSE_FLAG, DEFAULT_NTHREADS, DOWNLOAD, FILE_FLAG, FOR, HELP, HELP_MSG, MAKE, MOD, NTHREADS,
-    PROJECT, QUERY, REQUEST, RESOURCEPACKS, RINTH_FLAG, ROOT_FLAG, THREADS_FLAG, VERSION, VERSIONS,
-};
+use variables::constants::*;
 use zip::result::ZipError;
 
 fn request_arg_parser(args: &[String]) -> Option<SearchType> {
@@ -64,17 +61,19 @@ async fn main() -> Result<(), ZipError> {
 
     // TODO! Replace manual argument parse with CLAP
     match args[1].as_str() {
-        DOWNLOAD => {
-            if curse_pack {
+        DOWNLOAD | LONG_DOWNLOAD => {
+            if rinth_pack {
+                download_rinth_pack(&file_path, &destination_path).await;
+            } else if curse_pack {
                 curse_modpack_downloader(&file_path, &destination_path).await;
             } else {
-                download_rinth_pack(&file_path, &destination_path).await;
+                println!("No repo found!");
             }
         }
-        "-u" => update(&file_path).await,
-        MAKE => make_modpack(&file_path, N_THREADS()).await,
-        REQUEST => searcher::rinth::search(request_arg_parser(&args).unwrap()).await,
-        HELP => println!("{}", HELP_MSG),
+        LONG_UPDATE => update(&file_path).await,
+        LONG_MAKE => make_modpack(&file_path, N_THREADS()).await,
+        LONG_REQUEST => searcher::rinth::search(request_arg_parser(&args).expect("Wrong request type")).await,
+        HELP | LONG_HELP => println!("{}", HELP_MSG),
         _ => println!("Invalid arguments"),
     }
     Ok(())

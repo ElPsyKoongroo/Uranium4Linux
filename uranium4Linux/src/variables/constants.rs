@@ -1,8 +1,8 @@
 use std::sync::RwLock;
 
 pub const HELP_MSG: &str = "
--d Download the specified modpack in the specified route
--u Upgrade the specified modpack
+--download Download the specified modpack in the specified route
+--update Upgrade the specified modpack
 --make Make a modpack file from specified route
 --request <TYPE> Make a requests
 -h Print this message
@@ -36,11 +36,18 @@ pub const RINTH_JSON: &str = "modrinth.index.json";
 // MORE DEVELOPMENT IS NEEDED !
 pub static NTHREADS: RwLock<usize> = RwLock::new(32);
 
-// ACTIONS FLAGS
+// SHORT ACTIONS FLAGS
 pub const DOWNLOAD: &str = "-d";
 pub const MAKE: &str = "--make";
 pub const REQUEST: &str = "--request";
 pub const HELP: &str = "-h";
+
+// LONG ACTIONS FLAGS
+pub const LONG_DOWNLOAD: &str = "--download";
+pub const LONG_MAKE: &str = "--make";
+pub const LONG_UPDATE: &str = "--update";
+pub const LONG_REQUEST: &str = "--request";
+pub const LONG_HELP: &str = "--help";
 
 // OPTIONS FLAGS
 pub const THREADS_FLAG: &str = "-t";

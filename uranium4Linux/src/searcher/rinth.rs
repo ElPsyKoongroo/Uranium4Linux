@@ -1,7 +1,15 @@
 use mine_data_strutcs::rinth::rinth_mods::{RinthProject, RinthResponse, RinthVersion};
 use mine_data_strutcs::url_maker::maker;
 use serde::{de::DeserializeOwned, Serialize};
+use clap::{ValueEnum, Args};
 
+#[derive(Debug, Clone, Args)]
+pub struct Query {
+    q: String
+}
+
+
+#[derive(Clone, Debug)]
 pub enum SearchType {
     QUERY(String),
     FOR(u32, u32),
