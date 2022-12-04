@@ -8,12 +8,6 @@ edition = "2021"
 [features]
 console_output = []
 
-[profile.dev]
-opt-level = 1
-overflow-checks = false
-debug = 2
-incremental = true
-debug-assertions = true
 
 [dependencies]
 mine_data_strutcs = {path = "../mine_data_strutcs"}
@@ -31,5 +25,5 @@ fs_extra = "1.2.0"
 libc = "0.2.126" 
 murmurhash32 = {git = "https://github.com/gorilla-devs/murmurhash32.git"} 
 once_cell = "1.16.0"
-clap = { version = "4.0.26", features = ["derive"] }
+chrono = "0.4.23"
 
