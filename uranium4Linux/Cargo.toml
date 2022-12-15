@@ -26,4 +26,4 @@ libc = "0.2.126"
 murmurhash32 = {git = "https://github.com/gorilla-devs/murmurhash32.git"} 
 once_cell = "1.16.0"
 chrono = "0.4.23"
-
+bytes = "1.3.0"
