@@ -1,20 +1,23 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-const BASE: &'static str = "http://resources.download.minecraft.net/";
+const BASE: &'static str = "https://resources.download.minecraft.net/";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ObjectData {
-    pub hash: Option<String>,
-    pub size: Option<usize>,
+    pub hash: String,
+    pub size: usize,
 }
 
 impl ObjectData {
     pub fn get_link(&self) -> String { 
+        format!("{}{}/{}", BASE, &self.hash[..2], self.hash)
+            /*
         match &self.hash {
             Some(e) => format!("{}{}/{}", BASE, &e[..2], e),
             None => String::new(),
         }
+            */
        
         //format!("{}{}/{}", BASE, &self.hash[..2], self.hash)
     }
