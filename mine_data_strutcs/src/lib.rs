@@ -1,3 +1,4 @@
+pub mod minecraft;
 pub mod rinth;
 pub mod curse;
 pub mod url_maker;

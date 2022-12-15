@@ -1,4 +1,4 @@
-use crate::modpack_downloader::updater::update_modpack;
+use crate::downloaders::updater::update_modpack;
 use crate::variables::constants::*;
 use std::{fmt::Debug, str::FromStr};
 

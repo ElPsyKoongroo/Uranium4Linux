@@ -32,7 +32,7 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
 
     let download_urls = get_download_urls(&curse_req, responses, &mut names).await;
     let responses = download_mods(&curse_req, download_urls, &names, &mods_path).await;
-    let writters = get_writters(responses, names, &mods_path).await;
+    let writters = get_writters(responses, &names, &mods_path).await;
     let mut pool = AsyncPool::new();
     pool.push_request_vec(writters);
     pool.start().await;

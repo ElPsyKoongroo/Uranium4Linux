@@ -104,7 +104,7 @@ async fn download_memory_perf(links: Vec<String>, names: Vec<String>, destinatio
 
 async fn write_mods(responses: Vec<Response>, names: Vec<String>, destination_path: &str) {
     let mods_path = destination_path.to_owned() + "mods/";
-    let writters = get_writters(responses, names, &mods_path).await;
+    let writters = get_writters(responses, &names, &mods_path).await;
     let mut pool = AsyncPool::new();
     pool.push_request_vec(writters);
     pool.start().await;

@@ -5,6 +5,7 @@ pub const HELP_MSG: &str = "
 --update Upgrade the specified modpack
 --make Make a modpack file from specified route
 --request <TYPE> Make a requests
+--instanciate
 -h Print this message
 
 -f Specify the file/dir for [download/make modpack]
@@ -40,6 +41,7 @@ pub static NTHREADS: RwLock<usize> = RwLock::new(32);
 pub const DOWNLOAD: &str = "-d";
 pub const MAKE: &str = "--make";
 pub const REQUEST: &str = "--request";
+pub const INSTACIATE: &str = "-I";
 pub const HELP: &str = "-h";
 
 // LONG ACTIONS FLAGS
@@ -48,6 +50,7 @@ pub const LONG_MAKE: &str = "--make";
 pub const LONG_UPDATE: &str = "--update";
 pub const LONG_REQUEST: &str = "--request";
 pub const LONG_HELP: &str = "--help";
+pub const LONG_INSTACIATE: &str = "--instanciate";
 
 // OPTIONS FLAGS
 pub const THREADS_FLAG: &str = "-t";

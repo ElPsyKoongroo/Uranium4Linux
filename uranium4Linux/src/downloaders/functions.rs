@@ -9,7 +9,8 @@ pub async fn write_mod(path: &str, res: Response, name: &str) {
     let full_path = path.to_owned() + name;
     let content = web_res.bytes().await.unwrap();
 
-    match tokio::fs::write(&full_path, content).await {
+
+    match tokio::fs::write(&full_path, &content).await {
         Ok(_) => {},
         Err(e) => {
             eprintln!("{}", full_path);
@@ -20,7 +21,7 @@ pub async fn write_mod(path: &str, res: Response, name: &str) {
 
 pub async fn get_writters(
     responses: Vec<Response>,
-    names: Vec<String>,
+    names: &[String],
     destination_path: &str,
 ) -> Vec<JoinHandle<()>> {
     let mut writters = Vec::new();

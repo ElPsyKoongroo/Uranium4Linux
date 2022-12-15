@@ -3,15 +3,16 @@ mod checker;
 mod code_functions;
 mod easy_input;
 mod hashes;
-mod modpack_downloader;
+mod downloaders;
 mod modpack_maker;
 mod searcher;
 mod variables;
 mod zipper;
 
 use code_functions::{fix_path, get_bool_element, get_parse_element, update, N_THREADS};
-use modpack_downloader::curse_downloader::curse_modpack_downloader;
-use modpack_downloader::rinth_downloader::download_rinth_pack;
+use downloaders::curse_downloader::curse_modpack_downloader;
+use downloaders::rinth_downloader::download_rinth_pack;
+use downloaders::minecraft_downloader;
 use modpack_maker::maker::make_modpack;
 use searcher::rinth::SearchType;
 use std::env;
@@ -73,6 +74,7 @@ async fn main() -> Result<(), ZipError> {
         LONG_UPDATE => update(&file_path).await,
         LONG_MAKE => make_modpack(&file_path, N_THREADS()).await,
         LONG_REQUEST => searcher::rinth::search(request_arg_parser(&args).expect("Wrong request type")).await,
+        LONG_INSTACIATE => minecraft_downloader::donwload_minecraft(&destination_path).await.unwrap(),
         HELP | LONG_HELP => println!("{}", HELP_MSG),
         _ => println!("Invalid arguments"),
     }
