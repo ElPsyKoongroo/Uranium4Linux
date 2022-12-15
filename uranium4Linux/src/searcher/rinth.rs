@@ -1,12 +1,7 @@
 use mine_data_strutcs::rinth::rinth_mods::{RinthProject, RinthResponse, RinthVersion};
 use mine_data_strutcs::url_maker::maker;
 use serde::{de::DeserializeOwned, Serialize};
-use clap::{ValueEnum, Args};
 
-#[derive(Debug, Clone, Args)]
-pub struct Query {
-    q: String
-}
 
 
 #[derive(Clone, Debug)]
@@ -80,21 +75,12 @@ async fn search_for(limit: u32, offset: u32) {
 
 async fn get_data<T: DeserializeOwned>(url: &str) -> T {
     let client = reqwest::Client::new();
-
-    #[cfg(debug_assertions)]
-    println!("{}", url);
-
     let response = client.get(url).send().await.unwrap();
     response.json::<T>().await.unwrap()
 }
 
 async fn write_data<T: Serialize>(data: T) {
     let bytes = serde_json::to_vec(&data).unwrap();
-    let coso = serde_json::to_string_pretty(&data).unwrap();
-
-    #[cfg(debug_assertions)]
-    println!("{}", coso);
-
     tokio::fs::write("response.json", bytes).await.unwrap();
 }
 
