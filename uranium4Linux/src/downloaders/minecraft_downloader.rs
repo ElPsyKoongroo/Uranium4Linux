@@ -90,7 +90,7 @@ pub async fn download_resources(
 
         pool.start().await;
 
-        #[cfg(debug_assertions)]
+        #[cfg(feature = "console_output")]
         {
             i += 1;
             print!("\r{}%         ", (files.len() * i * 100) as f64 / 3407.0);
