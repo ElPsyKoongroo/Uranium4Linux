@@ -1,9 +1,9 @@
-use std::io::Write;
+use crate::checker::{check, log};
 use bytes::Bytes;
-
-use mine_data_strutcs::minecraft::{self, ObjectData};
+use mine_data_strutcs::minecraft;
 use requester::{async_pool::AsyncPool, mod_searcher::search_by_url};
 use reqwest;
+use std::io::{stdout, Write};
 
 use crate::code_functions::N_THREADS;
 
@@ -38,22 +38,24 @@ pub async fn donwload_minecraft(destionation_path: &str) -> Result<(), reqwest::
         .map(|v| v.hash.clone())
         .collect();
 
-    let total_size = resources.objects
+    let total_size = resources
+        .objects
         .files
         .values()
-        .fold(0, |acc, i| acc + i.size.clone());
-    println!("Total size: {}", total_size);
-    let objects: Vec<ObjectData> = resources.objects.files.values().cloned().collect();
-    let mut data = download_resources(resources, &requester).await;
+        .fold(0, |acc, i| acc + i.size);
 
+    println!("Total size: {}", total_size);
+    let mut data = download_resources(&resources, &requester).await;
 
     thread.join().unwrap();
     write_files(&mut data, &names).await;
-    
+
+    let objects: Vec<&minecraft::ObjectData> = resources.objects.files.values().collect();
+
     let wrong_files = check_files(&objects);
     if wrong_files.is_empty() {
         println!("No hay fallos");
-        return Ok(())
+        return Ok(());
     }
     for wrong_file in wrong_files {
         println!("Wrong: {}", objects[wrong_file].hash);
@@ -62,17 +64,19 @@ pub async fn donwload_minecraft(destionation_path: &str) -> Result<(), reqwest::
 }
 
 pub async fn download_resources(
-    resources: minecraft::Resources,
+    resources: &minecraft::Resources,
     requester: &reqwest::Client,
 ) -> Vec<Bytes> {
-    let (_names_vec, data): (Vec<String>, Vec<minecraft::ObjectData>) = resources
+    let (_names_vec, data): (Vec<String>, Vec<&minecraft::ObjectData>) = resources
         .objects
         .files
-        .into_iter()
-        .map(|(_, b)| (b.hash.clone(), b))
+        .values()
+        .map(|b| (b.hash.clone(), b))
         .unzip();
 
+    let mut i = 0;
     let chunk_size = N_THREADS();
+    // MAGIC !
     let mut bytes = Vec::with_capacity(3407);
     for files in data.chunks(chunk_size) {
         let mut pool = AsyncPool::new();
@@ -86,22 +90,13 @@ pub async fn download_resources(
 
         pool.start().await;
 
-        /*
-        responses.push(
-            pool.get_done_request()
-                .into_iter()
-                .filter_map(|res|
-                    match res {
-                       Ok(response) => Some(response),
-                       Err(error) => {
-                           println!("{}", error);
-                           None
-                       }
-                    }
-                )
-                .collect::<Vec<reqwest::Response>>(),
-        );
-        */
+        #[cfg(debug_assertions)]
+        {
+            i += 1;
+            print!("\r{}%         ", (files.len() * i * 100) as f64 / 3407.0);
+            stdout().flush().unwrap();
+        }
+
         push_data(
             pool.get_done_request()
                 .into_iter()
@@ -119,7 +114,6 @@ pub async fn download_resources(
         .await
     }
 
-    // MAGIC !
     bytes
 }
 
@@ -142,25 +136,27 @@ async fn push_data(responses: Vec<reqwest::Response>, chunk_size: usize, bytes: 
             }
         })
         .collect();
-    println!("{}", temp.len());
+    //println!("{}", temp.len());
     bytes.append(&mut temp);
 }
 
 async fn write_files(data: &mut [Bytes], names: &[String]) {
     if data.len() != names.len() {
-        println!("{} -- {}", data.len(), names.len());
+        log(format!("{} -- {}", data.len(), names.len()));
         panic!("Hay algo raro");
     }
 
     let open_options = std::fs::OpenOptions::new().write(true).to_owned();
     for (file_bytes, name) in data.into_iter().zip(names.iter()) {
         let path = ASSESTS_PATH.to_owned() + "objects/" + &name[..2] + "/" + &name;
-        println!("{}", path);
         let mut file = std::io::BufWriter::new(open_options.open(&path).unwrap());
-        match file.write_all(file_bytes) {
-            Ok(_) => println!("Escrito {}", path),
-            Err(_) => println!("Error al escribir {}", path),
-        }
+
+        check(
+            file.write_all(file_bytes),
+            true,
+            "minecraft_downloader; Fail to write resource",
+        )
+        .ok();
     }
 }
 
@@ -179,14 +175,15 @@ fn make_files(files: &[String]) {
     println!("Ficheros creados!");
 }
 
-
-fn check_files(files: &[ObjectData]) -> Vec<usize> {
+fn check_files(files: &[&minecraft::ObjectData]) -> Vec<usize> {
     use sha1::Digest;
     use std::io::Read;
     let mut not_ok = Vec::new();
+
     for i in 0..files.len() {
         let mut hasher = sha1::Sha1::new();
-        let path = ASSESTS_PATH.to_owned() + "objects/" + &files[i].hash[..2] + "/" + &files[i].hash;
+        let path =
+            ASSESTS_PATH.to_owned() + "objects/" + &files[i].hash[..2] + "/" + &files[i].hash;
         let mut file = match std::fs::File::open(path) {
             Ok(file) => file,
             Err(_e) => {
@@ -194,15 +191,18 @@ fn check_files(files: &[ObjectData]) -> Vec<usize> {
                 continue;
             }
         };
+
         let mut bytes = Vec::new();
         file.read_to_end(&mut bytes).unwrap();
         hasher.update(&bytes);
         let file_hash = hasher.finalize().to_vec();
         if file_hash != hex::decode(files[i].hash.clone()).unwrap() {
-            println!("{}", &files[i].hash);
+            //println!("{}", &files[i].hash);
             not_ok.push(i);
         }
     }
+    #[cfg(debug_assertions)]{
+        log(format!("Checking complete with {} errors", not_ok.len()));
+    }
     not_ok
 }
-

@@ -20,7 +20,7 @@ static LOG_FILE: Lazy<RwLock<BufWriter<std::fs::File>>> = Lazy::new(|| {
 ///
 /// # Panics
 ///
-///  If panic is true check will panic on E
+///  If value is E it will panic 
 pub fn check_panic<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
     value: Result<T, E>,
     show_error: bool,
@@ -44,7 +44,7 @@ where
 ///
 /// # Panics
 ///
-///  This function wont panic
+///  This function NEVER panics
 pub fn check<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
     value: Result<T, E>,
     show_error: bool,
@@ -61,6 +61,14 @@ where
         }
     }
 }
+
+pub fn log<M: std::fmt::Display + std::convert::AsRef<[u8]>>(msg: M){
+    let mut guard = LOG_FILE.write().unwrap();
+    let log_msg = format!("[LOG] {}\n", msg);
+    check(guard.write_all(log_msg.as_bytes()), false, "log; Failed to log").ok();
+    guard.flush().unwrap();
+}
+
 
 fn manage_error<E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
     error: E,
