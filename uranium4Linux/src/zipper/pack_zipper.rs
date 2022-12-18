@@ -1,14 +1,17 @@
-use super::uranium_structs::UraniumFile;
-use crate::checker::{check, check_panic};
-use crate::code_functions::fix_path;
-use crate::variables::constants;
-use crate::zipper::uranium_structs::FileType;
 use std::{
     fs::File,
     io::{Read, Write},
     path::{Path, PathBuf},
 };
+
 use zip::{result::ZipResult, write::FileOptions, ZipWriter};
+
+use crate::checker::{check, check_panic};
+use crate::code_functions::fix_path;
+use crate::variables::constants;
+use crate::zipper::uranium_structs::FileType;
+
+use super::uranium_structs::UraniumFile;
 
 pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<()> {
     let path = &fix_path(path);

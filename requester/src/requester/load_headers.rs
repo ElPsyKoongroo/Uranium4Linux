@@ -1,7 +1,7 @@
+use reqwest::header::{AUTHORIZATION, HeaderMap};
+
 pub const RINTH: &str = "RINTH";
 pub const CURSE: &str = "CURSE";
-
-use reqwest::header::{HeaderMap, AUTHORIZATION};
 
 pub fn load_headers(api: &str, headers: &mut HeaderMap) {
     match api {

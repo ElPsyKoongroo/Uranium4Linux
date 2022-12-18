@@ -1,8 +1,9 @@
-use once_cell::sync::Lazy;
 use std::fmt::Debug;
 use std::io::{BufWriter, Write};
 use std::sync::RwLock;
+
 use chrono::prelude::*;
+use once_cell::sync::Lazy;
 
 static LOG_FILE: Lazy<RwLock<BufWriter<std::fs::File>>> = Lazy::new(|| {
     RwLock::new(BufWriter::new(

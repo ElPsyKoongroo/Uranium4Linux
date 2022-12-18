@@ -1,10 +1,13 @@
-use crate::hashes::rinth_hash;
+use std::collections::HashMap;
+
+use serde::Deserialize;
+use serde::Serialize;
+
 use mine_data_strutcs::rinth::rinth_mods::RinthVersion;
 use mine_data_strutcs::url_maker;
 use requester::mod_searcher::search_by_url_post;
-use serde::Deserialize;
-use serde::Serialize;
-use std::collections::HashMap;
+
+use crate::hashes::rinth_hash;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Content {

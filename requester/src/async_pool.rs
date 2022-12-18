@@ -1,4 +1,5 @@
-use std::{time::Duration, collections::HashMap};
+use std::{collections::HashMap, time::Duration};
+
 use tokio::{task::JoinHandle, time};
 
 const PRE_TIME: u64 = 100;
@@ -29,6 +30,12 @@ impl<T> AsyncPool<T> {
     pub fn push_request_vec(&mut self, mut new_requests: Vec<JoinHandle<T>>){
         self.request_pool.append(&mut new_requests);
     }
+
+    pub fn clear(&mut self) {
+        self.request_pool.clear();
+        self.not_done_request.clear();
+        self.ordered_requests.clear();
+    } 
 
     pub async fn start(&mut self){
         self.items = self.request_pool.len();

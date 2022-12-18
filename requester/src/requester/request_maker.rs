@@ -1,9 +1,10 @@
-use super::load_headers;
-use crate::mod_searcher::Method;
 use reqwest::header::HeaderMap;
-use tokio::task::{spawn, JoinHandle};
+use tokio::task::{JoinHandle, spawn};
 use tokio::task;
 
+use crate::mod_searcher::Method;
+
+use super::load_headers;
 
 pub struct RinthRequester {
     cliente: reqwest::Client,

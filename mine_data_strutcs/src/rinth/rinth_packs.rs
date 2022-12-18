@@ -1,8 +1,11 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
-use super::rinth_mods::{RinthVersion, Hashes};
-use serde::{Deserialize, Serialize};
+
 use std::fs::read_to_string;
+
+use serde::{Deserialize, Serialize};
+
+use super::rinth_mods::{Hashes, RinthVersion};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RinthModpack {

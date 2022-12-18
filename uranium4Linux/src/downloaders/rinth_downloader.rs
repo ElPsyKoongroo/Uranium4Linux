@@ -1,13 +1,16 @@
-use super::functions::get_writters;
-use crate::code_functions::N_THREADS;
+use reqwest::Response;
+
+use mine_data_strutcs::rinth::rinth_packs::{load_rinth_pack, RinthMdFiles};
+use requester::async_pool::AsyncPool;
+use requester::mod_searcher::search_by_url;
+
 use crate::{
     variables::constants::{RINTH_JSON, TEMP_DIR},
     zipper::pack_unzipper::unzip_temp_pack,
 };
-use mine_data_strutcs::rinth::rinth_packs::{load_rinth_pack, RinthMdFiles};
-use requester::async_pool::AsyncPool;
-use requester::mod_searcher::search_by_url;
-use reqwest::Response;
+use crate::code_functions::N_THREADS;
+
+use super::functions::get_writters;
 
 pub async fn download_rinth_pack(path: &str, destination_path: &str) {
     unzip_temp_pack(path);

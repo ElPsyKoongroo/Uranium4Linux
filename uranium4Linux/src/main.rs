@@ -1,4 +1,17 @@
 #![allow(non_snake_case)]
+
+use std::env;
+
+use zip::result::ZipError;
+
+use code_functions::{fix_path, get_bool_element, get_parse_element, N_THREADS, update};
+use downloaders::curse_downloader::curse_modpack_downloader;
+use downloaders::minecraft_downloader;
+use downloaders::rinth_downloader::download_rinth_pack;
+use modpack_maker::maker::make_modpack;
+use searcher::rinth::SearchType;
+use variables::constants::*;
+
 mod checker;
 mod code_functions;
 mod easy_input;
@@ -8,16 +21,6 @@ mod modpack_maker;
 mod searcher;
 mod variables;
 mod zipper;
-
-use code_functions::{fix_path, get_bool_element, get_parse_element, update, N_THREADS};
-use downloaders::curse_downloader::curse_modpack_downloader;
-use downloaders::rinth_downloader::download_rinth_pack;
-use downloaders::minecraft_downloader;
-use modpack_maker::maker::make_modpack;
-use searcher::rinth::SearchType;
-use std::env;
-use variables::constants::*;
-use zip::result::ZipError;
 
 fn request_arg_parser(args: &[String]) -> Option<SearchType> {
     match args.iter().position(|f| f == REQUEST) {

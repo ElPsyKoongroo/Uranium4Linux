@@ -1,7 +1,9 @@
 #![allow(non_snake_case)]
+
+use std::fs::read_to_string;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
-use std::fs::read_to_string;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CursePackFiles {

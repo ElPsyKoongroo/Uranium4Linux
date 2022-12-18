@@ -1,8 +1,10 @@
-use crate::requester::request_maker::CurseRequester;
-use mine_data_strutcs::url_maker::maker::ModRinth;
+use serde;
 use tokio::task;
 use tokio::task::JoinHandle;
-use serde;
+
+use mine_data_strutcs::url_maker::maker::ModRinth;
+
+use crate::requester::request_maker::CurseRequester;
 
 pub enum Method {
     GET,
@@ -81,12 +83,33 @@ pub fn search_by_url(
     )
 }
 
+pub fn search_by_url_owned(
+    cliente: reqwest::Client,
+    url: &str,
+) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
+    let url = url.to_owned();
+    tokio::task::spawn(async move {
+        cliente
+            .get(&url)
+            .header(
+                reqwest::header::USER_AGENT,
+                "github.com/ElPsyKoongroo/Uranium4Linux (sergious234@gmail.com)"
+                    .parse::<reqwest::header::HeaderValue>()
+                    .unwrap(),
+            )
+            .send()
+            .await
+    })
+}
+
 pub fn search_by_url_post<T>(
     cliente: &reqwest::Client,
     url: &str,
     content: &T,
-) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> where 
-T: serde::Serialize {
+) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>>
+where
+    T: serde::Serialize,
+{
     tokio::task::spawn(
         cliente
             .post(url.to_owned())

@@ -1,9 +1,11 @@
-use crate::checker::*;
+use std::fs;
+use std::io::Read;
+
 use hex::ToHex;
 use murmurhash32::murmurhash2;
 use sha1::{Digest, Sha1};
-use std::fs;
-use std::io::Read;
+
+use crate::checker::*;
 
 fn get_sha1_from_file(file_path: &str) -> String {
     let mut hasher = Sha1::new();

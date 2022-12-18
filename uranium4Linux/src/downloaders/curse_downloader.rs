@@ -1,14 +1,16 @@
-use crate::code_functions::N_THREADS;
-use crate::variables::constants::TEMP_DIR;
-use crate::zipper::pack_unzipper::unzip_temp_pack;
-use mine_data_strutcs::url_maker::maker::Curse;
+use reqwest::Response;
+
 use mine_data_strutcs::{curse::curse_modpacks::*, curse::curse_mods::*};
+use mine_data_strutcs::url_maker::maker::Curse;
 use requester::{
     async_pool::AsyncPool, mod_searcher::Method, requester::request_maker::CurseRequester,
 };
 
+use crate::code_functions::N_THREADS;
+use crate::variables::constants::TEMP_DIR;
+use crate::zipper::pack_unzipper::unzip_temp_pack;
+
 use super::functions::{get_writters, overrides};
-use reqwest::Response;
 
 pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
     unzip_temp_pack(path);

@@ -1,8 +1,10 @@
+use std::fs;
+
+use reqwest::Response;
+use tokio::task::JoinHandle;
+
 use crate::checker::{check, check_panic};
 use crate::variables::constants::TEMP_DIR;
-use reqwest::Response;
-use std::fs;
-use tokio::task::JoinHandle;
 
 pub async fn write_mod(path: &str, res: Response, name: &str) {
     let full_path = path.to_owned() + name;
