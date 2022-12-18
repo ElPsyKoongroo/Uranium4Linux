@@ -40,8 +40,8 @@ where
 }
 
 /// # Given a Result<T, E> it checks if Ok() or Err()
-/// - If T => Return Result<T, <T, E>
-/// - If E => check will log the error in log.txt
+/// - If T => Return Result<T, E>
+/// - If E => check will log the error in log.txt and returns Result<T, E>
 ///
 /// # Panics
 ///
@@ -51,8 +51,8 @@ pub fn check<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
     show_error: bool,
     msg: M,
 ) -> Result<T, E>
-where
-    E: Debug,
+    where
+        E: Debug,
 {
     match value {
         Ok(ref _e) => value,
@@ -63,6 +63,34 @@ where
     }
 }
 
+/// # Given a Result<T, E> it checks if Ok() or Err()
+/// - If T => Return T
+/// - If E => check will log the error in log.txt and returns T::default()
+///
+/// # Panics
+///
+///  This function NEVER panics
+pub fn check_default<T: std::default::Default, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
+    value: Result<T, E>,
+    show_error: bool,
+    msg: M, ) -> T
+    where
+        E: Debug
+{
+    match value {
+        Ok(e) => e,
+        Err(ref error) => {
+            manage_error(error, show_error, msg);
+            T::default()
+        }
+    }
+}
+
+/// # LOG
+/// This function will write in the log file the messages.
+///
+/// # Panics
+/// This function NEVER panics
 pub fn log<M: std::fmt::Display + std::convert::AsRef<[u8]>>(msg: M){
     let mut guard = LOG_FILE.write().unwrap();
     let log_msg = format!("[LOG] {}\n", msg);
@@ -70,6 +98,18 @@ pub fn log<M: std::fmt::Display + std::convert::AsRef<[u8]>>(msg: M){
     guard.flush().unwrap();
 }
 
+/// # OLOG
+/// This function will write in the log file the messages and also will print it in stdout
+///
+/// # Panics
+/// This function NEVER panics
+pub fn olog<M: std::fmt::Display + std::convert::AsRef<[u8]>>(msg: M){
+    let mut guard = LOG_FILE.write().unwrap();
+    let log_msg = format!("[LOG] {}\n", msg);
+    println!("{log_msg}");
+    check(guard.write_all(log_msg.as_bytes()), false, "log; Failed to log").ok();
+    guard.flush().unwrap();
+}
 
 fn manage_error<E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
     error: E,
@@ -78,10 +118,8 @@ fn manage_error<E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
 ) where
     E: Debug,
 {
-    let mut guard = LOG_FILE.write().unwrap();
-    let log_msg = format!("[ERROR] {} {:?}\n", msg, error);
-    guard.write_all(log_msg.as_bytes()).expect("Failed to log");
-    guard.flush().unwrap();
+    let msg = format!("[ERROR] {} {:?}\n", msg, error);
+    log(msg);
     if show_error {
         eprintln!("Next error ocurred in runtime: {:?}\n\n", error);
     }

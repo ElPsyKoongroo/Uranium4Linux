@@ -1,9 +1,7 @@
 #![allow(non_snake_case)]
 
 use std::env;
-
 use zip::result::ZipError;
-
 use code_functions::{fix_path, get_bool_element, get_parse_element, N_THREADS, update};
 use downloaders::curse_downloader::curse_modpack_downloader;
 use downloaders::minecraft_downloader;

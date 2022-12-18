@@ -67,3 +67,7 @@ pub const VERSIONS: &str = "--versions";
 pub const MOD: &str = "--mod";
 pub const PROJECT: &str = "--project";
 pub const RESOURCEPACKS: &str = "--resourcepacks";
+
+// ERROR MESSAGES
+pub const DOWNLOAD_ERROR_MSG: &str = "Error with the download_request";
+pub const CANT_CREATE_DIR: &str = "Cant create the directory";

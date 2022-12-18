@@ -39,7 +39,7 @@ pub struct Objects {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Resources {
-    pub objects: Objects
+    pub objects: Objects,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
