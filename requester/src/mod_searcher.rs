@@ -4,6 +4,7 @@ use tokio::task::JoinHandle;
 
 use mine_data_strutcs::url_maker::maker::ModRinth;
 
+use crate::requester::request_maker::Req;
 use crate::requester::request_maker::CurseRequester;
 
 pub enum Method {
@@ -22,8 +23,8 @@ pub fn search_with_client(
     request: &RequestInfo,
 ) -> JoinHandle<Result<reqwest::Response, reqwest::Error>> {
     match request.method {
-        Method::GET => requester.get(&request.url, &Method::GET, ""),
-        Method::POST => requester.get(&request.url, &Method::POST, &request.body),
+        Method::GET => requester.get(&request.url, Method::GET, ""),
+        Method::POST => requester.get(&request.url, Method::POST, &request.body),
     }
 }
 
@@ -72,7 +73,7 @@ pub fn search_by_url(
     let url = url.to_owned();
     tokio::task::spawn(
         cliente
-            .get(&url)
+            .get(url)
             .header(
                 reqwest::header::USER_AGENT,
                 "github.com/ElPsyKoongroo/Uranium4Linux (sergious234@gmail.com)"

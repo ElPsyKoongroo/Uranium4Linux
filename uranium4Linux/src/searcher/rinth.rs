@@ -12,20 +12,23 @@ pub enum SearchType {
     VERSION(String),
     VERSIONS(String),
     RESOURCEPACKS(u32, u32),
+    MODPACKS(u32, u32),
 }
 
 pub async fn search(search: SearchType) {
     match search {
         SearchType::QUERY(q) => query(&q).await,
         SearchType::FOR(limit, offset) => search_for(limit, offset).await,
-        SearchType::MOD(_) => {todo!()}
+        SearchType::MOD(_) => {
+            todo!()
+        }
         SearchType::PROJECT(id) => search_project(&id).await,
         SearchType::VERSION(id) => search_version(&id).await,
         SearchType::VERSIONS(id) => search_versions(&id).await,
-        SearchType::RESOURCEPACKS(limit, offset) => search_sourcepacks(limit, offset).await,
+        SearchType::RESOURCEPACKS(limit, offset) => search_resourcepacks(limit, offset).await,
+        SearchType::MODPACKS(limit, offset) => search_modpacks(limit, offset).await,
     }
 }
-
 
 #[allow(unused)]
 async fn query(q: &str) {
@@ -48,14 +51,20 @@ async fn search_project(id: &str) {
     write_data(data).await;
 }
 
-async fn search_versions(id: &str) { 
+async fn search_versions(id: &str) {
     let url = maker::ModRinth::mod_version_by_id(id);
     let data = get_data::<RinthVersion>(&url).await;
     write_data(data).await;
 }
 
-async fn search_sourcepacks(limit: u32, offset: u32) {
+async fn search_resourcepacks(limit: u32, offset: u32) {
     let url = maker::ModRinth::resourcepacks(limit, offset);
+    let data = get_data::<RinthResponse>(&url).await;
+    write_data(data).await;
+}
+
+async fn search_modpacks(limit: u32, offset: u32) {
+    let url = maker::ModRinth::modpacks(limit, offset);
     let data = get_data::<RinthResponse>(&url).await;
     write_data(data).await;
 }

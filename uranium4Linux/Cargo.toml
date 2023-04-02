@@ -10,15 +10,15 @@ console_output = []
 
 
 [dependencies]
+serde.workspace = true
 mine_data_strutcs = {path = "../mine_data_strutcs"}
 requester = {path = "../requester"}
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-reqwest = { version = "0.11.13", features = ["json"] }
+reqwest = { version = "0.11.14", features = ["json"] }
 tokio = { version = "1.23.0", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
 regex = "1"
 futures= "0.3.25"
-sha-1 = "0.10.0"
+sha1 = "0.10.5"
 hex = "0.4.3"
 zip = "0.6.2"
 fs_extra = "1.2.0"

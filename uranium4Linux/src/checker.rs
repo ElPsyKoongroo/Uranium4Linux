@@ -1,9 +1,8 @@
+use chrono::prelude::*;
+use once_cell::sync::Lazy;
 use std::fmt::Debug;
 use std::io::{BufWriter, Write};
 use std::sync::RwLock;
-
-use chrono::prelude::*;
-use once_cell::sync::Lazy;
 
 static LOG_FILE: Lazy<RwLock<BufWriter<std::fs::File>>> = Lazy::new(|| {
     RwLock::new(BufWriter::new(
@@ -21,7 +20,7 @@ static LOG_FILE: Lazy<RwLock<BufWriter<std::fs::File>>> = Lazy::new(|| {
 ///
 /// # Panics
 ///
-///  If value is E it will panic 
+///  If value is E it will panic
 pub fn check_panic<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
     value: Result<T, E>,
     show_error: bool,
@@ -51,8 +50,8 @@ pub fn check<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
     show_error: bool,
     msg: M,
 ) -> Result<T, E>
-    where
-        E: Debug,
+where
+    E: Debug,
 {
     match value {
         Ok(ref _e) => value,
@@ -70,12 +69,18 @@ pub fn check<T, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
 /// # Panics
 ///
 ///  This function NEVER panics
-pub fn check_default<T: std::default::Default, E, M: std::fmt::Display + std::convert::AsRef<[u8]>>(
+#[allow(unused)]
+pub fn check_default<
+    T: std::default::Default,
+    E,
+    M: std::fmt::Display + std::convert::AsRef<[u8]>,
+>(
     value: Result<T, E>,
     show_error: bool,
-    msg: M, ) -> T
-    where
-        E: Debug
+    msg: M,
+) -> T
+where
+    E: Debug,
 {
     match value {
         Ok(e) => e,
@@ -91,10 +96,15 @@ pub fn check_default<T: std::default::Default, E, M: std::fmt::Display + std::co
 ///
 /// # Panics
 /// This function NEVER panics
-pub fn log<M: std::fmt::Display + std::convert::AsRef<[u8]>>(msg: M){
+pub fn log<M: std::fmt::Display>(msg: M) {
     let mut guard = LOG_FILE.write().unwrap();
     let log_msg = format!("[LOG] {}\n", msg);
-    check(guard.write_all(log_msg.as_bytes()), false, "log; Failed to log").ok();
+    check(
+        guard.write_all(log_msg.as_bytes()),
+        false,
+        "log; Failed to log",
+    )
+    .ok();
     guard.flush().unwrap();
 }
 
@@ -103,11 +113,55 @@ pub fn log<M: std::fmt::Display + std::convert::AsRef<[u8]>>(msg: M){
 ///
 /// # Panics
 /// This function NEVER panics
-pub fn olog<M: std::fmt::Display + std::convert::AsRef<[u8]>>(msg: M){
+pub fn olog<M: std::fmt::Display>(msg: M) {
     let mut guard = LOG_FILE.write().unwrap();
     let log_msg = format!("[LOG] {}\n", msg);
     println!("{log_msg}");
-    check(guard.write_all(log_msg.as_bytes()), false, "log; Failed to log").ok();
+    check(
+        guard.write_all(log_msg.as_bytes()),
+        false,
+        "log; Failed to log",
+    )
+    .ok();
+    guard.flush().unwrap();
+}
+
+/// # DLOG
+/// This function will write in the log file the messages if debug assertions are enable
+///
+/// # Panics
+/// This function NEVER panics
+#[inline]
+pub fn dlog<M: std::fmt::Display>(msg: M) {
+    #[cfg(debug_assertions)]
+    {
+        let mut guard = LOG_FILE.write().unwrap();
+        let log_msg = format!("[LOG] {}\n", msg);
+        check(
+            guard.write_all(log_msg.as_bytes()),
+            false,
+            "log; Failed to log",
+        )
+        .ok();
+        guard.flush().unwrap();
+    }
+}
+
+/// # OLOG
+/// This function will write in the log file the messages and also will print it in stdout
+///
+/// # Panics
+/// This function NEVER panics
+pub fn elog<M: std::fmt::Display>(msg: M) {
+    let mut guard = LOG_FILE.write().unwrap();
+    let log_msg = format!("[ERROR] {}\n", msg);
+    println!("{log_msg}");
+    check(
+        guard.write_all(log_msg.as_bytes()),
+        false,
+        "log; Failed to log",
+    )
+        .ok();
     guard.flush().unwrap();
 }
 

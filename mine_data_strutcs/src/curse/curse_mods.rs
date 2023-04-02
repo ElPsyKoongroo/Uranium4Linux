@@ -3,15 +3,14 @@
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Clone, Debug)] 
+#[derive(Deserialize, Serialize, Clone, Debug)]
 /// This struct only contains data about the mod logo.
 struct Logo {
     id: usize,
     modId: usize,
     thumbnailUrl: String,
-    url: String
+    url: String,
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 /// This struct contains the data about the specific file of a mod
@@ -23,11 +22,10 @@ pub struct CurseFile {
     fileName: String,
     downloadUrl: Option<String>,
     fileLength: usize,
-    gameVersions: Vec<String>
+    gameVersions: Vec<String>,
 }
 
 impl CurseFile {
-    
     pub fn get_id(&self) -> usize {
         self.id
     }
@@ -43,9 +41,8 @@ impl CurseFile {
     pub fn get_gameVersions(&self) -> &Vec<String> {
         &self.gameVersions
     }
-    
 
-    pub fn get_displayName(&self) -> String{
+    pub fn get_displayName(&self) -> String {
         self.displayName.clone()
     }
 
@@ -59,9 +56,9 @@ impl CurseFile {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct FingerPrintInfo{
+struct FingerPrintInfo {
     id: usize,
-    pub file: CurseFile
+    pub file: CurseFile,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -69,11 +66,11 @@ struct FingerPrintInfo{
 /// Fingerprint requets are like
 ///:"data": {
 ///:    exactMatches: \[
-///:        CurseFile 
+///:        CurseFile
 ///:    \]
 ///:}
 pub struct CurseFingerPrint {
-    exactMatches: Vec<FingerPrintInfo>
+    exactMatches: Vec<FingerPrintInfo>,
 }
 
 impl CurseFingerPrint {
@@ -82,23 +79,21 @@ impl CurseFingerPrint {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 /// This struct contains the data about a single version of a mod
-pub struct CurseVersion{
+pub struct CurseVersion {
     id: usize,
     gameId: usize,
-    name: String,         
-    slug: String,         
+    name: String,
+    slug: String,
     downloadCount: usize,
     latestFiles: Vec<CurseFile>,
 }
 
-
-#[derive(Serialize, Deserialize, Clone, Debug)] 
+#[derive(Serialize, Deserialize, Clone, Debug)]
 /// This struct contains the data about the multiple versions of a mod
-pub struct CurseVersions{
-    data: Vec<CurseVersion>
+pub struct CurseVersions {
+    data: Vec<CurseVersion>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -107,11 +102,11 @@ pub struct CurseVersions{
 ///     * fields of other struct *
 /// }
 /// We need this struct.
-pub struct CurseResponse<T: Serialize>{
-    pub data: T
+pub struct CurseResponse<T: Serialize> {
+    pub data: T,
 }
 
-/*                          
+/*
 "data": {
         "id": 238222,
         "gameId": 432,
@@ -244,5 +239,5 @@ pub struct CurseResponse<T: Serialize>{
                 "fingerprint": 9943101
             }]
         },
- 
+
  * */

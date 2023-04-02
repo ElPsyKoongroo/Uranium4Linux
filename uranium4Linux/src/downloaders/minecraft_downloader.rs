@@ -1,181 +1,337 @@
-use std::io::stdout;
-use std::io::Write;
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::collections::HashMap;
-use sha1::Digest;
-use bytes::Bytes;
-use reqwest;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use mine_data_strutcs::minecraft;
-use crate::checker::{check, check_default, check_panic, log, olog};
+use crate::checker::{check, check_panic, dlog, log, olog};
 use crate::code_functions::N_THREADS;
-use crate::variables::constants::{CANT_CREATE_DIR, DOWNLOAD_ERROR_MSG};
+use crate::variables::constants::CANT_CREATE_DIR;
+use bytes::Bytes;
+use mine_data_strutcs::minecraft::{self, Resources};
+use mine_data_strutcs::minecraft::{MinecraftInstance, MinecraftInstances};
+use once_cell::sync::Lazy;
+use reqwest;
+use sha1::Digest;
+use std::error::Error;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use tokio::io::stdout;
+use tokio::io::AsyncWriteExt;
+use tokio::task::JoinSet;
 
 const ASSESTS_PATH: &str = "assets/";
-const PLACE_HOLDER: &str =
-    "https://piston-meta.mojang.com/v1/packages/c492375ded5da34b646b8c5c0842a0028bc69cec/2.json";
+const INSTANCES_LIST: &str = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
-struct MinecraftDownloader<'a> {
-    bytes: Vec<Bytes>,
-    names: &'a [&'a str],
-    requester: reqwest::Client,
-    chunk_size: usize,
+static OPEN_OPTIONS: Lazy<tokio::fs::OpenOptions> =
+    Lazy::new(|| tokio::fs::OpenOptions::new().write(true).clone());
+
+#[derive(Debug)]
+enum SourceState {
+    Good { name: String, content: Bytes },
+    Bad { name: String },
 }
 
-impl<'a> MinecraftDownloader<'a> {
-    pub fn new(names: &'a[&'a str], chunk_size: usize) -> MinecraftDownloader {
-        MinecraftDownloader {
-            bytes: Vec::with_capacity(names.len()),
-            names: &names,
-            requester: reqwest::Client::new(),
-            chunk_size,
+impl SourceState {
+    pub fn get_name(&self) -> &str {
+        match self {
+            SourceState::Good { name, content: _ } => name,
+            SourceState::Bad { name } => name,
         }
     }
 
-    pub async fn start(mut self, resources: &minecraft::Resources) {
-        let start = tokio::time::Instant::now();
-        self.download_resources(&resources).await;
-        let end = tokio::time::Instant::now();
-        olog(format!("\nDownload time: {}", end.duration_since(start).as_millis()));
-        self.write_files().await;
-        self.check_files().await;
+    pub fn get_bytes(&self) -> Option<&Bytes> {
+        match self {
+            SourceState::Good { name: _, content } => Some(content),
+            SourceState::Bad { name: _ } => None,
+        }
     }
 
-    pub async fn download_resources(&mut self, resources: &minecraft::Resources) {
-        let mut data: Vec<&minecraft::ObjectData> = resources.objects.files.values().collect();
+    pub fn get_path(&self) -> String {
+        let name = match self {
+            SourceState::Good { name, content: _ } => name,
+            SourceState::Bad { name } => name,
+        };
+        format!("{}objects/{}/{}", ASSESTS_PATH, &name[..2], name)
+    }
+
+    pub fn set_bad(&mut self) {
+        *self = match self {
+            SourceState::Good { name, content: _ } => SourceState::Bad {
+                name: std::mem::take(name),
+            },
+            SourceState::Bad { name } => SourceState::Bad {
+                name: std::mem::take(name),
+            },
+        };
+    }
+}
+
+struct MinecraftDownloader {
+    test: Vec<SourceState>,
+    sources: Resources,
+    requester: reqwest::Client,
+    chunk_size: usize,
+    path: Arc<PathBuf>,
+}
+
+impl MinecraftDownloader {
+    pub fn new_with_reqwester(
+        sources: Resources,
+        chunk_size: usize,
+        requester: reqwest::Client,
+        path: Arc<PathBuf>,
+    ) -> MinecraftDownloader {
+        MinecraftDownloader {
+            test: Vec::new(),
+            sources,
+            requester,
+            chunk_size,
+            path,
+        }
+    }
+
+    pub async fn start(mut self) {
+        let start = tokio::time::Instant::now();
+        self.download_resources().await.ok();
+        let end = tokio::time::Instant::now();
+        olog(format!(
+            "Download && Write time: {}",
+            end.duration_since(start).as_millis()
+        ));
+    }
+
+    pub fn get_names(&self) -> Vec<&str> {
+        self.sources
+            .objects
+            .values()
+            .map(|v| v.hash.as_str())
+            .collect()
+    }
+
+    pub async fn download_resources(&mut self) -> Result<(), Box<dyn Error>> {
+        let mut data: Vec<&minecraft::ObjectData> = self.sources.objects.values().collect();
+        let range: Vec<usize> = (0..self.sources.objects.values().len()).collect();
         data.sort_by(|a, b| b.size.cmp(&a.size));
 
+        let mut join_set = JoinSet::new();
+        let mut writters = JoinSet::new();
+
+        #[cfg(feature = "console_output")]
         let mut i = 0;
-        let mut join_set = tokio::task::JoinSet::new();
-        let mut responses: HashMap<usize, Bytes> = HashMap::new();
 
-        for files in data.chunks(self.chunk_size) {
-            files.iter().enumerate().for_each(|(i, file)| {
+        for indexs in range.chunks(self.chunk_size) {
+            let mut sources = Vec::with_capacity(self.chunk_size);
+            for i in indexs {
                 let rc = self.requester.clone();
-                let url = file.get_link();
-                join_set.spawn(
-                    async move {
-                        (rc.get(&url).send().await.unwrap().bytes().await, i)
-                    });
-            });
-
-            while let Some(Ok((result, index))) = join_set.join_next().await {
-                responses.insert(index, check_default(result, false, DOWNLOAD_ERROR_MSG));
+                let url = data[*i].get_link();
+                let hash = data[*i].hash.clone();
+                join_set.spawn(async move {
+                    SourceState::Good {
+                        name: hash,
+                        content: rc
+                            .get(&url)
+                            .send()
+                            .await
+                            .unwrap()
+                            .bytes()
+                            .await
+                            .unwrap_or_default(),
+                    }
+                });
             }
+
+            while let Some(source) = join_set.join_next().await {
+                sources.push(source?);
+            }
+            writters.spawn(MinecraftDownloader::write_files(
+                sources,
+                Arc::clone(&self.path),
+            ));
 
             #[cfg(feature = "console_output")]
             {
-                i += files.len();
-                print!("\r{:.2}%", (i * 100) as f64 / 3407.0);
-                stdout().flush().unwrap();
+                i += indexs.len();
+                print!(
+                    "\r{:.2}%",
+                    (i * 100) as f64 / self.sources.objects.len() as f64
+                );
+                stdout().flush();
             }
-            (0..responses.len()).for_each(|i| self.bytes.push(responses.remove(&i).unwrap()));
         }
+
+        let mut bad_files = Vec::new();
+        while let Some(w) = writters.join_next().await {
+            bad_files.append(&mut w.unwrap());
+        }
+        Ok(())
     }
 
-    async fn write_files(&mut self) {
-        if self.bytes.len() != self.names.len() {
-            log(format!("{} -- {}", self.bytes.len(), self.names.len()));
-            panic!("Hay algo raro");
-        }
-
-        let open_options = tokio::fs::OpenOptions::new().write(true).to_owned();
-        for (file_bytes, name) in self.bytes.iter().zip(self.names.iter()) {
-            let path = ASSESTS_PATH.to_owned() + "objects/" + &name[..2] + "/" + &name;
-            let mut file = open_options.open(path).await.unwrap();
-            check(
-                file.write_all(&file_bytes).await,
-                true,
-                "minecraft_downloader; Fail to write resource",
-            )
-            .ok();
-        }
-    }
-
-    async fn check_files(&self) {
-        let not_ok: Arc<Mutex<Vec<usize>>> = Arc::new(Mutex::new(Vec::new())) ;
-        for indexs in (0..self.names.len()).collect::<Vec<usize>>().chunks(self.chunk_size) {
-            let mut join_set = tokio::task::JoinSet::new();
-            indexs.into_iter().for_each(|i| {
-                let i = i.clone();
-                let nk = Arc::clone(&not_ok);
-                let path = ASSESTS_PATH.to_owned() + "objects/" + &self.names[i][..2] + "/" + &self.names[i];
-                join_set.spawn(async move {MinecraftDownloader::check_file(path, nk, i).await});
-            });
-            while let Some(_) = join_set.join_next().await {}
-        }
-
-        #[cfg(debug_assertions)]
-        {
-            log(format!("Checking complete with {} errors", not_ok.lock().unwrap().len()));
-        }
-    }
-
-    async fn check_file(path: String, nk: Arc<Mutex<Vec<usize>>>, i: usize){
-        let mut hasher = sha1::Sha1::new();
-        let mut file = match tokio::fs::File::open(&path).await {
-            Ok(file) => file,
-            Err(_e) => {
-                let mut guard = nk.lock().unwrap();
-                guard.push(i);
-                return ;
-            }
-        };
-
-        let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes).await.unwrap();
-        hasher.update(&bytes);
-        let file_hash = hasher.finalize().to_vec();
-        let hash = &path[(path.rfind('/').unwrap())+1..];
-        if file_hash != hex::decode(hash).unwrap() {
-            let mut guard = match nk.lock() {
-                Ok(g) => g,
-                Err(_e) => {return ;}
-            };
-            guard.push(i);
-        }
-    }
-
-    fn make_files(files: &[&str]) {
-        for file in files {
-            let path = ASSESTS_PATH.to_owned() + "objects/" + &file[..2] + "/" + &file;
-            let _file = match std::fs::File::create(&path) {
-                Ok(e) => e,
-                Err(_) => {
-                    std::fs::create_dir_all(ASSESTS_PATH.to_owned() + "objects/" + &file[..2] + "/")
-                        .expect(CANT_CREATE_DIR);
-                    std::fs::File::create(path).unwrap()
+    async fn write_files(sources: Vec<SourceState>, dest: Arc<PathBuf>) -> Vec<SourceState> {
+        let mut results = Vec::with_capacity(sources.len() / 2);
+        for mut source in sources {
+            let path = dest.join(source.get_path());
+            let mut file = OPEN_OPTIONS.open(&path).await.unwrap();
+            let Some(bytes) = source.get_bytes() else {continue};
+            //olog(format!("Writting {:?}", path));
+            match MinecraftDownloader::check_file(bytes, source.get_name()) {
+                Ok(_) => {
+                    check(
+                        file.write_all(bytes).await,
+                        true,
+                        "minecraft_downloader; Fail to write resource",
+                    )
+                    .ok();
                 }
-            };
+                Err(_) => {
+                    log(format!("Bad file {}", source.get_name()));
+                    source.set_bad();
+                    results.push(source);
+                }
+            }
+        }
+        results
+    }
+
+    fn check_file<T: AsRef<[u8]>>(bytes: T, hash: &str) -> Result<(), hex::FromHexError> {
+        let mut hasher = sha1::Sha1::new();
+        hasher.update(bytes.as_ref());
+        let file_hash = hasher.finalize().to_vec();
+        if file_hash != hex::decode(hash)? {
+            dlog(format!("Error while checking {:?}, wrong hash", hash));
+            return Err(hex::FromHexError::InvalidStringLength);
+        }
+        Ok(())
+    }
+
+    async fn make_files(&self, path: Arc<PathBuf>) -> Result<(), std::io::Error> {
+        for file in self.get_names() {
+            let path = path.join(ASSESTS_PATH.to_owned() + "objects/" + &file[..2] + "/" + file);
+            if tokio::fs::File::create(&path).await.is_err() {
+                std::fs::create_dir_all(path.parent().unwrap()).expect(CANT_CREATE_DIR);
+                std::fs::File::create(path)?;
+            }
         }
         log("Ficheros creados!");
+        Ok(())
     }
 }
 
-pub async fn donwload_minecraft(_destination_path: &str) -> Result<(), reqwest::Error> {
-    check_panic(tokio::fs::create_dir_all("assets/indexes").await, false, CANT_CREATE_DIR);
-    check_panic(tokio::fs::create_dir_all("assets/objects").await, false, CANT_CREATE_DIR);
+/*
 
+   MINECRAFT INSTANCES VERSIONS/LIST ?
+
+*/
+
+pub async fn print_instances() -> Result<(), reqwest::Error> {
     let requester = reqwest::Client::new();
+    let instances = list_instances(&requester).await?;
+    instances
+        .get_versions_raw()
+        .iter()
+        .for_each(|t| println!("{}", t.get_id_raw()));
+
+    Ok(())
+}
+
+pub async fn list_instances(
+    requester: &reqwest::Client,
+) -> Result<MinecraftInstances, reqwest::Error> {
+    let instances = requester
+        .get(INSTANCES_LIST)
+        .send()
+        .await?
+        .json::<minecraft::MinecraftInstances>()
+        .await?;
+
+    Ok(instances)
+}
+
+/*
+
+        DOWNLOAD MINECRAFT RESOURCES CODE SECTION
+
+*/
+
+async fn get_sourcers(
+    requester: &reqwest::Client,
+    assets_url: &str,
+    destination_path: &Path,
+) -> Result<Resources, reqwest::Error> {
     let resources = requester
-        .get(PLACE_HOLDER)
+        .get(assets_url)
         .send()
         .await?
         .json::<minecraft::Resources>()
         .await?;
 
-    let names: Vec<&str> = resources
-        .objects
-        .files
-        .values()
-        .map(|v| v.hash.as_str())
-        .collect();
+    check_panic(
+        tokio::fs::create_dir_all(destination_path.join("assets/indexes")).await,
+        true,
+        CANT_CREATE_DIR,
+    );
 
-    let mc_downloader = MinecraftDownloader::new(&names, N_THREADS());
-    MinecraftDownloader::make_files(&names);
-    mc_downloader.start(&resources).await;
+    check_panic(
+        tokio::fs::create_dir_all(destination_path.join("assets/objects")).await,
+        true,
+        CANT_CREATE_DIR,
+    );
+
+    Ok(resources)
+}
+
+async fn create_indexes(
+    resources: &Resources,
+    destination_path: &Path,
+    assets_url: &str,
+) -> Result<(), std::io::Error> {
+    let indexes_path = destination_path
+        .join("assets/indexes/")
+        .join(&assets_url[assets_url.rfind('/').unwrap_or_default() + 1..]);
+    let mut indexes = tokio::fs::File::create(indexes_path).await?;
+
+    indexes
+        .write_all(
+            serde_json::to_string(resources)
+                .unwrap_or_default()
+                .as_bytes(),
+        )
+        .await?;
+
     Ok(())
 }
 
+pub async fn download_sourcers(
+    assets_url: &str,
+    requester: &reqwest::Client,
+    destination_path: PathBuf,
+) -> Result<(), Box<dyn Error>> {
+    let resources = get_sourcers(requester, assets_url, &destination_path).await?;
+    create_indexes(&resources, &destination_path, assets_url).await?;
+    let arc_path = Arc::new(destination_path);
+    let mc_downloader = MinecraftDownloader::new_with_reqwester(
+        resources,
+        N_THREADS(),
+        requester.clone(),
+        arc_path.clone(),
+    );
+    mc_downloader.make_files(arc_path.clone()).await?;
+    mc_downloader.start().await;
+    Ok(())
+}
 
+pub async fn donwload_minecraft(
+    instance: &str,
+    destination_path: PathBuf,
+) -> Result<(), Box<dyn Error>> {
+    let requester = reqwest::Client::new();
+    let intances = list_instances(&requester).await?;
+    let instance_url = intances.get_instance_url(instance).unwrap();
+
+    let instance: MinecraftInstance = requester.get(instance_url).send().await?.json().await?;
+
+    download_sourcers(&instance.assest_index.url, &requester, destination_path).await?;
+
+    //TODO!
+    // 1.- Learn how the .minecraft folders works
+    // 2.- Download the minecraft libraries in the correspondientes folders
+    // 3.- Download only the necessary librarias bcs somes are for Windows and somes are for Linux
+    // 4.- Try to log with Microsoft account
+    // 5.- Try to launch minecraft
+
+    Ok(())
+}

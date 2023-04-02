@@ -6,11 +6,11 @@ use std::{
 
 use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 
-use crate::checker::{check, check_panic};
+use crate::checker::{check, check_panic, dlog};
 use crate::code_functions::fix_path;
 use crate::variables::constants;
-use crate::zipper::uranium_structs::FileType;
 
+use crate::zipper::uranium_structs::FileType;
 use super::uranium_structs::UraniumFile;
 
 pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<()> {
@@ -132,11 +132,11 @@ fn append_config_file(
     let buffer = file.bytes().flatten().collect::<Vec<u8>>();
 
     // Is a recoverable error reading 0 bytes from file ?
-    // In this case Uranium will just send a warning about it 
+    // In this case Uranium will just send a warning about it
     // and dont add the file
     if buffer.is_empty() {
-        let _ = check::<(), _, _>(Err(format!("No bytes from {:?} ?", absolute_path)), true, "");
-        return 
+        dlog("No bytes readed from the pack");
+        return;
     }
 
     // Add the file to the zip

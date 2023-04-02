@@ -1,0 +1,63 @@
+    Checking uranium4Linux v0.1.0 (/mnt/Uni/Programacion/rust/Uranium4Linux/uranium4Linux)
+warning: unused import: `olog`
+ --> uranium4Linux/src/downloaders/rinth_downloader.rs:6:28
+  |
+6 | use crate::checker::{dlog, olog, log};
+  |                            ^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0277]: the trait bound `std::option::Option<std::option::Option<&bytes::Bytes>>: AsRef<[u8]>` is not satisfied
+   --> uranium4Linux/src/downloaders/minecraft_downloader.rs:169:51
+    |
+169 |             match MinecraftDownloader::check_file(bytes, source.get_name()) {
+    |                   ------------------------------- ^^^^^ the trait `AsRef<[u8]>` is not implemented for `std::option::Option<std::option::Option<&bytes::Bytes>>`
+    |                   |
+    |                   required by a bound introduced by this call
+    |
+note: required by a bound in `MinecraftDownloader::check_file`
+   --> uranium4Linux/src/downloaders/minecraft_downloader.rs:188:22
+    |
+188 |     fn check_file<T: AsRef<[u8]>>(bytes: T, hash: &str) -> Result<(), hex::FromHexError> {
+    |                      ^^^^^^^^^^^ required by this bound in `MinecraftDownloader::check_file`
+
+error[E0308]: mismatched types
+   --> uranium4Linux/src/downloaders/minecraft_downloader.rs:172:40
+    |
+172 |                         file.write_all(bytes).await,
+    |                              --------- ^^^^^ expected `&[u8]`, found enum `std::option::Option`
+    |                              |
+    |                              arguments to this function are incorrect
+    |
+    = note: expected reference `&[u8]`
+                    found enum `std::option::Option<std::option::Option<&bytes::Bytes>>`
+note: associated function defined here
+   --> /home/sergio/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-1.24.2/src/io/util/async_write_ext.rs:364:12
+    |
+364 |         fn write_all<'a>(&'a mut self, src: &'a [u8]) -> WriteAll<'a, Self>
+    |            ^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> uranium4Linux/src/downloaders/minecraft_downloader.rs:113:13
+    |
+113 |         let mut i = 0;
+    |             ----^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: unreachable statement
+  --> uranium4Linux/src/downloaders/functions.rs:58:13
+   |
+57 |             panic!();
+   |             -------- any code following this expression is unreachable
+58 |             return;
+   |             ^^^^^^^ unreachable statement
+   |
+   = note: `#[warn(unreachable_code)]` on by default
+
+Some errors have detailed explanations: E0277, E0308.
+For more information about an error, try `rustc --explain E0277`.
+warning: `uranium4Linux` (bin "uranium4Linux") generated 3 warnings
+error: could not compile `uranium4Linux` due to 2 previous errors; 3 warnings emitted

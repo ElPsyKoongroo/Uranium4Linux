@@ -8,9 +8,10 @@ where
     let mut s = String::new();
     print!("{}", msg);
     stdout().flush().unwrap();
-    stdin().read_line(&mut s).expect("Did not enter a correct string");
-    let trimmed = s.trim();
-    match trimmed.parse::<T>() {
+    stdin()
+        .read_line(&mut s)
+        .expect("Did not enter a correct string");
+    match s.trim().parse::<T>() {
         Ok(i) => i,
         Err(_) => default,
     }

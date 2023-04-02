@@ -25,10 +25,10 @@ impl CursePackFiles {
 pub struct CursePack {
     name: String,
     author: String,
-    files: Vec<CursePackFiles>
+    files: Vec<CursePackFiles>,
 }
 
-impl CursePack{
+impl CursePack {
     pub fn get_files(&self) -> &Vec<CursePackFiles> {
         &self.files
     }

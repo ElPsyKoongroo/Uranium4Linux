@@ -1,5 +1,5 @@
-use std::fs::{File, remove_dir_all};
 use std::fs::create_dir;
+use std::fs::{remove_dir_all, File};
 
 use crate::checker::{check, check_panic};
 use crate::variables::constants::TEMP_DIR;
@@ -10,7 +10,7 @@ pub fn unzip_temp_pack(file_path: &str) {
     let zip_file = check_panic(
         File::open(file_path),
         true,
-        "unzipper; Zip file not found! ",
+        format!("unzipper; Zip file not found! {}", file_path),
     );
 
     let mut zip = zip::ZipArchive::new(zip_file).unwrap();
@@ -20,7 +20,7 @@ pub fn unzip_temp_pack(file_path: &str) {
         false,
         "unzipper; Could not create temporal dir",
     );
-    if let Err(_) = a {
+    if a.is_err() {
         remove_temp_pack();
     }
 

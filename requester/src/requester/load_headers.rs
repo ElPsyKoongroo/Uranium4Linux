@@ -1,4 +1,4 @@
-use reqwest::header::{AUTHORIZATION, HeaderMap};
+use reqwest::header::{HeaderMap, AUTHORIZATION};
 
 pub const RINTH: &str = "RINTH";
 pub const CURSE: &str = "CURSE";

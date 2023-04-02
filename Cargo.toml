@@ -1,3 +1,6 @@
+[workspace.dependencies]
+serde = { version = "1.0.147", features = ["derive"] }
+
 [workspace]
 members = ["uranium4Linux", "requester", "mine_data_strutcs"]
 

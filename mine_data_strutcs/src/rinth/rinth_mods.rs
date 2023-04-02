@@ -22,7 +22,7 @@ pub struct SearchProjects {
 }
 
 /// `RinthMod` pretends to be the structure for the response of
-/// https://api.modrinth.com/v2/project/{id | slug} 
+/// https://api.modrinth.com/v2/project/{id | slug}
 /// This type is also usable when requesting searchs for rinth api
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RinthProject {
@@ -36,7 +36,7 @@ pub struct RinthProject {
 }
 
 impl std::fmt::Display for RinthProject {
-    fn fmt(&self, f: &mut std::fmt::Formatter ) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "Mod name: {}", self.title)
     }
 }
@@ -122,7 +122,7 @@ impl RinthVersion {
     }
 
     pub fn get_hashes(&self) -> &Hashes {
-        &self.files[0].hashes   
+        &self.files[0].hashes
     }
 
     pub fn get_size(&self) -> usize {
@@ -162,7 +162,7 @@ pub struct RinthVersions {
     pub versions: Vec<RinthVersion>,
 }
 
-impl std::convert::From<Vec<RinthVersion>> for RinthVersions  {
+impl std::convert::From<Vec<RinthVersion>> for RinthVersions {
     fn from(versions: Vec<RinthVersion>) -> RinthVersions {
         RinthVersions { versions }
     }
@@ -268,7 +268,7 @@ impl fmt::Display for RinthVersions {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Hashes {
     pub sha512: String,
-    pub sha1: String
+    pub sha1: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -276,7 +276,7 @@ struct RinthFile {
     pub hashes: Hashes,
     pub url: String,
     pub filename: String,
-    pub size: usize
+    pub size: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -298,7 +298,7 @@ impl RinthResponse {
     }
 
     pub fn show(&self) {
-        println!("{}", self);
+        println!("{self}");
     }
 
     pub fn len(&self) -> usize {

@@ -6,14 +6,13 @@ pub enum FileType {
 }
 
 #[derive(Clone)]
-pub struct UraniumFile{
+pub struct UraniumFile {
     /// Relative path from minecraft root mods/sodium.jar
-    path: String, 
+    path: String,
     /// sodium.jar  
     name: String,
     file_type: FileType,
 }
-
 
 impl UraniumFile {
     pub fn new(path: &str, name: &str, file_type: FileType) -> UraniumFile {
@@ -27,10 +26,10 @@ impl UraniumFile {
     pub fn get_path(&self) -> String {
         self.path.clone()
     }
-    
+
     pub fn get_name(&self) -> String {
         self.name.clone()
-    } 
+    }
 
     pub fn get_absolute_path(&self) -> String {
         self.path.clone() + &self.name
@@ -43,5 +42,4 @@ impl UraniumFile {
     pub fn get_type(&self) -> FileType {
         self.file_type.clone()
     }
-
 }

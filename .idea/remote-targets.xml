@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <targets>
+      <target name="sergio@207.188.155.34:2222" type="ssh/sftp" uuid="99eb11ab-0a17-4c0e-b8c0-faee18812188">
+        <config>
+          <option name="projectRootOnTarget" value="$USER_HOME$/Uranium4Linux" />
+          <option name="serverName" value="sergio@207.188.155.34:2222 password" />
+        </config>
+        <ContributedStateBase type="RsLanguageRuntime">
+          <config>
+            <option name="cargoPath" value="$USER_HOME$/.cargo/bin/cargo" />
+            <option name="cargoVersion" value="1.66.0 (d65d197ad 2022-11-15)" />
+            <option name="rustcPath" value="$USER_HOME$/.cargo/bin/rustc" />
+            <option name="rustcVersion" value="1.66.0 (69f9c33d7 2022-12-12)" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>

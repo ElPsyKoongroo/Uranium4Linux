@@ -4,8 +4,8 @@ use std::path::Path;
 
 use futures::future::join_all;
 
-use mine_data_strutcs::{rinth::rinth_mods::RinthVersion, url_maker::maker};
 use mine_data_strutcs::rinth::rinth_packs::RinthModpack;
+use mine_data_strutcs::{rinth::rinth_mods::RinthVersion, url_maker::maker};
 use requester::async_pool::AsyncPool;
 
 use crate::hashes::rinth_hash;
@@ -92,8 +92,8 @@ async fn search_mod(item: &[(String, String)], n_threads: usize) -> Vec<ParseSta
             .map(|f| tokio::task::spawn(cliente.get(maker::ModRinth::hash(&f.0)).send()))
             .collect();
         pool.push_request_vec(reqs);
-        pool.start().await;
-        rinth_responses.append(&mut pool.get_done_request());
+        // pool.start().await;
+        rinth_responses.append(&mut pool.start().await);
     }
 
     // Get rinth parses

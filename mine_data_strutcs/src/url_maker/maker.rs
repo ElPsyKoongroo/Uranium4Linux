@@ -32,25 +32,22 @@ impl ModRinth {
         )
     }
 
-
     /// https://api.modrinth.com/v2/project/AANobbMI/version
     pub fn mod_versions_by_id(id: &str) -> String {
         format!("{}/project/{}/version", BASE_MRN_URL2, id)
     }
 
-    pub fn modpacks() -> String {
-        format!(
-            "{}/search?facets=[[\"project_type:modpack\"]]",
-            BASE_MRN_URL2,
-        )
-    }
-
     pub fn resourcepacks(limit: u32, offset: u32) -> String {
         format!(
             "{}/search?limit={}&offset={}&facets=[[\"project_type:resourcepack\"]]",
-            BASE_MRN_URL2,
-            limit,
-            offset,
+            BASE_MRN_URL2, limit, offset,
+        )
+    }
+
+    pub fn modpacks(limit: u32, offset: u32) -> String {
+        format!(
+            "{}/search?limit={}&offset={}&facets=[[\"project_type:modpack\"]]",
+            BASE_MRN_URL2, limit, offset,
         )
     }
 

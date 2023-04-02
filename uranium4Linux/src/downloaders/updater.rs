@@ -40,10 +40,10 @@ pub async fn update_modpack(minecraft_path: &str) {
     for hash in mods_hashes {
         match updates.get(&hash) {
             Some(v) if v.get_hashes().sha1 != hash => {
-                println!("Update avaliable for {}", v.get_name())
+                println!("Update avaliable for {}", v.get_name());
             }
             Some(v) => {
-                println!("{} is up to date!", v.get_name())
+                println!("{} is up to date!", v.get_name());
             }
             None => {}
         }

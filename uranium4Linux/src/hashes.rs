@@ -5,7 +5,7 @@ use hex::ToHex;
 use murmurhash32::murmurhash2;
 use sha1::{Digest, Sha1};
 
-use crate::checker::*;
+use crate::checker::check_panic;
 
 fn get_sha1_from_file(file_path: &str) -> String {
     let mut hasher = Sha1::new();

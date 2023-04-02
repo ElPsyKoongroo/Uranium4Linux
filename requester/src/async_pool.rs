@@ -1,78 +1,54 @@
 use std::{collections::HashMap, time::Duration};
-
+use std::collections::VecDeque;
 use tokio::{task::JoinHandle, time};
-
+use tokio::task::JoinSet;
 const PRE_TIME: u64 = 100;
 
+// This is not anymore an AsyncPool, just a task sorter xd
 pub struct AsyncPool<T> {
-    request_pool: Vec<JoinHandle<T>>,
+    request_pool: VecDeque<JoinHandle<T>>,
     items: usize,
-    not_done_request: Vec<usize>,
-    ordered_requests: HashMap<usize, T>
+    ordered_requests: HashMap<usize, T>,
 }
 
-
 impl<T> AsyncPool<T> {
-
     pub fn new() -> AsyncPool<T> {
         AsyncPool {
-            request_pool: Vec::new(),
+            request_pool: VecDeque::new(),
             items: 0,
-            not_done_request: Vec::new(),
-            ordered_requests: HashMap::new()
+            ordered_requests: HashMap::new(),
         }
     }
 
     pub fn push_request(&mut self, request: JoinHandle<T>) {
-        self.request_pool.push(request);
+        self.request_pool.push_back(request);
     }
 
-    pub fn push_request_vec(&mut self, mut new_requests: Vec<JoinHandle<T>>){
-        self.request_pool.append(&mut new_requests);
+    pub fn push_request_vec(&mut self, new_requests: Vec<JoinHandle<T>>) {
+        self.request_pool.append(&mut VecDeque::from(new_requests));
+        if self.request_pool.len() > self.ordered_requests.capacity() {
+            self.ordered_requests = HashMap::with_capacity(self.request_pool.len());
+        }
     }
 
     pub fn clear(&mut self) {
         self.request_pool.clear();
-        self.not_done_request.clear();
         self.ordered_requests.clear();
-    } 
+    }
 
-    pub async fn start(&mut self){
+    pub async fn start(&mut self) -> Vec<T> where T: 'static + Send {
         self.items = self.request_pool.len();
-        self.not_done_request = (0..self.items).collect();
-        self.ordered_requests = HashMap::with_capacity(self.items);
         time::sleep(Duration::from_millis(PRE_TIME)).await;
-        while !self.not_done_request.is_empty() {
-            self.request_loop().await;
+        let mut join_set = JoinSet::new();
+
+        for i in 0..self.items {
+            let task = self.request_pool.pop_front().unwrap();
+            join_set.spawn(async move {(task.await, i)});
         }
-    }
 
-    async fn request_loop(&mut self) {
-
-        for i in self.not_done_request.clone() {
-            let sleep = time::sleep(Duration::from_millis(20));
-            tokio::pin!(sleep);
-
-            tokio::select! {
-                _ = &mut sleep =>  {
-                    continue;
-                }
-                
-                res = &mut self.request_pool[i] => {
-                    self.ordered_requests.insert(i, res.unwrap());
-                    self.not_done_request.retain(|&x| x != i);
-                }
-            }
+        while let Some(Ok((source,i ))) = join_set.join_next().await {
+            self.ordered_requests.insert(i, source.unwrap());
         }
-    }
-
-    pub fn get_done_request(&mut self) -> Vec<T> {
-        let mut done_requests = Vec::with_capacity(self.items);
-        for i in 0..self.items{
-            let value = self.ordered_requests.remove(&i).unwrap();
-            done_requests.push(value);
-        }
-        done_requests
+        (0..self.items).into_iter().map(|i| self.ordered_requests.remove(&i).unwrap()).collect()
     }
 }
-

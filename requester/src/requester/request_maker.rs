@@ -1,14 +1,19 @@
+use bytes::Bytes;
 use reqwest::header::HeaderMap;
-use tokio::task::{JoinHandle, spawn};
 use tokio::task;
+use tokio::task::{spawn, JoinHandle};
 
 use crate::mod_searcher::Method;
 
 use super::load_headers;
 
+pub trait Req {
+    fn get(&self, url: &str, method: Method, body: &str) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>>; 
+}
+
 pub struct RinthRequester {
     cliente: reqwest::Client,
-    headers: HeaderMap
+    headers: HeaderMap,
 }
 
 impl RinthRequester {
@@ -20,9 +25,7 @@ impl RinthRequester {
 
         req.headers.insert(
             "x-api-key",
-            "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"
-                .parse()
-                .unwrap(),
+            "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".parse().unwrap(),
         );
         req.headers
             .insert("Content-Type", "application/json".parse().unwrap());
@@ -31,16 +34,22 @@ impl RinthRequester {
 
         req
     }
-    pub fn search_by_url(&self, url: &str) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
+    pub fn search_by_url(
+        &self,
+        url: &str,
+    ) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
         let url = url.to_owned();
-        tokio::task::spawn(self.cliente.get(&url).headers(self.headers.clone()).send())
+        tokio::task::spawn(self.cliente.get(url).headers(self.headers.clone()).send())
     }
 }
 
+#[derive(Clone)]
 pub struct CurseRequester {
     cliente: reqwest::Client,
     headers: HeaderMap,
 }
+
+unsafe impl Send for CurseRequester{}
 
 impl CurseRequester {
     pub fn new() -> CurseRequester {
@@ -61,12 +70,16 @@ impl CurseRequester {
             .insert("Accept", "application/json".parse().unwrap());
 
         req
-    }
+    }  
+}
 
-    pub fn get(
+
+impl Req for CurseRequester {
+
+    fn get(
         &self,
         url: &str,
-        method: &Method,
+        method: Method,
         body: &str,
     ) -> JoinHandle<Result<reqwest::Response, reqwest::Error>> {
         let url = url.to_owned();
@@ -84,6 +97,7 @@ impl CurseRequester {
 
         spawn(a_func)
     }
+    
 }
 
 pub struct Requester {
