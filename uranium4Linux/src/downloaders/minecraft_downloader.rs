@@ -1,18 +1,22 @@
-use crate::checker::{check, check_panic, dlog, log, olog};
-use crate::code_functions::N_THREADS;
-use crate::variables::constants::CANT_CREATE_DIR;
+use crate::{
+    checker::{check, check_panic, dlog, log, olog},
+    code_functions::N_THREADS,
+    variables::constants::CANT_CREATE_DIR,
+};
 use bytes::Bytes;
-use mine_data_strutcs::minecraft::{self, Resources};
-use mine_data_strutcs::minecraft::{MinecraftInstance, MinecraftInstances};
+use mine_data_strutcs::minecraft::{self, MinecraftInstance, MinecraftInstances, Resources};
 use once_cell::sync::Lazy;
 use reqwest;
 use sha1::Digest;
-use std::error::Error;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::io::stdout;
-use tokio::io::AsyncWriteExt;
-use tokio::task::JoinSet;
+use std::{
+    error::Error,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+use tokio::{
+    io::{stdout, AsyncWriteExt},
+    task::JoinSet,
+};
 
 const ASSESTS_PATH: &str = "assets/";
 const INSTANCES_LIST: &str = "https://launchermeta.mojang.com/mc/game/version_manifest.json";

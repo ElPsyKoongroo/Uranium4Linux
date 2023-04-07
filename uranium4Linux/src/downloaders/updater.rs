@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use mine_data_strutcs::rinth::rinth_mods::RinthVersion;
-use mine_data_strutcs::url_maker;
+use mine_data_strutcs::{rinth::rinth_mods::RinthVersion, url_maker};
 use requester::mod_searcher::search_by_url_post;
 
 use crate::hashes::rinth_hash;
