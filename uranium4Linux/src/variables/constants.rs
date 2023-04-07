@@ -41,7 +41,7 @@ pub const DOWNLOAD: &str = "-D";
 pub const MAKE: &str = "-M";
 pub const REQUEST: &str = "-R";
 pub const INSTACIATE: &str = "-I";
-pub const HELP: &str = "-H";
+pub const HELP: &str = "-h";
 
 // LONG ACTIONS FLAGS
 pub const LONG_DOWNLOAD: &str = "--download";

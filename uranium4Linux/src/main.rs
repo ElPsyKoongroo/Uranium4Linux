@@ -14,7 +14,6 @@ use zip::result::ZipError;
 mod checker;
 mod code_functions;
 mod downloaders;
-mod easy_input;
 mod hashes;
 mod modpack_maker;
 mod searcher;
@@ -107,7 +106,7 @@ async fn main() -> Result<(), ZipError> {
             minecraft_downloader::print_instances().await.unwrap();
         }
         HELP | LONG_HELP => println!("{}", HELP_MSG),
-        _ => println!("Invalid arguments"),
+        _ => println!("Invalid arguments\n\n {}", HELP_MSG),
     }
     Ok(())
 }
