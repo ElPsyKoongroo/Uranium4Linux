@@ -1,5 +1,4 @@
-use std::fs;
-use std::io::Read;
+use std::{fs, io::Read};
 
 use hex::ToHex;
 use murmurhash32::murmurhash2;

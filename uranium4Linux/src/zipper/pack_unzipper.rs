@@ -1,8 +1,9 @@
-use std::fs::create_dir;
-use std::fs::{remove_dir_all, File};
+use std::fs::{create_dir, remove_dir_all, File};
 
-use crate::checker::{check, check_panic};
-use crate::variables::constants::TEMP_DIR;
+use crate::{
+    checker::{check, check_panic},
+    variables::constants::TEMP_DIR,
+};
 
 pub fn unzip_temp_pack(file_path: &str) {
     // Should't fail, in case this fail the program must end because the

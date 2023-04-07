@@ -6,12 +6,14 @@ use std::{
 
 use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 
-use crate::checker::{check, check_panic, dlog};
-use crate::code_functions::fix_path;
-use crate::variables::constants;
+use crate::{
+    checker::{check, check_panic, dlog},
+    code_functions::fix_path,
+    variables::constants,
+};
 
-use crate::zipper::uranium_structs::FileType;
 use super::uranium_structs::UraniumFile;
+use crate::zipper::uranium_structs::FileType;
 
 pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<()> {
     let path = &fix_path(path);

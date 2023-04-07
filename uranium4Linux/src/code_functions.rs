@@ -1,7 +1,6 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::downloaders::updater::update_modpack;
-use crate::variables::constants::*;
+use crate::{downloaders::updater::update_modpack, variables::constants::*};
 
 pub async fn update(path: &str) {
     update_modpack(path).await;

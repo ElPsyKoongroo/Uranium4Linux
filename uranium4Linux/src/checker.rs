@@ -1,8 +1,10 @@
 use chrono::prelude::*;
 use once_cell::sync::Lazy;
-use std::fmt::Debug;
-use std::io::{BufWriter, Write};
-use std::sync::RwLock;
+use std::{
+    fmt::Debug,
+    io::{BufWriter, Write},
+    sync::RwLock,
+};
 
 static LOG_FILE: Lazy<RwLock<BufWriter<std::fs::File>>> = Lazy::new(|| {
     RwLock::new(BufWriter::new(
@@ -161,7 +163,7 @@ pub fn elog<M: std::fmt::Display>(msg: M) {
         false,
         "log; Failed to log",
     )
-        .ok();
+    .ok();
     guard.flush().unwrap();
 }
 

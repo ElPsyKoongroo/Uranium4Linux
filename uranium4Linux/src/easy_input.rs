@@ -1,5 +1,7 @@
-use std::io::{stdin, stdout, Write};
-use std::str::FromStr;
+use std::{
+    io::{stdin, stdout, Write},
+    str::FromStr,
+};
 
 pub fn input<T>(msg: &str, default: T) -> T
 where

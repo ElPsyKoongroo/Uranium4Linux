@@ -5,7 +5,7 @@ pub const EXTENSION: &str = ".zip";
 pub const HELP_MSG: &str = "
 -D | --download         Download the specified modpack in the specified route
 -U | --update           Upgrade the specified modpack
--M |--make              Make a modpack file from specified route
+-M | --make             Make a modpack file from specified route
 -R | --request <TYPE>   Make a requests
 -I | --instanciate
 -h | --help             Print this message
@@ -32,6 +32,7 @@ REQUESTS TYPES
 pub const TEMP_DIR: &str = "./temp_dir/";
 pub const DEFAULT_NTHREADS: usize = 32;
 pub const RINTH_JSON: &str = "modrinth.index.json";
+pub const CURSE_JSON: &str = "manifest.json";
 
 pub static NTHREADS: RwLock<usize> = RwLock::new(32);
 

@@ -1,15 +1,15 @@
 #![allow(non_snake_case)]
-
+use crate::checker::olog;
 use code_functions::{fix_path, get_bool_element, get_parse_element, update, N_THREADS};
-use downloaders::curse_downloader::curse_modpack_downloader;
-use downloaders::minecraft_downloader;
-use downloaders::rinth_downloader::download_rinth_pack;
+use downloaders::{
+    curse_downloader::curse_modpack_downloader, minecraft_downloader,
+    rinth_downloader::download_rinth_pack,
+};
 use modpack_maker::maker::make_modpack;
 use searcher::rinth::SearchType;
 use std::env;
 use variables::constants::*;
 use zip::result::ZipError;
-use crate::checker::olog;
 
 mod checker;
 mod code_functions;
@@ -98,10 +98,14 @@ async fn main() -> Result<(), ZipError> {
         LONG_REQUEST => {
             searcher::rinth::search(request_arg_parser(&args).expect("Wrong request type")).await;
         }
-        INSTACIATE | LONG_INSTACIATE => minecraft_downloader::donwload_minecraft(&instance, destination_path.into())
-            .await
-            .unwrap(),
-        LIST_INSTANCES => {minecraft_downloader::print_instances().await.unwrap();},
+        INSTACIATE | LONG_INSTACIATE => {
+            minecraft_downloader::donwload_minecraft(&instance, destination_path.into())
+                .await
+                .unwrap()
+        }
+        LIST_INSTANCES => {
+            minecraft_downloader::print_instances().await.unwrap();
+        }
         HELP | LONG_HELP => println!("{}", HELP_MSG),
         _ => println!("Invalid arguments"),
     }

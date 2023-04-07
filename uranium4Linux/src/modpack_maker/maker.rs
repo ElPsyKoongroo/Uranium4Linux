@@ -1,16 +1,15 @@
 use core::panic;
-use std::fs::read_dir;
-use std::path::Path;
+use std::{fs::read_dir, path::Path};
 
 use futures::future::join_all;
 
-use mine_data_strutcs::rinth::rinth_packs::RinthModpack;
-use mine_data_strutcs::{rinth::rinth_mods::RinthVersion, url_maker::maker};
+use mine_data_strutcs::{
+    rinth::{rinth_mods::RinthVersion, rinth_packs::RinthModpack},
+    url_maker::maker,
+};
 use requester::async_pool::AsyncPool;
 
-use crate::hashes::rinth_hash;
-use crate::variables::constants;
-use crate::zipper::pack_zipper::compress_pack;
+use crate::{hashes::rinth_hash, variables::constants, zipper::pack_zipper::compress_pack};
 
 /// Good -> Means Uranium found the mod
 /// Raw  -> Means the mod need to be added raw

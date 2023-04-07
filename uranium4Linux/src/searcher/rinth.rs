@@ -1,7 +1,9 @@
 use serde::{de::DeserializeOwned, Serialize};
 
-use mine_data_strutcs::rinth::rinth_mods::{RinthProject, RinthResponse, RinthVersion};
-use mine_data_strutcs::url_maker::maker;
+use mine_data_strutcs::{
+    rinth::rinth_mods::{RinthProject, RinthResponse, RinthVersion},
+    url_maker::maker,
+};
 
 #[derive(Clone, Debug)]
 pub enum SearchType {
