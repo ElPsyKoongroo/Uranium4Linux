@@ -41,7 +41,6 @@ pub struct Instancee<'a> {
 }
 */
 
-
 /*
 
        https://launchermeta.mojang.com/mc/game/version_manifest.json
@@ -82,7 +81,7 @@ impl MinecraftInstances {
     pub fn get_instance_url(&self, instance: &str) -> Option<&str> {
         for version in &self.versions {
             if version.get_id_raw() == instance {
-                return Some(version.get_link_raw())
+                return Some(version.get_link_raw());
             }
         }
         None
@@ -92,10 +91,10 @@ impl MinecraftInstances {
 /*
 
 
-        MINECRAFT INSTANCE DATA STRUCTURE
+       MINECRAFT INSTANCE DATA STRUCTURE
 
 
- */
+*/
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct Artifact {
@@ -111,24 +110,21 @@ pub struct LibData {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
-pub struct Library {
-
-}
-
+pub struct Library {}
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct AssestIndex {
     pub id: String,
     pub sha1: String,
     pub size: usize,
-    #[serde(rename="totalSize")]
+    #[serde(rename = "totalSize")]
     pub total_size: u128,
     pub url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MinecraftInstance {
-    #[serde(rename="assetIndex")]
+    #[serde(rename = "assetIndex")]
     pub assest_index: AssestIndex,
     pub id: String,
     pub downloads: HashMap<String, DownloadData>,

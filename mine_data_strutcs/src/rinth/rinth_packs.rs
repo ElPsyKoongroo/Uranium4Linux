@@ -3,14 +3,17 @@
 
 use super::rinth_mods::{Hashes, RinthVersion};
 use serde::{Deserialize, Serialize};
-use std::fs::read_to_string;
+use std::{
+    fs::read_to_string,
+    path::{Path, PathBuf},
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RinthModpack {
     formatVersion: usize,
     game: String,
     versionId: String,
-    name: String,
+    name: PathBuf,
     files: Vec<RinthMdFiles>,
 }
 
@@ -20,13 +23,13 @@ impl RinthModpack {
             formatVersion: 1,
             game: "minecraft".to_owned(),
             versionId: "0.0.0".to_owned(),
-            name: "example".to_owned(),
+            name: "example".into(),
             files: Vec::new(),
         }
     }
 
     pub fn get_name(&self) -> String {
-        self.name.clone()
+        self.name.display().to_string()
     }
 
     pub fn get_files(&self) -> &Vec<RinthMdFiles> {
@@ -45,7 +48,7 @@ impl RinthModpack {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RinthMdFiles {
-    path: String,
+    path: PathBuf,
     hashes: Hashes,
     downloads: Vec<String>,
     fileSize: usize,
@@ -54,7 +57,7 @@ pub struct RinthMdFiles {
 impl std::convert::From<RinthVersion> for RinthMdFiles {
     fn from(version: RinthVersion) -> RinthMdFiles {
         RinthMdFiles {
-            path: "mods/".to_owned() + &version.get_file_name(),
+            path: ("mods/".to_owned() + &version.get_file_name()).into(),
             hashes: version.get_hashes().clone(),
             downloads: vec![version.get_file_url()],
             fileSize: version.get_size(),
@@ -71,25 +74,28 @@ impl RinthMdFiles {
         &self.downloads[0]
     }
 
-    pub fn get_id(& self) -> Option<&str> {
+    pub fn get_id(&self) -> Option<&str> {
         for download_link in &self.downloads {
             if download_link.contains("modrinth") {
-                return download_link.split("data/")
-                    .nth(1)
-                    .map(|f| 
-                        &f[0..8]
-                    );
+                return download_link.split("data/").nth(1).map(|f| &f[0..8]);
             }
-        } 
+        }
         None
     }
 
-    pub fn get_name(&self) -> String {
-        self.path.strip_prefix("mods/").unwrap().to_owned()
+    pub fn get_name(&self) -> PathBuf {
+        self.path.clone()
+        // self.path.strip_prefix("mods/").unwrap().to_owned()
     }
 
-    pub fn get_raw_name(&self) -> &str {
-        self.path.strip_prefix("mods/").unwrap()
+    pub fn get_raw_name(&self) -> &PathBuf {
+        &self.path
+        // self.path.file_name().unwrap().to_os_string().into_string().unwrap()
+        /*
+        self.path.strip_prefix("mods/").expect(
+            &format!("ERROR: Cant get raw name of {}", self.path)
+        )
+            */
     }
 }
 
