@@ -3,6 +3,7 @@
 /doc
 /.vscode
 /*.json
+/.idea
 /test
 /.obsidian
 Cargo.lock
