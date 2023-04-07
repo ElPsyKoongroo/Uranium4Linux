@@ -1,16 +1,24 @@
 use bytes::Bytes;
 use reqwest::header::HeaderMap;
-use tokio::task;
-use tokio::task::{spawn, JoinHandle};
+use tokio::{
+    task,
+    task::{spawn, JoinHandle},
+};
 
 use crate::mod_searcher::Method;
 
 use super::load_headers;
 
 pub trait Req {
-    fn get(&self, url: &str, method: Method, body: &str) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>>; 
+    fn get(
+        &self,
+        url: &str,
+        method: Method,
+        body: &str,
+    ) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>>;
 }
 
+#[derive(Clone)]
 pub struct RinthRequester {
     cliente: reqwest::Client,
     headers: HeaderMap,
@@ -43,13 +51,25 @@ impl RinthRequester {
     }
 }
 
+impl Req for RinthRequester {
+    fn get(
+        &self,
+        url: &str,
+        method: Method,
+        body: &str,
+    ) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
+        let url = url.to_owned();
+        tokio::task::spawn(self.cliente.get(url).headers(self.headers.clone()).send())
+    }
+}
+
 #[derive(Clone)]
 pub struct CurseRequester {
     cliente: reqwest::Client,
     headers: HeaderMap,
 }
 
-unsafe impl Send for CurseRequester{}
+unsafe impl Send for CurseRequester {}
 
 impl CurseRequester {
     pub fn new() -> CurseRequester {
@@ -70,12 +90,10 @@ impl CurseRequester {
             .insert("Accept", "application/json".parse().unwrap());
 
         req
-    }  
+    }
 }
 
-
 impl Req for CurseRequester {
-
     fn get(
         &self,
         url: &str,
@@ -97,7 +115,6 @@ impl Req for CurseRequester {
 
         spawn(a_func)
     }
-    
 }
 
 pub struct Requester {

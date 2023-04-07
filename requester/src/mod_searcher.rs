@@ -1,11 +1,9 @@
 use serde;
-use tokio::task;
-use tokio::task::JoinHandle;
+use tokio::{task, task::JoinHandle};
 
 use mine_data_strutcs::url_maker::maker::ModRinth;
 
-use crate::requester::request_maker::Req;
-use crate::requester::request_maker::CurseRequester;
+use crate::requester::request_maker::{CurseRequester, Req};
 
 pub enum Method {
     GET,
