@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -19,7 +21,7 @@ pub struct CurseFile {
     gameId: Option<usize>,
     modId: usize,
     displayName: String,
-    fileName: String,
+    fileName: PathBuf,
     downloadUrl: Option<String>,
     fileLength: usize,
     gameVersions: Vec<String>,
@@ -30,27 +32,27 @@ impl CurseFile {
         self.id
     }
 
-    pub fn get_gameId(&self) -> usize {
+    pub fn get_game_id(&self) -> usize {
         self.gameId.unwrap_or_default()
     }
 
-    pub fn get_modId(&self) -> usize {
+    pub fn get_mod_id(&self) -> usize {
         self.modId
     }
 
-    pub fn get_gameVersions(&self) -> &Vec<String> {
+    pub fn get_game_versions(&self) -> &Vec<String> {
         &self.gameVersions
     }
 
-    pub fn get_displayName(&self) -> String {
+    pub fn get_display_name(&self) -> String {
         self.displayName.clone()
     }
 
-    pub fn get_fileName(&self) -> String {
+    pub fn get_file_name(&self) -> PathBuf {
         self.fileName.clone()
     }
 
-    pub fn get_downloadUrl(&self) -> String {
+    pub fn get_download_url(&self) -> String {
         self.downloadUrl.clone().unwrap_or_default()
     }
 }

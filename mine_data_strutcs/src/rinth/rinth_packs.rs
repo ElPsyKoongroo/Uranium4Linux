@@ -3,10 +3,7 @@
 
 use super::rinth_mods::{Hashes, RinthVersion};
 use serde::{Deserialize, Serialize};
-use std::{
-    fs::read_to_string,
-    path::{Path, PathBuf},
-};
+use std::{fs::read_to_string, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RinthModpack {

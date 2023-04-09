@@ -1,12 +1,9 @@
 use crate::{
-    checker::{check, elog, log},
+    checker::{check, elog},
     variables::constants::TEMP_DIR,
-    N_THREADS,
 };
-use requester::{mod_searcher::Method, requester::request_maker::Req};
-use reqwest::Response;
-use std::{error::Error, fs, path::PathBuf, sync::Arc};
-use tokio::{io::AsyncWriteExt, task::JoinSet};
+use std::fs;
+use std::path::PathBuf;
 
 pub fn overrides(destination_path: &PathBuf, overrides_folder: &str) {
     // Copy all the content of overrides into the minecraft root folder

@@ -34,21 +34,24 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
 
     // Get the info of each mod to get the url and download it
     let responses: Vec<Response> = get_mod_responses(&curse_req, &files_ids).await;
-    let mut names = Vec::with_capacity(files_ids.len());
-
     let mods_path = destination_path.to_owned() + "mods/";
 
+    let mut names = Vec::with_capacity(files_ids.len());
     let download_urls = get_download_urls(&curse_req, responses, &mut names).await;
 
-    let names: Vec<PathBuf> = names.iter().map(|n| PathBuf::from(n)).collect();
 
-    let downloader = Downloader {
+
+    // All the above code was just for obtaining the download urls
+    // and the names.
+
+    Downloader {
         names,
         urls: Arc::new(download_urls),
         path: Arc::new(PathBuf::from(mods_path)),
         requester: curse_req,
-    };
-    downloader.start().await;
+    }
+    .start()
+    .await;
 
     overrides(&destination_path.into(), "overrides");
 }
@@ -57,8 +60,8 @@ async fn get_mod_responses(curse_req: &CurseRequester, files_ids: &[String]) -> 
     let mut responses: Vec<Response> = Vec::with_capacity(files_ids.len());
     let threads: usize = N_THREADS();
 
+    let mut pool = AsyncPool::new();
     for chunk in files_ids.chunks(threads) {
-        let mut pool = AsyncPool::new();
         let mut requests = Vec::new();
         for url in chunk {
             let tarea = curse_req.get(url, Method::GET, "");
@@ -82,7 +85,7 @@ async fn get_mod_responses(curse_req: &CurseRequester, files_ids: &[String]) -> 
                 })
                 .collect(),
         );
-        // pool.clear();
+        pool.clear();
     }
 
     responses
@@ -92,7 +95,7 @@ async fn get_mod_responses(curse_req: &CurseRequester, files_ids: &[String]) -> 
 async fn get_download_urls(
     curse_req: &CurseRequester,
     responses: Vec<Response>,
-    names: &mut Vec<String>,
+    names: &mut Vec<PathBuf>,
 ) -> Vec<String> {
     // In order to get rid of reallocations pre allocate the vector with
     // responses capacity.
@@ -103,14 +106,17 @@ async fn get_download_urls(
         // Parse the response into a CurseResponse<CurseFile>
         let curse_file = response.json::<CurseResponse<CurseFile>>().await;
         if let Ok(file) = curse_file {
-            let download_url = file.data.get_downloadUrl();
+            let download_url = file.data.get_download_url();
 
             // In case the download link its empty, because CurseApi could give
             // a right response but with empty download link... -.-
             if download_url.is_empty() {
-                println!("There is no download link for {}", file.data.get_fileName());
+                println!(
+                    "There is no download link for {}",
+                    file.data.get_file_name().display()
+                );
             } else {
-                names.push(file.data.get_fileName());
+                names.push(file.data.get_file_name());
                 download_urls.push(download_url);
             }
         }

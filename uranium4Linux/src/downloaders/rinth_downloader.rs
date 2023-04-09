@@ -1,6 +1,6 @@
 use super::gen_downloader::Downloader;
 use crate::{
-    checker::{dlog, log},
+    checker::dlog,
     downloaders::functions::overrides,
     variables::constants::{RINTH_JSON, TEMP_DIR},
     zipper::pack_unzipper::unzip_temp_pack,
@@ -11,9 +11,7 @@ use std::{path::PathBuf, sync::Arc};
 
 pub async fn download_rinth_pack(path: &str, destination_path: &str) {
     unzip_temp_pack(path);
-
     let rinth_pack = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON));
-
     dlog("Pack loaded");
 
     let file_links: Vec<String> = rinth_pack
@@ -21,7 +19,6 @@ pub async fn download_rinth_pack(path: &str, destination_path: &str) {
         .iter()
         .map(RinthMdFiles::get_download_link)
         .collect();
-
     dlog(format!("Downloading {} files", file_links.len()));
 
     let file_names: Vec<PathBuf> = rinth_pack
@@ -32,7 +29,7 @@ pub async fn download_rinth_pack(path: &str, destination_path: &str) {
 
     file_names
         .iter()
-        .for_each(|f| log(format!("{}", f.display())));
+        .for_each(|f| dlog(format!("{}", f.display())));
 
     let requester = RinthRequester::new();
 
@@ -44,6 +41,5 @@ pub async fn download_rinth_pack(path: &str, destination_path: &str) {
     };
 
     downloader.start().await;
-
     overrides(&destination_path.into(), "overrides");
 }

@@ -1,9 +1,25 @@
-use requester::{requester::request_maker::Req, mod_searcher::Method};
+use crate::{checker::elog, code_functions::N_THREADS};
+use requester::{mod_searcher::Method, requester::request_maker::Req};
 use reqwest::Response;
-use tokio::{task::JoinSet, io::AsyncWriteExt};
 use std::{error::Error, path::PathBuf, sync::Arc};
+use tokio::{io::AsyncWriteExt, task::JoinSet};
 
-use crate::code_functions::N_THREADS;
+/*
+ *       +------------+
+ *       | Downloader |
+ *       +------------+
+ *             |                   path
+ *             V                   names
+ *      +-----------------+        response_chunk       +--------------------+
+ *      |   get_response  | --------------------------> | download_and_write |
+ *      +-----------------+          *NEW TASK*         +--------------------+
+ *                ^       |
+ *                |       /
+ *                 \_____/
+ *                  ^^^^^^
+ *        for chunk in urls.chunk(N_THREADS)
+ *
+ * */
 
 pub struct Downloader<T: Req + Clone + Send> {
     pub urls: Arc<Vec<String>>,
@@ -18,12 +34,9 @@ impl<T: Req + Clone + std::marker::Send + std::marker::Sync + 'static> Downloade
     }
 
     async fn get_responses(&mut self) -> Result<(), Box<dyn Error>> {
-        let mut i = 0;
         let mut tasks = Vec::new();
         let chunk_size = N_THREADS();
-        for url_chunk in self.urls.chunks(chunk_size) {
-            println!("{}", i);
-            i += 1;
+        for url_chunk in self.urls. chunks(chunk_size) {
             let mut responses = Vec::with_capacity(self.urls.len());
             let path_c = self.path.clone();
             let names: Vec<PathBuf> = self.names.drain(0..url_chunk.len()).collect();
@@ -68,12 +81,12 @@ impl<T: Req + Clone + std::marker::Send + std::marker::Sync + 'static> Downloade
             match file.write_all(&bytes).await {
                 Ok(_) => {}
                 Err(e) => {
-                    return Err(format!(
-                        "[ERROR] Can not write in {file_name}: {error}",
+                    elog(format!(
+                        "Can not write in {file_name}: {error}",
                         file_name = file_path.display(),
                         error = e
-                    )
-                    .into());
+                    ));
+                    return Err(e.into());
                 }
             };
         }

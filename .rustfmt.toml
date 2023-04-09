@@ -1,0 +1,5 @@
+edition = "2021"
+reorder_imports = true
+imports_layout = "Mixed"
+imports_indent = "Block"
+imports_granularity = "Crate"

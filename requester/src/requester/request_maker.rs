@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use reqwest::header::HeaderMap;
 use tokio::{
     task,
@@ -55,8 +54,8 @@ impl Req for RinthRequester {
     fn get(
         &self,
         url: &str,
-        method: Method,
-        body: &str,
+        _method: Method,
+        _body: &str,
     ) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
         let url = url.to_owned();
         tokio::task::spawn(self.cliente.get(url).headers(self.headers.clone()).send())

@@ -13,10 +13,10 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tokio::{
-    io::{stdout, AsyncWriteExt},
-    task::JoinSet,
-};
+use tokio::{io::AsyncWriteExt, task::JoinSet};
+
+#[cfg(feature = "console_output")]
+use tokio::io::stdout;
 
 const ASSESTS_PATH: &str = "assets/";
 const INSTANCES_LIST: &str = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
