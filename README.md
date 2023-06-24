@@ -34,3 +34,12 @@ Avalible repositories: <br>
 with the minecraft mod community so I think the best way to support this project is to fully focus on their
 modpack format !
 
+## EXAMPLES 
+
+### How to download a modpack:
+![DownloadUse](pic/DownloadUse.png)
+
+<br><br><br><br>
+
+### Help message:
+![HelpUse](pic/HelpUse.png)
