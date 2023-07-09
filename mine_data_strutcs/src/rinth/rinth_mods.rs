@@ -321,6 +321,7 @@ impl std::fmt::Display for RinthResponse {
     }
 }
 
+/*
 /// If a is newer -1, if b is newer 1, if they are the same 0
 pub fn compare_versions(a: &RinthProject, b: &RinthProject) -> i8 {
     let a_version = a.get_versions()[0].clone();
@@ -341,3 +342,4 @@ pub fn compare_versions(a: &RinthProject, b: &RinthProject) -> i8 {
     }
     0
 }
+*/

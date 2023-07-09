@@ -1,9 +1,10 @@
-#![allow(dead_code)]
 #![allow(non_snake_case)]
 
 use crate::rinth::rinth_mods::RinthProject;
 
 const BASE_CUR_URL: &str = "https://api.curseforge.com";
+
+#[allow(unused)]
 const BASE_MRN_URL: &str = "https://api.modrinth.com/api/v1/mod";
 const BASE_MRN_URL2: &str = "https://api.modrinth.com/v2";
 

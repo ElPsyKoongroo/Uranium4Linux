@@ -1,6 +1,6 @@
 use std::sync::RwLock;
 
-pub const EXTENSION: &str = ".zip";
+pub const EXTENSION: &str = ".mrpack";
 
 pub const HELP_MSG: &str = "
 -D | --download         Download the specified modpack in the specified route
@@ -8,6 +8,7 @@ pub const HELP_MSG: &str = "
 -M | --make             Make a modpack file from specified route
 -R | --request <TYPE>   Make a requests
 -I | --instanciate
+   | --list-instances   Print all minecraft versions
 -h | --help             Print this message
 
 -f                      Specify the file/dir for [download/make modpack]
@@ -37,11 +38,12 @@ pub const CURSE_JSON: &str = "manifest.json";
 pub static NTHREADS: RwLock<usize> = RwLock::new(32);
 
 // SHORT ACTIONS FLAGS
-pub const DOWNLOAD: &str = "-D";
-pub const MAKE: &str = "-M";
-pub const REQUEST: &str = "-R";
-pub const INSTACIATE: &str = "-I";
-pub const HELP: &str = "-h";
+pub const SHORT_DOWNLOAD: &str = "-D";
+pub const SHORT_MAKE: &str = "-M";
+pub const SHORT_REQUEST: &str = "-R";
+pub const SHORT_INSTACIATE: &str = "-I";
+pub const SHORT_HELP: &str = "-h";
+pub const SHORT_UPDATE: &str = "-U";
 
 // LONG ACTIONS FLAGS
 pub const LONG_DOWNLOAD: &str = "--download";

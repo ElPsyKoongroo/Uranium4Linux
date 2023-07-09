@@ -8,4 +8,3 @@ edition = "2021"
 [dependencies]
 serde.workspace = true
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-regex = "1"

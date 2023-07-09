@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -27,10 +27,10 @@ impl Content {
 }
 
 pub async fn update_modpack(minecraft_path: &str) {
-    let mods_path = minecraft_path.to_owned() + "mods/";
+    let mods_path = PathBuf::from(minecraft_path).join("mods/");
     let mods_names = std::fs::read_dir(&mods_path).unwrap();
     let mods_hashes = mods_names
-        .map(|f| rinth_hash(f.unwrap().path().to_str().unwrap()))
+        .map(|f| rinth_hash(f.unwrap().path().as_path()))
         .collect::<Vec<String>>();
 
     let updates = get_updates(&mods_hashes).await;

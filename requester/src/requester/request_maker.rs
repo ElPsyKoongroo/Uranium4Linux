@@ -193,3 +193,15 @@ impl Requester {
         self.headers = Some(headers);
     }
 }
+
+impl Req for reqwest::Client {
+    fn get(
+        &self,
+        url: &str,
+        _method: Method,
+        _body: &str,
+    ) -> task::JoinHandle<Result<reqwest::Response, reqwest::Error>> {
+        let url = url.to_owned();
+        tokio::task::spawn(self.get(url).send())
+    }
+}

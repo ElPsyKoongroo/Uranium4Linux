@@ -57,7 +57,6 @@ impl<T> AsyncPool<T> {
             self.ordered_requests.insert(i, source.unwrap());
         }
         (0..self.items)
-            .into_iter()
             .map(|i| self.ordered_requests.remove(&i).unwrap())
             .collect()
     }

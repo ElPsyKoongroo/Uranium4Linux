@@ -2,8 +2,7 @@ use crate::{
     checker::{check, elog},
     variables::constants::TEMP_DIR,
 };
-use std::fs;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 pub fn overrides(destination_path: &PathBuf, overrides_folder: &str) {
     // Copy all the content of overrides into the minecraft root folder

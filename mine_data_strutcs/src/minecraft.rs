@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
-const BASE: &'static str = "https://resources.download.minecraft.net/";
+const BASE: &str = "https://resources.download.minecraft.net/";
 
 /*
 
@@ -18,6 +18,10 @@ pub struct ObjectData {
 impl ObjectData {
     pub fn get_link(&self) -> String {
         format!("{}{}/{}", BASE, &self.hash[..2], self.hash)
+    }
+
+    pub fn get_path(&self) -> PathBuf {
+        PathBuf::from(self.hash[..2].to_owned() + "/" + &self.hash)
     }
 }
 
@@ -96,9 +100,17 @@ impl MinecraftInstances {
 
 */
 
+/*
+
+
+       LIBRARY DATA
+
+
+*/
+
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct Artifact {
-    path: String,
+    path: PathBuf,
     sha1: String,
     size: usize,
     url: String,
@@ -106,11 +118,22 @@ struct Artifact {
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct LibData {
-    downloads: Vec<Artifact>,
+    artifact: Artifact,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
-pub struct Library {}
+pub struct Library {
+    downloads: LibData,
+    name: String,
+}
+
+/*
+
+
+    ASSESTS INDEX DATA
+
+
+*/
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct AssestIndex {
@@ -122,10 +145,32 @@ pub struct AssestIndex {
     pub url: String,
 }
 
+pub type Libraries = Vec<Library>;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MinecraftInstance {
     #[serde(rename = "assetIndex")]
     pub assest_index: AssestIndex,
     pub id: String,
     pub downloads: HashMap<String, DownloadData>,
+    pub libraries: Libraries,
+}
+
+pub trait Lib {
+    fn get_paths(&self) -> Vec<PathBuf>;
+    fn get_ulrs(&self) -> Vec<&str>;
+}
+
+impl Lib for Libraries {
+    fn get_paths(&self) -> Vec<PathBuf> {
+        self.iter()
+            .map(|l| l.downloads.artifact.path.clone())
+            .collect()
+    }
+
+    fn get_ulrs(&self) -> Vec<&str> {
+        self.iter()
+            .map(|l| l.downloads.artifact.url.as_str())
+            .collect()
+    }
 }

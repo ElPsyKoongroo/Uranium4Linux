@@ -1,5 +1,5 @@
 use core::panic;
-use std::{fs::read_dir, path::Path};
+use std::{fs::read_dir, path::{Path, PathBuf}};
 
 use futures::future::join_all;
 
@@ -49,8 +49,8 @@ fn get_mods(minecraft_path: &Path) -> Vec<(String, String)> {
     let mods = match read_dir(&mods_path) {
         Ok(e) => e
             .into_iter()
-            .map(|f| f.unwrap().path().to_str().unwrap().to_owned())
-            .collect::<Vec<String>>(),
+            .map(|f| f.unwrap().path())
+            .collect::<Vec<PathBuf>>(),
         Err(error) => {
             eprintln!("Error reading the directory: {}", error);
             panic!("")
@@ -59,8 +59,8 @@ fn get_mods(minecraft_path: &Path) -> Vec<(String, String)> {
 
     // Push all the (has, file_name) to the vector
     for path in mods {
-        let mod_hash = rinth_hash(&path);
-        let file_name = path.split('/').last().unwrap().to_owned();
+        let mod_hash = rinth_hash(path.as_path());
+        let file_name = path.file_name().unwrap().to_os_string().into_string().unwrap_or_default();
         hashes_names.push((mod_hash, file_name));
     }
 

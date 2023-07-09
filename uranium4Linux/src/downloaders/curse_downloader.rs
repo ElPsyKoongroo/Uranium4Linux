@@ -1,7 +1,7 @@
 use crate::{
     code_functions::N_THREADS,
     variables::constants::{CURSE_JSON, TEMP_DIR},
-    zipper::pack_unzipper::unzip_temp_pack,
+    zipper::pack_unzipper::unzip_temp_pack, error::ModpackError,
 };
 use mine_data_strutcs::{
     curse::{curse_modpacks::*, curse_mods::*},
@@ -15,11 +15,10 @@ use requester::{
 use reqwest::Response;
 use std::{path::PathBuf, sync::Arc};
 
-use super::functions::overrides;
-use super::gen_downloader::Downloader;
+use super::{functions::overrides, gen_downloader::Downloader};
 
-pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
-    unzip_temp_pack(path);
+pub async fn curse_modpack_downloader(path: &str, destination_path: &str) -> Result<(), ModpackError> {
+    unzip_temp_pack(path)?;
 
     let curse_pack = load_curse_pack((TEMP_DIR.to_owned() + CURSE_JSON).as_ref())
         .expect("Couldnt load the pack");
@@ -27,7 +26,12 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
     let files_ids: Vec<String> = curse_pack
         .get_files()
         .iter()
-        .map(|f| Curse::file(&f.get_projectID().to_string(), &f.get_fileID().to_string()))
+        .map(|f| {
+            Curse::file(
+                &f.get_project_id().to_string(),
+                &f.get_file_id().to_string(),
+            )
+        })
         .collect();
 
     let curse_req = CurseRequester::new();
@@ -38,8 +42,6 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
 
     let mut names = Vec::with_capacity(files_ids.len());
     let download_urls = get_download_urls(&curse_req, responses, &mut names).await;
-
-
 
     // All the above code was just for obtaining the download urls
     // and the names.
@@ -54,6 +56,7 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str) {
     .await;
 
     overrides(&destination_path.into(), "overrides");
+    Ok(())
 }
 
 async fn get_mod_responses(curse_req: &CurseRequester, files_ids: &[String]) -> Vec<Response> {

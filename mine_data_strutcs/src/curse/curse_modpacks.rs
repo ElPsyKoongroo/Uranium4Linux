@@ -12,11 +12,11 @@ pub struct CursePackFiles {
 }
 
 impl CursePackFiles {
-    pub fn get_projectID(&self) -> usize {
+    pub fn get_project_id(&self) -> usize {
         self.projectID
     }
 
-    pub fn get_fileID(&self) -> usize {
+    pub fn get_file_id(&self) -> usize {
         self.fileID
     }
 }

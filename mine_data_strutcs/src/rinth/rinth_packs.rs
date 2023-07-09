@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-#![allow(dead_code)]
 
 use super::rinth_mods::{Hashes, RinthVersion};
 use serde::{Deserialize, Serialize};
@@ -96,16 +95,15 @@ impl RinthMdFiles {
     }
 }
 
-fn deserializ_pack(path: &str) -> RinthModpack {
-    serde_json::from_str(&read_to_string(path).unwrap()).unwrap()
+fn deserializ_pack(path: &str) -> Option<RinthModpack> {
+    serde_json::from_str(&read_to_string(path).unwrap()).ok()
 }
 
-pub fn load_rinth_pack(pack_path: &str) -> RinthModpack {
+pub fn load_rinth_pack(pack_path: &str) -> Option<RinthModpack> {
     match read_to_string(pack_path) {
         Ok(_) => {}
-        Err(error) => {
-            eprintln!("Error reading the pack \n\n{error}");
-            panic!();
+        Err(_) => {
+            return None;
         }
     };
 

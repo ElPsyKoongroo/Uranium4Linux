@@ -1,218 +1,53 @@
 use crate::{
-    checker::{check, check_panic, dlog, log, olog},
-    code_functions::N_THREADS,
+    checker::{check_panic, log},
     variables::constants::CANT_CREATE_DIR,
 };
-use bytes::Bytes;
-use mine_data_strutcs::minecraft::{self, MinecraftInstance, MinecraftInstances, Resources};
-use once_cell::sync::Lazy;
+
+use fs_extra::dir::create_all;
+use mine_data_strutcs::minecraft::{
+    self, Lib, Libraries, MinecraftInstance, MinecraftInstances, Resources,
+};
 use reqwest;
 use sha1::Digest;
 use std::{
     error::Error,
     path::{Path, PathBuf},
-    sync::Arc,
 };
-use tokio::{io::AsyncWriteExt, task::JoinSet};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-#[cfg(feature = "console_output")]
-use tokio::io::stdout;
+//#[cfg(feature = "console_output")]
+use std::io::Write;
 
+use super::gen_downloader;
+
+const DEFAULT_FILE_BUFFER_SIZE: usize = 16384;
 const ASSESTS_PATH: &str = "assets/";
+const OBJECTS_PATH: &str = "objects";
 const INSTANCES_LIST: &str = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
-static OPEN_OPTIONS: Lazy<tokio::fs::OpenOptions> =
-    Lazy::new(|| tokio::fs::OpenOptions::new().write(true).clone());
+use thiserror::Error;
 
-#[derive(Debug)]
-enum SourceState {
-    Good { name: String, content: Bytes },
-    Bad { name: String },
+#[derive(Error, Debug)]
+enum HashCheckError {
+    #[error("Invalid hash")]
+    BadHash,
+    #[error("Hash doesnt match")]
+    HashDoesntMatch,
 }
 
-impl SourceState {
-    pub fn get_name(&self) -> &str {
-        match self {
-            SourceState::Good { name, content: _ } => name,
-            SourceState::Bad { name } => name,
-        }
+///
+/// Returns Ok(()) when the hash matches.
+/// Otherwise Err
+///
+fn check_file<T: AsRef<[u8]>>(bytes: T, hash: &str) -> Result<(), HashCheckError> {
+    let mut hasher = sha1::Sha1::new();
+    hasher.update(bytes.as_ref());
+    let file_hash = hasher.finalize().to_vec();
+    if file_hash != hex::decode(hash).map_err(|_| HashCheckError::BadHash)? {
+        log(format!("Error while checking {:?}, wrong hash", hash));
+        return Err(HashCheckError::HashDoesntMatch);
     }
-
-    pub fn get_bytes(&self) -> Option<&Bytes> {
-        match self {
-            SourceState::Good { name: _, content } => Some(content),
-            SourceState::Bad { name: _ } => None,
-        }
-    }
-
-    pub fn get_path(&self) -> String {
-        let name = match self {
-            SourceState::Good { name, content: _ } => name,
-            SourceState::Bad { name } => name,
-        };
-        format!("{}objects/{}/{}", ASSESTS_PATH, &name[..2], name)
-    }
-
-    pub fn set_bad(&mut self) {
-        *self = match self {
-            SourceState::Good { name, content: _ } => SourceState::Bad {
-                name: std::mem::take(name),
-            },
-            SourceState::Bad { name } => SourceState::Bad {
-                name: std::mem::take(name),
-            },
-        };
-    }
-}
-
-struct MinecraftDownloader {
-    test: Vec<SourceState>,
-    sources: Resources,
-    requester: reqwest::Client,
-    chunk_size: usize,
-    path: Arc<PathBuf>,
-}
-
-impl MinecraftDownloader {
-    pub fn new_with_reqwester(
-        sources: Resources,
-        chunk_size: usize,
-        requester: reqwest::Client,
-        path: Arc<PathBuf>,
-    ) -> MinecraftDownloader {
-        MinecraftDownloader {
-            test: Vec::new(),
-            sources,
-            requester,
-            chunk_size,
-            path,
-        }
-    }
-
-    pub async fn start(mut self) {
-        let start = tokio::time::Instant::now();
-        self.download_resources().await.ok();
-        let end = tokio::time::Instant::now();
-        olog(format!(
-            "Download && Write time: {}",
-            end.duration_since(start).as_millis()
-        ));
-    }
-
-    pub fn get_names(&self) -> Vec<&str> {
-        self.sources
-            .objects
-            .values()
-            .map(|v| v.hash.as_str())
-            .collect()
-    }
-
-    pub async fn download_resources(&mut self) -> Result<(), Box<dyn Error>> {
-        let mut data: Vec<&minecraft::ObjectData> = self.sources.objects.values().collect();
-        let range: Vec<usize> = (0..self.sources.objects.values().len()).collect();
-        data.sort_by(|a, b| b.size.cmp(&a.size));
-
-        let mut join_set = JoinSet::new();
-        let mut writters = JoinSet::new();
-
-        #[cfg(feature = "console_output")]
-        let mut i = 0;
-
-        for indexs in range.chunks(self.chunk_size) {
-            let mut sources = Vec::with_capacity(self.chunk_size);
-            for i in indexs {
-                let rc = self.requester.clone();
-                let url = data[*i].get_link();
-                let hash = data[*i].hash.clone();
-                join_set.spawn(async move {
-                    SourceState::Good {
-                        name: hash,
-                        content: rc
-                            .get(&url)
-                            .send()
-                            .await
-                            .unwrap()
-                            .bytes()
-                            .await
-                            .unwrap_or_default(),
-                    }
-                });
-            }
-
-            while let Some(source) = join_set.join_next().await {
-                sources.push(source?);
-            }
-            writters.spawn(MinecraftDownloader::write_files(
-                sources,
-                Arc::clone(&self.path),
-            ));
-
-            #[cfg(feature = "console_output")]
-            {
-                i += indexs.len();
-                print!(
-                    "\r{:.2}%",
-                    (i * 100) as f64 / self.sources.objects.len() as f64
-                );
-                stdout().flush();
-            }
-        }
-
-        let mut bad_files = Vec::new();
-        while let Some(w) = writters.join_next().await {
-            bad_files.append(&mut w.unwrap());
-        }
-        Ok(())
-    }
-
-    async fn write_files(sources: Vec<SourceState>, dest: Arc<PathBuf>) -> Vec<SourceState> {
-        let mut results = Vec::with_capacity(sources.len() / 2);
-        for mut source in sources {
-            let path = dest.join(source.get_path());
-            let mut file = OPEN_OPTIONS.open(&path).await.unwrap();
-            let Some(bytes) = source.get_bytes() else {continue};
-            //olog(format!("Writting {:?}", path));
-            match MinecraftDownloader::check_file(bytes, source.get_name()) {
-                Ok(_) => {
-                    check(
-                        file.write_all(bytes).await,
-                        true,
-                        "minecraft_downloader; Fail to write resource",
-                    )
-                    .ok();
-                }
-                Err(_) => {
-                    log(format!("Bad file {}", source.get_name()));
-                    source.set_bad();
-                    results.push(source);
-                }
-            }
-        }
-        results
-    }
-
-    fn check_file<T: AsRef<[u8]>>(bytes: T, hash: &str) -> Result<(), hex::FromHexError> {
-        let mut hasher = sha1::Sha1::new();
-        hasher.update(bytes.as_ref());
-        let file_hash = hasher.finalize().to_vec();
-        if file_hash != hex::decode(hash)? {
-            dlog(format!("Error while checking {:?}, wrong hash", hash));
-            return Err(hex::FromHexError::InvalidStringLength);
-        }
-        Ok(())
-    }
-
-    async fn make_files(&self, path: Arc<PathBuf>) -> Result<(), std::io::Error> {
-        for file in self.get_names() {
-            let path = path.join(ASSESTS_PATH.to_owned() + "objects/" + &file[..2] + "/" + file);
-            if tokio::fs::File::create(&path).await.is_err() {
-                std::fs::create_dir_all(path.parent().unwrap()).expect(CANT_CREATE_DIR);
-                std::fs::File::create(path)?;
-            }
-        }
-        log("Ficheros creados!");
-        Ok(())
-    }
+    Ok(())
 }
 
 /*
@@ -284,7 +119,8 @@ async fn create_indexes(
     assets_url: &str,
 ) -> Result<(), std::io::Error> {
     let indexes_path = destination_path
-        .join("assets/indexes/")
+        .join(ASSESTS_PATH)
+        .join("indexes")
         .join(&assets_url[assets_url.rfind('/').unwrap_or_default() + 1..]);
     let mut indexes = tokio::fs::File::create(indexes_path).await?;
 
@@ -299,23 +135,106 @@ async fn create_indexes(
     Ok(())
 }
 
+///   
+///   # How this function works:  
+///  
+///  - Create the corresponding files before downloading the data
+///  - Download the data
+///
 pub async fn download_sourcers(
     assets_url: &str,
-    requester: &reqwest::Client,
+    requester: reqwest::Client,
     destination_path: PathBuf,
 ) -> Result<(), Box<dyn Error>> {
-    let resources = get_sourcers(requester, assets_url, &destination_path).await?;
+    let resources = get_sourcers(&requester, assets_url, &destination_path).await?;
     create_indexes(&resources, &destination_path, assets_url).await?;
-    let arc_path = Arc::new(destination_path);
-    let mc_downloader = MinecraftDownloader::new_with_reqwester(
-        resources,
-        N_THREADS(),
-        requester.clone(),
-        arc_path.clone(),
-    );
-    mc_downloader.make_files(arc_path.clone()).await?;
-    mc_downloader.start().await;
+
+    let names: Vec<PathBuf> = resources
+        .objects
+        .values()
+        .map(|file| {
+            PathBuf::from(
+                ASSESTS_PATH.to_owned() + OBJECTS_PATH + &file.hash[..2] + "/" + &file.hash,
+            )
+        })
+        .collect();
+
+    let urls: Vec<String> = resources.objects.values().map(|v| v.get_link()).collect();
+
+    for p in &names {
+        create_all(destination_path.join(p).parent().unwrap(), false)
+            .expect("Error while creating the sources directories");
+    }
+
+    let gen_downloader = gen_downloader::Downloader {
+        names,
+        requester,
+        urls: urls.into(),
+        path: destination_path.clone().into(),
+    };
+
+    gen_downloader.start().await;
+
+    let n_files = resources.objects.len();
+    let mut i = 0;
+    for file in resources.objects.values() {
+        let file_path = destination_path
+            .join(ASSESTS_PATH)
+            .join(OBJECTS_PATH)
+            .join(file.get_path());
+
+        let mut reader = tokio::io::BufReader::new(
+            tokio::fs::File::open(&file_path)
+                .await
+                .expect("Unable to open the file"),
+        );
+        let mut buffer = Vec::with_capacity(DEFAULT_FILE_BUFFER_SIZE);
+        reader
+            .read_to_end(&mut buffer)
+            .await
+            .expect("Error while reading the file");
+
+        if buffer.len() != file.size && check_file(buffer, &file.hash).is_err() {
+            println!("Error in file {}", file_path.to_str().unwrap());
+        }
+        i += 1;
+        print!("\r{}/{}     ", i, n_files);
+        let _ = std::io::stdout().lock().flush();
+    }
     Ok(())
+}
+
+pub async fn download_libraries(
+    requester: reqwest::Client,
+    destination_path: PathBuf,
+    libraries: Libraries,
+) {
+    let raw_paths = libraries.get_paths();
+    let urls = libraries
+        .get_ulrs()
+        .into_iter()
+        .map(|e| e.to_string())
+        .collect::<Vec<String>>()
+        .into();
+
+    let good_paths: Vec<PathBuf> = raw_paths
+        .iter()
+        .map(|p| PathBuf::from("libraries").join(p))
+        .collect();
+
+    for p in &good_paths {
+        create_all(destination_path.join(p).parent().unwrap(), false)
+            .expect("Unable to create Lib's dirs");
+    }
+
+    let gen_downloader = gen_downloader::Downloader {
+        names: good_paths,
+        requester,
+        urls,
+        path: destination_path.into(),
+    };
+
+    gen_downloader.start().await;
 }
 
 pub async fn donwload_minecraft(
@@ -323,16 +242,32 @@ pub async fn donwload_minecraft(
     destination_path: PathBuf,
 ) -> Result<(), Box<dyn Error>> {
     let requester = reqwest::Client::new();
-    let intances = list_instances(&requester).await?;
-    let instance_url = intances.get_instance_url(instance).unwrap();
+    let intances = list_instances(&requester)
+        .await
+        .expect("Couldnt get minecraft versions");
+    let instance_url = intances
+        .get_instance_url(instance)
+        .expect(&format!("Couldnt find {instance} version"));
 
     let instance: MinecraftInstance = requester.get(instance_url).send().await?.json().await?;
 
-    download_sourcers(&instance.assest_index.url, &requester, destination_path).await?;
+    download_libraries(
+        requester.clone(),
+        destination_path.clone(),
+        instance.libraries,
+    )
+    .await;
+
+    download_sourcers(
+        &instance.assest_index.url,
+        requester.clone(),
+        destination_path,
+    )
+    .await?;
 
     //TODO!
-    // 1.- Learn how the .minecraft folders works
-    // 2.- Download the minecraft libraries in the correspondientes folders
+    // Done 1.- Learn how the .minecraft folders works
+    // Done 2.- Download the minecraft libraries in the correspondientes folders
     // 3.- Download only the necessary librarias bcs somes are for Windows and somes are for Linux
     // 4.- Try to log with Microsoft account
     // 5.- Try to launch minecraft

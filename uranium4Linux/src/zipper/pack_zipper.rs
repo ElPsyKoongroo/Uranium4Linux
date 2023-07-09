@@ -49,17 +49,17 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<(
 
 fn search_files(minecraft_path: &str, relative_path: &str, config_files: &mut Vec<UraniumFile>) {
     // Get this directory files
-    let mut sub_config_files =
+    let sub_config_files =
         get_new_files(&(minecraft_path.to_owned() + relative_path), relative_path);
 
     // Go through the sub_config_files vector and set the right tipe to each file. Then add them to config_files
-    for config_file in &mut sub_config_files {
+    for mut config_file in sub_config_files {
         let path: PathBuf = (minecraft_path.to_owned() + &config_file.get_absolute_path()).into();
         if Path::is_file(&path) {
-            (*config_file).set_type(FileType::Data);
+            config_file.set_type(FileType::Data);
             config_files.push(config_file.clone());
         } else {
-            (*config_file).set_type(FileType::Dir);
+            config_file.set_type(FileType::Dir);
             config_files.push(config_file.clone());
             let new_path = relative_path.to_owned() + &config_file.get_name() + "/";
             search_files(minecraft_path, &new_path, config_files);

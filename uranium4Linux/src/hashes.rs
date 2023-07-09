@@ -1,4 +1,4 @@
-use std::{fs, io::Read};
+use std::{fs, io::Read, path::Path};
 
 use hex::ToHex;
 use murmurhash32::murmurhash2;
@@ -30,8 +30,8 @@ fn get_sha1_from_file(file_path: &str) -> String {
     temp.encode_hex::<String>()
 }
 
-pub fn rinth_hash(path: &str) -> String {
-    get_sha1_from_file(path)
+pub fn rinth_hash(path: &Path) -> String {
+    get_sha1_from_file(path.to_str().unwrap())
 }
 
 // TODO! Remove curse
