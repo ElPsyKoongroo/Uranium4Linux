@@ -22,22 +22,19 @@ pub async fn rinth_pack_download(
     file_path: String,
     destination_path: String,
 ) -> Result<(), ModpackError> {
-    let mut rinth_downloader = RinthDownloader::new(file_path, destination_path)?;
+    let mut rinth_downloader = RinthDownloader::new(&file_path, &destination_path)?;
     rinth_downloader.start().await;
-    let total = rinth_downloader.len()*2;
+    let total = rinth_downloader.len() * 2;
     let mut i = 1;
 
     loop {
         let _ = std::io::stdout().flush();
-        match rinth_downloader.chunk().await {
-            Some(_x) => {
-                print!("\r{} / {}      ", i, total);
-                i += 1;
-            }
-            None => {
-                println!();
-                return Ok(());
-            }
+        if rinth_downloader.chunk().await.is_some() {
+            print!("\r{} / {}      ", i, total);
+            i += 1;
+        } else {
+            println!();
+            return Ok(());
         }
     }
 }

@@ -1,7 +1,4 @@
-use crate::{
-    checker::{elog},
-    code_functions::N_THREADS,
-};
+use crate::{checker::elog, code_functions::N_THREADS};
 use futures::future::join_all;
 use requester::{mod_searcher::Method, requester::request_maker::Req};
 use reqwest::Response;
@@ -130,6 +127,7 @@ impl<T: Req + Clone + std::marker::Send + std::marker::Sync + 'static> Downloade
         //self.get_responses().await.unwrap();
     }
 
+    #[allow(unused)]
     async fn get_responses(&mut self) -> Result<(), Box<dyn Error>> {
         let chunk_size = N_THREADS();
 
@@ -200,13 +198,12 @@ impl<T: Req + Clone + std::marker::Send + std::marker::Sync + 'static> Downloade
                 if self.tasks.get(i).unwrap().is_finished() {
                     let task = self.tasks.remove(i).unwrap();
                     task.await.unwrap();
-                    return Some(self.tasks.len());
+                    self.tasks.len();
                 }
             }
             let _ = self.tasks.pop_front().unwrap().await;
             return Some(self.tasks.len());
-        } else {
-            return None;
         }
+        None
     }
 }

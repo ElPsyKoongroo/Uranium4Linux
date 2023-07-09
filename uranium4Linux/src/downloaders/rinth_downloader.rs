@@ -1,16 +1,17 @@
 use super::gen_downloader::*;
 use crate::{
     checker::dlog,
+    code_functions::N_THREADS,
     downloaders::functions::overrides,
     error::ModpackError,
     variables::constants::{RINTH_JSON, TEMP_DIR},
-    zipper::pack_unzipper::unzip_temp_pack, code_functions::N_THREADS,
+    zipper::pack_unzipper::unzip_temp_pack,
 };
 use mine_data_strutcs::rinth::rinth_packs::{load_rinth_pack, RinthMdFiles, RinthModpack};
 use requester::requester::request_maker::RinthRequester;
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::Arc 
 };
 
 pub struct RinthDownloader {
@@ -19,11 +20,11 @@ pub struct RinthDownloader {
 }
 
 impl RinthDownloader {
-    pub fn new<I: Into<PathBuf> + ToString>(
-        modpack_path: I,
-        destination: I,
-    ) -> Result<Self, ModpackError> {
-        let modpack = RinthDownloader::load_pack(modpack_path.to_string())?;
+    pub fn new<I: Into<PathBuf> + std::convert::AsRef<std::ffi::OsStr> + ToString>(
+        modpack_path: &I,
+        destination: &I,
+    ) -> Result<Self, ModpackError> where I: AsRef<Path> {
+        let modpack = RinthDownloader::load_pack(modpack_path)?;
         let (links, names) = RinthDownloader::get_data(&modpack);
 
         Ok(RinthDownloader {
@@ -57,7 +58,7 @@ impl RinthDownloader {
         let file_names: Vec<PathBuf> = rinth_pack
             .get_files()
             .iter()
-            .map(|f| f.get_name())
+            .map(RinthMdFiles::get_name)
             .collect();
 
         file_names
@@ -67,12 +68,10 @@ impl RinthDownloader {
         (file_links, file_names)
     }
 
-    fn load_pack<I: AsRef<Path> + std::fmt::Debug>(path: I) -> Result<RinthModpack, ModpackError> {
+    fn load_pack<I: AsRef<Path>>(path: I) -> Result<RinthModpack, ModpackError> {
         unzip_temp_pack(path)?;
-        let rinth_pack = match load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON)) {
-            Some(pack) => pack,
-            None => panic!("Cant read the pack"),
-        };
+        let Some(rinth_pack) = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON)) else {
+            panic!("Cant read the pack")};
 
         dlog("Pack loaded");
 
@@ -88,15 +87,16 @@ impl RinthDownloader {
     }
 }
 
-pub async fn download_rinth_pack<I: AsRef<Path> + std::fmt::Debug>(path: I, destination_path: I) -> Result<(), ModpackError>
+pub async fn download_rinth_pack<I: AsRef<Path> + std::fmt::Debug>(
+    path: I,
+    destination_path: I,
+) -> Result<(), ModpackError>
 where
     PathBuf: From<I>,
 {
     unzip_temp_pack(path)?;
-    let rinth_pack = match load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON)) {
-        Some(pack) => pack,
-        None => return Err(ModpackError::WrongModpackFormat),
-    };
+    let Some(rinth_pack) = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON)) else {
+         return Err(ModpackError::WrongModpackFormat)  };
 
     dlog("Pack loaded");
 
@@ -111,7 +111,7 @@ where
     let file_names: Vec<PathBuf> = rinth_pack
         .get_files()
         .iter()
-        .map(|f| f.get_name())
+        .map(RinthMdFiles::get_name)
         .collect();
 
     file_names

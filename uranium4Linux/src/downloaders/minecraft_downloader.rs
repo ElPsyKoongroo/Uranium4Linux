@@ -5,7 +5,7 @@ use crate::{
 
 use fs_extra::dir::create_all;
 use mine_data_strutcs::minecraft::{
-    self, Lib, Libraries, MinecraftInstance, MinecraftInstances, Resources,
+    self, Lib, Libraries, MinecraftInstance, MinecraftInstances, ObjectData, Resources,
 };
 use reqwest;
 use sha1::Digest;
@@ -159,7 +159,11 @@ pub async fn download_sourcers(
         })
         .collect();
 
-    let urls: Vec<String> = resources.objects.values().map(|v| v.get_link()).collect();
+    let urls = resources
+        .objects
+        .values()
+        .map(ObjectData::get_link)
+        .collect::<Vec<String>>();
 
     for p in &names {
         create_all(destination_path.join(p).parent().unwrap(), false)
@@ -213,7 +217,7 @@ pub async fn download_libraries(
     let urls = libraries
         .get_ulrs()
         .into_iter()
-        .map(|e| e.to_string())
+        .map(std::string::ToString::to_string)
         .collect::<Vec<String>>()
         .into();
 
@@ -247,7 +251,7 @@ pub async fn donwload_minecraft(
         .expect("Couldnt get minecraft versions");
     let instance_url = intances
         .get_instance_url(instance)
-        .expect(&format!("Couldnt find {instance} version"));
+        .unwrap_or_else(|| panic!("Couldnt find {instance} version"));
 
     let instance: MinecraftInstance = requester.get(instance_url).send().await?.json().await?;
 
