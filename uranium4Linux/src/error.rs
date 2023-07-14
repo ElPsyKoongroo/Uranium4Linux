@@ -8,4 +8,15 @@ pub enum ModpackError {
     WrongModpackFormat,
     #[error("File not found")]
     FileNotFound,
+    #[error("Cant create dir")]
+    CantCreateDir,
+}
+
+#[derive(Debug, Error)]
+pub enum MakerError {
+    #[error("Cant compress the modpack")]
+    CantCompress,
+    #[error("Cant remove temp JSON file")]
+    CantRemoveJSON
+
 }

@@ -1,5 +1,8 @@
 use core::panic;
-use std::{fs::read_dir, path::{Path, PathBuf}};
+use std::{
+    fs::read_dir,
+    path::{Path, PathBuf},
+};
 
 use futures::future::join_all;
 
@@ -9,13 +12,47 @@ use mine_data_strutcs::{
 };
 use requester::async_pool::AsyncPool;
 
-use crate::{hashes::rinth_hash, variables::constants, zipper::pack_zipper::compress_pack};
+use crate::{
+    code_functions::N_THREADS, error::MakerError, hashes::rinth_hash, variables::constants,
+    zipper::pack_zipper::compress_pack,
+};
 
 /// Good -> Means Uranium found the mod
 /// Raw  -> Means the mod need to be added raw
 enum ParseState {
     Good(RinthVersion),
     Raw(String),
+}
+
+pub struct ModpackMaker;
+
+impl ModpackMaker {
+    pub async fn make<'a, I>(path: &I) -> Result<(), MakerError>
+    where
+        I: AsRef<Path>,
+    {
+        let hash_filename = get_mods(Path::new(path.as_ref()));
+
+        let mods_states = search_mods_for_modpack(hash_filename, N_THREADS()).await;
+
+        let mp_name = "modpack".to_owned();
+
+        let mut rinth_pack = RinthModpack::new();
+        let mut raw_mods = Vec::new();
+        for rinth_mod in mods_states {
+            match rinth_mod {
+                ParseState::Good(m) => rinth_pack.add_mod(m.into()),
+                ParseState::Raw(file_name) => raw_mods.push(file_name),
+            }
+        }
+
+        rinth_pack.write_mod_pack_with_name();
+
+        compress_pack(&mp_name, path.as_ref(), &raw_mods).map_err(|_| MakerError::CantCompress)?;
+
+        std::fs::remove_file(constants::RINTH_JSON).map_err(|_| MakerError::CantRemoveJSON)?;
+        Ok(())
+    }
 }
 
 pub async fn make_modpack(path: &str, n_threads: usize) {
@@ -36,7 +73,8 @@ pub async fn make_modpack(path: &str, n_threads: usize) {
 
     rinth_pack.write_mod_pack_with_name();
 
-    compress_pack(&mp_name, path, &raw_mods).unwrap();
+    let path = PathBuf::from(path);
+    compress_pack(&mp_name, path.as_path(), &raw_mods).unwrap();
 
     std::fs::remove_file(constants::RINTH_JSON).unwrap();
 }
@@ -60,7 +98,12 @@ fn get_mods(minecraft_path: &Path) -> Vec<(String, String)> {
     // Push all the (has, file_name) to the vector
     for path in mods {
         let mod_hash = rinth_hash(path.as_path());
-        let file_name = path.file_name().unwrap().to_os_string().into_string().unwrap_or_default();
+        let file_name = path
+            .file_name()
+            .unwrap()
+            .to_os_string()
+            .into_string()
+            .unwrap_or_default();
         hashes_names.push((mod_hash, file_name));
     }
 

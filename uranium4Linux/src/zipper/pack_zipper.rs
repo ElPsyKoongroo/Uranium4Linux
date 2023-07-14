@@ -15,8 +15,8 @@ use crate::{
 use super::uranium_structs::UraniumFile;
 use crate::zipper::uranium_structs::FileType;
 
-pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<()> {
-    let path = &fix_path(path);
+pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> ZipResult<()> {
+    //let path = &fix_path(path);
 
     let zip_file = File::create(name.to_owned() + constants::EXTENSION).unwrap();
     let mut zip = zip::ZipWriter::new(zip_file);
@@ -47,14 +47,18 @@ pub fn compress_pack(name: &str, path: &str, raw_mods: &[String]) -> ZipResult<(
     Ok(())
 }
 
-fn search_files(minecraft_path: &str, relative_path: &str, config_files: &mut Vec<UraniumFile>) {
+fn search_files(minecraft_path: &Path, relative_path: &str, config_files: &mut Vec<UraniumFile>) {
     // Get this directory files
-    let sub_config_files =
-        get_new_files(&(minecraft_path.to_owned() + relative_path), relative_path);
+    let sub_config_files = get_new_files(
+        minecraft_path.to_owned().join(relative_path).as_path(),
+        relative_path,
+    );
 
     // Go through the sub_config_files vector and set the right tipe to each file. Then add them to config_files
     for mut config_file in sub_config_files {
-        let path: PathBuf = (minecraft_path.to_owned() + &config_file.get_absolute_path()).into();
+        let path: PathBuf = minecraft_path
+            .to_owned()
+            .join(&config_file.get_absolute_path());
         if Path::is_file(&path) {
             config_file.set_type(FileType::Data);
             config_files.push(config_file.clone());
@@ -67,9 +71,17 @@ fn search_files(minecraft_path: &str, relative_path: &str, config_files: &mut Ve
     }
 }
 
-fn get_new_files(path: &str, relative_path: &str) -> Vec<UraniumFile> {
+fn get_new_files(path: &Path, relative_path: &str) -> Vec<UraniumFile> {
     let sub_directory = std::fs::read_dir(path);
-    let sub_directory = check(sub_directory, true, format!("Error al leer {}", path)).unwrap();
+    let sub_directory = check(
+        sub_directory,
+        true,
+        format!(
+            "Error al leer {}",
+            path.as_os_str().to_str().unwrap_or_default()
+        ),
+    )
+    .unwrap();
 
     let sub_config_files: Vec<UraniumFile> = sub_directory
         .map(|file| {
@@ -84,7 +96,7 @@ fn get_new_files(path: &str, relative_path: &str) -> Vec<UraniumFile> {
 }
 
 fn add_files_to_zip(
-    minecraft_path: &str,
+    minecraft_path: &Path,
     config_files: &mut Vec<UraniumFile>,
     zip: &mut ZipWriter<File>,
     options: FileOptions,
@@ -95,14 +107,14 @@ fn add_files_to_zip(
 }
 
 fn match_file(
-    root_path: &str,
+    root_path: &Path,
     zip: &mut ZipWriter<File>,
     options: FileOptions,
     file: &mut UraniumFile,
 ) {
     match file.get_type() {
         FileType::Data => {
-            let absolute_path = PathBuf::from(root_path.to_owned() + &file.get_absolute_path());
+            let absolute_path = root_path.to_owned().join(&file.get_absolute_path());
             let rel_path = "overrides/".to_owned() + &file.get_absolute_path();
             append_config_file(&absolute_path, &rel_path, zip, options);
         }
@@ -154,7 +166,7 @@ fn append_config_file(
     );
 }
 
-fn add_raw_mods(path: &str, zip: &mut ZipWriter<File>, raw_mods: &[String], options: FileOptions) {
+fn add_raw_mods(path: &Path, zip: &mut ZipWriter<File>, raw_mods: &[String], options: FileOptions) {
     check_panic(
         zip.add_directory("overrides/mods", options),
         false,
@@ -167,9 +179,15 @@ fn add_raw_mods(path: &str, zip: &mut ZipWriter<File>, raw_mods: &[String], opti
         #[cfg(debug_assertions)]
         println!("Adding {}", file_name);
 
-        println!("{}", (path.to_owned() + "mods/") + jar_file);
+        println!(
+            "{}",
+            (path.join("mods/").join(jar_file))
+                .as_os_str()
+                .to_str()
+                .unwrap_or_default()
+        );
         let buffer = check_panic(
-            std::fs::read((path.to_owned() + "mods/") + jar_file),
+            std::fs::read(path.join("mods/").join(jar_file)),
             false,
             format!("zipper; Unable to read {}", jar_file),
         );

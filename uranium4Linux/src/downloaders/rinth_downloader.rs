@@ -20,18 +20,28 @@ pub struct RinthDownloader {
 }
 
 impl RinthDownloader {
-    pub fn new<I: Into<PathBuf> + std::convert::AsRef<std::ffi::OsStr> + ToString>(
+    pub fn new<I: Into<PathBuf>>(
         modpack_path: &I,
         destination: &I,
     ) -> Result<Self, ModpackError> where I: AsRef<Path> {
         let modpack = RinthDownloader::load_pack(modpack_path)?;
         let (links, names) = RinthDownloader::get_data(&modpack);
 
+        let destination = destination.as_ref().to_owned();
+
+        if !destination.join("mods").exists() {
+            std::fs::create_dir(destination.join("mods")).map_err(|_| ModpackError::CantCreateDir)?
+        }
+
+        if !destination.join("config").exists() {
+            std::fs::create_dir(destination.join("config")).map_err(|_| ModpackError::CantCreateDir)?
+        }
+
         Ok(RinthDownloader {
             gen_downloader: Downloader2::new(
                 links.into(),
                 names,
-                Arc::new(destination.into()),
+                destination.into(),
                 RinthRequester::new(),
             ),
             modpack,
