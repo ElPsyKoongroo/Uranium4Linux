@@ -22,8 +22,10 @@
 - [x] `make_modpack` should return a `Result<(), Error>`
 - [ ] Refactor `serach_mods_for_modpack` and `search_mod`
 - [x] Change `path` type to `PathBuf`
-- [ ] Make a type alias for `&[(String, String)]`
+- [x] Make a type alias for `&[(String, String)]`
 - [ ] Change `&'str` to `&Path` to everything that uses a path.
+- [x] Refactor `ModpackMaker` into a struct with chunk method
+
 
 
 ## pack_zipper.rs

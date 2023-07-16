@@ -4,9 +4,8 @@
 #[cfg(debug_assertions)]
 use uranium4Linux::checker::olog;
 
-use code_functions::{fix_path, get_bool_element, get_parse_element, update, N_THREADS};
+use code_functions::{fix_path, get_bool_element, get_parse_element, update};
 use downloaders::{curse_downloader::curse_modpack_downloader, minecraft_downloader};
-use modpack_maker::maker::make_modpack;
 use std::env;
 use uranium4Linux::{request_arg_parser, *};
 use variables::constants::*;
@@ -42,7 +41,7 @@ async fn main() -> Result<(), ZipError> {
             }
         }
         SHORT_UPDATE | LONG_UPDATE => update(&file_path).await,
-        SHORT_MAKE | LONG_MAKE => make_modpack(&file_path, N_THREADS()).await,
+        SHORT_MAKE | LONG_MAKE => {make_modpack(&file_path).await;}
         SHORT_REQUEST | LONG_REQUEST => {
             searcher::rinth::search(request_arg_parser(&args).expect("Wrong request type")).await;
         }

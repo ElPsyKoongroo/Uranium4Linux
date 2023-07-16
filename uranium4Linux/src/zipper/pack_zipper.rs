@@ -8,7 +8,6 @@ use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 
 use crate::{
     checker::{check, check_panic, dlog},
-    code_functions::fix_path,
     variables::constants,
 };
 
@@ -112,10 +111,11 @@ fn match_file(
     options: FileOptions,
     file: &mut UraniumFile,
 ) {
+    let overrides: PathBuf = PathBuf::from("overrides/");
     match file.get_type() {
         FileType::Data => {
-            let absolute_path = root_path.to_owned().join(&file.get_absolute_path());
-            let rel_path = "overrides/".to_owned() + &file.get_absolute_path();
+            let absolute_path = root_path.to_owned().join(file.get_absolute_path());
+            let rel_path = overrides.join(file.get_absolute_path());
             append_config_file(&absolute_path, &rel_path, zip, options);
         }
 
@@ -133,7 +133,7 @@ fn match_file(
 
 fn append_config_file(
     absolute_path: &PathBuf,
-    rel_path: &str,
+    rel_path: &Path,
     zip: &mut ZipWriter<File>,
     option: FileOptions,
 ) {
@@ -155,9 +155,9 @@ fn append_config_file(
 
     // Add the file to the zip
     check_panic(
-        zip.start_file(rel_path, option),
+        zip.start_file(rel_path.as_os_str().to_str().unwrap_or_default(), option),
         false,
-        format!("zipper; Unable to start zip file {}", rel_path),
+        format!("zipper; Unable to start zip file {:?}", rel_path),
     );
     check_panic(
         zip.write_all(&buffer),

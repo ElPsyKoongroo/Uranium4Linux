@@ -30,11 +30,11 @@ impl RinthDownloader {
         let destination = destination.as_ref().to_owned();
 
         if !destination.join("mods").exists() {
-            std::fs::create_dir(destination.join("mods")).map_err(|_| ModpackError::CantCreateDir)?
+            std::fs::create_dir(destination.join("mods")).map_err(|_| ModpackError::CantCreateDir)?;
         }
 
         if !destination.join("config").exists() {
-            std::fs::create_dir(destination.join("config")).map_err(|_| ModpackError::CantCreateDir)?
+            std::fs::create_dir(destination.join("config")).map_err(|_| ModpackError::CantCreateDir)?;
         }
 
         Ok(RinthDownloader {

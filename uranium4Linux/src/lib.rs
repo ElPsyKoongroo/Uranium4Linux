@@ -5,7 +5,7 @@ use std::io::Write;
 
 use downloaders::rinth_downloader::*;
 use error::{ModpackError, MakerError};
-use modpack_maker::maker::ModpackMaker;
+use modpack_maker::maker::{ModpackMaker, State};
 use searcher::rinth::SearchType;
 use variables::constants::*;
 
@@ -19,8 +19,22 @@ pub mod searcher;
 pub mod variables;
 pub mod zipper;
 
-pub async fn make_modpack(minecraft_path: String) -> Result<(), MakerError>  {
-    ModpackMaker::make(&minecraft_path).await
+pub async fn make_modpack(minecraft_path: &str) -> Result<(), MakerError>  {
+    let mut maker = ModpackMaker::new(&minecraft_path);
+    maker.start().await;
+    let mut i = 0;
+    loop {
+        match maker.chunk().await {
+            Ok(State::Finish) => return Ok(()),
+            Err(e) => return Err(e),
+            _ => {
+                println!("{}", i);
+                i += 1;
+            }
+        }
+    }
+    
+    //ModpackMaker::make(&minecraft_path).await
 }
 
 pub async fn rinth_pack_download(
