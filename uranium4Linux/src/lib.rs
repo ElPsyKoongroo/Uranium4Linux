@@ -21,7 +21,7 @@ pub mod zipper;
 
 pub async fn make_modpack(minecraft_path: &str) -> Result<(), MakerError>  {
     let mut maker = ModpackMaker::new(&minecraft_path);
-    maker.start().await;
+    maker.start();
     let mut i = 0;
     loop {
         match maker.chunk().await {

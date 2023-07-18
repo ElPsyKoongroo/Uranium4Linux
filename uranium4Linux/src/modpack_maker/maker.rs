@@ -56,7 +56,7 @@ impl<'a> ModpackMaker<'a> {
         }
     }
 
-    pub async fn start(&mut self) {
+    pub fn start(&mut self) {
         self.hash_filenames = self.get_mods();
     }
 
@@ -136,11 +136,11 @@ impl<'a> ModpackMaker<'a> {
                 State::Searching
             }
             State::Searching => {
-                if !self.hash_filenames.is_empty() {
+                if self.hash_filenames.is_empty() {
+                    State::Checking
+                } else {
                     self.search_mods().await;
                     State::Searching
-                } else {
-                    State::Checking
                 }
             }
             State::Checking => {

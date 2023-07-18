@@ -41,7 +41,7 @@ async fn main() -> Result<(), ZipError> {
             }
         }
         SHORT_UPDATE | LONG_UPDATE => update(&file_path).await,
-        SHORT_MAKE | LONG_MAKE => {make_modpack(&file_path).await;}
+        SHORT_MAKE | LONG_MAKE => {let _ = make_modpack(&file_path).await;}
         SHORT_REQUEST | LONG_REQUEST => {
             searcher::rinth::search(request_arg_parser(&args).expect("Wrong request type")).await;
         }
