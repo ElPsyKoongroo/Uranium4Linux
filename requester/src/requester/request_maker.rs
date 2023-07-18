@@ -1,3 +1,5 @@
+use std::env;
+
 use reqwest::header::HeaderMap;
 use tokio::{
     task,
@@ -77,9 +79,12 @@ impl CurseRequester {
             headers: HeaderMap::new(),
         };
 
+
+        let (_, curse_api_key) = env::vars().find(|(v,_)| v =="CURSE_API_KEY").unwrap_or_default();
+
         req.headers.insert(
             "x-api-key",
-            "$2a$10$6mO.gbGdm7elhecL3XMcxOby5RrftY2ufGTZxg3gocM1kDlF1UCuK"
+            curse_api_key
                 .parse()
                 .unwrap(),
         );
