@@ -1,0 +1,26 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "Uranium-235" ]
+  pull_request:
+    branches: [ "Uranium-235" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build
+      run: cargo build --verbose
+      script: |
+        export CURSE_API_KEY=${{ secrets.CURSE_API_KEY }}
+
+    - name: Run tests
+      run: cargo test --verbose
