@@ -2,39 +2,39 @@ use super::gen_downloader::*;
 use crate::{
     checker::dlog,
     code_functions::N_THREADS,
-    downloaders::functions::overrides,
     error::ModpackError,
     variables::constants::{RINTH_JSON, TEMP_DIR},
     zipper::pack_unzipper::unzip_temp_pack,
 };
 use mine_data_strutcs::rinth::rinth_packs::{load_rinth_pack, RinthMdFiles, RinthModpack};
 use requester::requester::request_maker::RinthRequester;
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc 
-};
+use std::path::{Path, PathBuf};
 
+/// RinthDownloader struct is responsable for downloading
+/// the fiven modpack
 pub struct RinthDownloader {
     gen_downloader: Downloader2<RinthRequester>,
     modpack: RinthModpack,
 }
 
 impl RinthDownloader {
-    pub fn new<I: Into<PathBuf>>(
+    pub fn new<I: Into<PathBuf> + AsRef<Path>>(
         modpack_path: &I,
         destination: &I,
-    ) -> Result<Self, ModpackError> where I: AsRef<Path> {
+    ) -> Result<Self, ModpackError> {
         let modpack = RinthDownloader::load_pack(modpack_path)?;
         let (links, names) = RinthDownloader::get_data(&modpack);
 
         let destination = destination.as_ref().to_owned();
 
         if !destination.join("mods").exists() {
-            std::fs::create_dir(destination.join("mods")).map_err(|_| ModpackError::CantCreateDir)?;
+            std::fs::create_dir(destination.join("mods"))
+                .map_err(|_| ModpackError::CantCreateDir)?;
         }
 
         if !destination.join("config").exists() {
-            std::fs::create_dir(destination.join("config")).map_err(|_| ModpackError::CantCreateDir)?;
+            std::fs::create_dir(destination.join("config"))
+                .map_err(|_| ModpackError::CantCreateDir)?;
         }
 
         Ok(RinthDownloader {
@@ -48,10 +48,17 @@ impl RinthDownloader {
         })
     }
 
+    /// Returns the number of **CHUNKS** to download.
+    ///
+    /// So, if `N_THREADS` is set to 2 and there are 32 mods it
+    /// will return 16;
+    ///
+    /// 32/2 = 16
     pub fn len(&self) -> usize {
         self.gen_downloader.urls.len() / N_THREADS()
     }
 
+    /// Simply returns the modpack name.
     pub fn get_modpack_name(&self) -> String {
         self.modpack.get_name()
     }
@@ -88,15 +95,23 @@ impl RinthDownloader {
         Ok(rinth_pack)
     }
 
+    /// Starts the downloading.
     pub async fn start(&mut self) {
         self.gen_downloader.start().await;
     }
 
+    /// Make progress.
+    ///
+    /// If the download still in progress return
+    /// the number of chunks remaining.
+    ///
+    /// Else return None.
     pub async fn chunk(&mut self) -> Option<usize> {
         self.gen_downloader.progress().await
     }
 }
 
+/*
 pub async fn download_rinth_pack<I: AsRef<Path> + std::fmt::Debug>(
     path: I,
     destination_path: I,
@@ -141,3 +156,4 @@ where
     overrides(&destination_path.into(), "overrides");
     Ok(())
 }
+*/

@@ -25,6 +25,8 @@
 - [x] Make a type alias for `&[(String, String)]`
 - [ ] Change `&'str` to `&Path` to everything that uses a path.
 - [x] Refactor `ModpackMaker` into a struct with chunk method
+- [x] Make docs for pub functions
+- [ ] Make docs for non-pub functions
 
 
 
@@ -33,3 +35,7 @@
 - [ ] Fix unwraps in `compress_pack`
 - [ ] Change `&str` to `Path`  in `search_files`
 
+
+## rinth_downloader.rs
+- [x] Make docs for pub functions
+- [ ] Make docs for non-pub functions

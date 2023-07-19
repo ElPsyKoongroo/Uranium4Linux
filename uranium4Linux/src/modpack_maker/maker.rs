@@ -35,6 +35,9 @@ pub enum State {
     Finish,
 }
 
+
+/// This struct is responsable for the creation
+/// of the modpacks given a minecraft path.
 pub struct ModpackMaker<'a> {
     path: &'a Path,
     current_state: State,
@@ -56,8 +59,26 @@ impl<'a> ModpackMaker<'a> {
         }
     }
 
+    /// This method should be called ALWAYS before calling chunk
+    /// or finish method.
+    ///
+    /// It fetchs the mods from minecraft/mods folder.
     pub fn start(&mut self) {
         self.hash_filenames = self.get_mods();
+    }
+
+    /// Can only be used after start method is called.
+    ///
+    /// If this methods returns Ok(()) it means the modpack
+    /// has been made succecsfully
+    pub async fn finish(&mut self) -> Result<(), MakerError> {
+        loop {
+            match self.chunk().await {
+                Ok(State::Finish) => return Ok(()),
+                Err(e) => return Err(e),
+                _ => {}
+            }
+        }
     }
 
     async fn search_mods(&mut self) {
@@ -88,15 +109,14 @@ impl<'a> ModpackMaker<'a> {
             if let Ok(m) = rinth {
                 self.mods_states.push(ParseState::Good(m));
             } else {
-                self.mods_states
-                    .push(ParseState::Raw(chunk[i].1.clone()));
+                self.mods_states.push(ParseState::Raw(chunk[i].1.clone()));
             }
         }
 
         // Get rinth parses
     }
 
-    pub fn get_mods(&mut self) -> HashFilename {
+    fn get_mods(&mut self) -> HashFilename {
         assert!(self.path.is_dir(), "{:?} is not a dir", self.path);
 
         let mods_path = self.path.join("mods/");
@@ -129,6 +149,10 @@ impl<'a> ModpackMaker<'a> {
         hashes_names
     }
 
+    /// This method will make progress until Ok(State::Finish) is returned
+    /// or throw an Err.
+    ///
+    /// It will return the current State of the process.
     pub async fn chunk(&mut self) -> Result<State, MakerError> {
         self.current_state = match self.current_state {
             State::Starting => {
@@ -163,14 +187,13 @@ impl<'a> ModpackMaker<'a> {
 
                 State::Finish
             }
-            State::Finish => {
-                State::Finish
-            }
+            State::Finish => State::Finish,
         };
 
         Ok(self.current_state)
     }
 
+    /*
     pub async fn make<I>(path: &I) -> Result<(), MakerError>
     where
         I: AsRef<Path>,
@@ -197,8 +220,10 @@ impl<'a> ModpackMaker<'a> {
         std::fs::remove_file(constants::RINTH_JSON).map_err(|_| MakerError::CantRemoveJSON)?;
         Ok(())
     }
+    */
 }
 
+/*
 pub async fn make_modpack(path: &str, n_threads: usize) {
     let hash_filename = get_mods(Path::new(path));
 
@@ -222,7 +247,9 @@ pub async fn make_modpack(path: &str, n_threads: usize) {
 
     std::fs::remove_file(constants::RINTH_JSON).unwrap();
 }
+*/
 
+/*
 fn get_mods(minecraft_path: &Path) -> Vec<(String, String)> {
     let mut hashes_names = Vec::new();
     assert!(minecraft_path.is_dir(), "{:?} is not a dir", minecraft_path);
@@ -295,6 +322,7 @@ async fn search_mod(item: &[(String, String)], n_threads: usize) -> Vec<ParseSta
     }
     mods_states
 }
+*/
 
 async fn parse_responses(
     responses: Vec<Result<reqwest::Response, reqwest::Error>>,
@@ -306,3 +334,4 @@ async fn parse_responses(
     )
     .await
 }
+
