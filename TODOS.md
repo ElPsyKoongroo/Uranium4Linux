@@ -27,6 +27,8 @@
 - [x] Refactor `ModpackMaker` into a struct with chunk method
 - [x] Make docs for pub functions
 - [ ] Make docs for non-pub functions
+- [ ] Handle errors and don't panic
+- [x] Move `client` into the struct
 
 
 

@@ -18,9 +18,9 @@ pub struct RinthDownloader {
 }
 
 impl RinthDownloader {
-    pub fn new<I: Into<PathBuf> + AsRef<Path>>(
-        modpack_path: &I,
-        destination: &I,
+    pub fn new<I: AsRef<Path>>(
+        modpack_path: I,
+        destination: I,
     ) -> Result<Self, ModpackError> {
         let modpack = RinthDownloader::load_pack(modpack_path)?;
         let (links, names) = RinthDownloader::get_data(&modpack);
@@ -110,50 +110,3 @@ impl RinthDownloader {
         self.gen_downloader.progress().await
     }
 }
-
-/*
-pub async fn download_rinth_pack<I: AsRef<Path> + std::fmt::Debug>(
-    path: I,
-    destination_path: I,
-) -> Result<(), ModpackError>
-where
-    PathBuf: From<I>,
-{
-    unzip_temp_pack(path)?;
-    let Some(rinth_pack) = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON)) else {
-         return Err(ModpackError::WrongModpackFormat)  };
-
-    dlog("Pack loaded");
-
-    let file_links: Vec<String> = rinth_pack
-        .get_files()
-        .iter()
-        .map(RinthMdFiles::get_download_link)
-        .collect();
-
-    dlog(format!("Downloading {} files", file_links.len()));
-
-    let file_names: Vec<PathBuf> = rinth_pack
-        .get_files()
-        .iter()
-        .map(RinthMdFiles::get_name)
-        .collect();
-
-    file_names
-        .iter()
-        .for_each(|f| dlog(format!("{}", f.display())));
-
-    let requester = RinthRequester::new();
-
-    let downloader = Downloader {
-        names: file_names,
-        urls: Arc::new(file_links),
-        path: Arc::new(destination_path.as_ref().into()),
-        requester,
-    };
-
-    downloader.start().await;
-    overrides(&destination_path.into(), "overrides");
-    Ok(())
-}
-*/
