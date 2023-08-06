@@ -1,7 +1,5 @@
-
 # GitHub
 - [ ] Add videos showing how to use Uranium4Linux
-
 
 # Uranium4Linux
 
@@ -29,6 +27,9 @@
 - [ ] Make docs for non-pub functions
 - [ ] Handle errors and don't panic
 - [x] Move `client` into the struct
+- [x] Change `&'a path`  to `PathBuf`
+- [ ] Add `len()` method indicating how many mods are in the minecraft dir.
+- [ ] Make a field `threads`  in `ModpackMaker` so it doesnt need to call `N_THREADS()` fun all the time.
 
 
 
@@ -41,3 +42,6 @@
 ## rinth_downloader.rs
 - [x] Make docs for pub functions
 - [ ] Make docs for non-pub functions
+
+## lib.rs
+- [x] Write docs for public functions

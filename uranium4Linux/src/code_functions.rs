@@ -14,15 +14,16 @@ pub fn fix_path(path: &str) -> String {
     path.to_owned()
 }
 
-pub fn get_bool_element(args: &[String], flag: &str) -> bool {
-    args.iter().any(|f| f == flag)
-}
 
 pub fn N_THREADS() -> usize {
     match NTHREADS.read() {
         Ok(e) => *e,
         Err(_) => DEFAULT_NTHREADS,
     }
+}
+
+pub fn get_bool_element(args: &[String], flag: &str) -> bool {
+    args.iter().any(|f| f == flag)
 }
 
 pub fn get_parse_element<T>(args: &[String], flag: &str) -> Option<T>

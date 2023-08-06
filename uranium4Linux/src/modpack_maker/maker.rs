@@ -37,31 +37,31 @@ pub enum State {
 
 /// This struct is responsable for the creation
 /// of the modpacks given a minecraft path.
-pub struct ModpackMaker<'a> {
-    path: &'a Path,
+pub struct ModpackMaker {
+    path: PathBuf,
     current_state: State,
     hash_filenames: HashFilename,
     mods_states: Vec<ParseState>,
     rinth_pack: RinthModpack,
     raw_mods: Vec<String>,
-    cliente: reqwest::Client
+    cliente: reqwest::Client,
 }
 
-impl<'a> ModpackMaker<'a> {
-    pub fn new<I: AsRef<Path>>(path: &'a I) -> ModpackMaker<'a> {
+impl ModpackMaker {
+    pub fn new<I: AsRef<Path>>(path: &I) -> ModpackMaker {
         ModpackMaker {
-            path: path.as_ref(),
+            path: path.as_ref().to_path_buf(),
             current_state: State::Starting,
             hash_filenames: vec![],
             mods_states: vec![],
             rinth_pack: RinthModpack::new(),
             raw_mods: vec![],
-            cliente: reqwest::Client::new()
+            cliente: reqwest::Client::new(),
         }
     }
 
-    /// This method should be called ALWAYS before calling chunk
-    /// or finish method.
+    /// This method should be called before calling chunk
+    /// or finish method for optimal performance.
     ///
     /// It fetchs the mods from minecraft/mods folder.
     pub fn start(&mut self) {
@@ -81,6 +81,58 @@ impl<'a> ModpackMaker<'a> {
                 _ => {}
             }
         }
+    }
+
+    /// Returns how many mods are in the minecraft
+    /// directory
+    pub fn len(&self) -> usize {
+        self.hash_filenames.len()
+    }
+
+    /// This method will make progress until Ok(State::Finish) is returned
+    /// or throw an Err.
+    ///
+    /// It will return the current State of the process.
+    pub async fn chunk(&mut self) -> Result<State, MakerError> {
+        self.current_state = match self.current_state {
+            State::Starting => {
+                if self.hash_filenames.is_empty() {
+                    self.hash_filenames = self.get_mods();
+                }
+                State::Searching
+            }
+            State::Searching => {
+                if self.hash_filenames.is_empty() {
+                    State::Checking
+                } else {
+                    self.search_mods().await;
+                    State::Searching
+                }
+            }
+            State::Checking => {
+                for rinth_mod in &self.mods_states {
+                    match rinth_mod {
+                        ParseState::Good(m) => self.rinth_pack.add_mod(m.clone().into()),
+                        ParseState::Raw(file_name) => self.raw_mods.push(file_name.clone()),
+                    }
+                }
+                State::Writing
+            }
+            State::Writing => {
+                self.rinth_pack.write_mod_pack_with_name();
+
+                compress_pack("modpack", &self.path, &self.raw_mods)
+                    .map_err(|_| MakerError::CantCompress)?;
+
+                std::fs::remove_file(constants::RINTH_JSON)
+                    .map_err(|_| MakerError::CantRemoveJSON)?;
+
+                State::Finish
+            }
+            State::Finish => State::Finish,
+        };
+
+        Ok(self.current_state)
     }
 
     async fn search_mods(&mut self) {
@@ -145,50 +197,6 @@ impl<'a> ModpackMaker<'a> {
         }
 
         hashes_names
-    }
-
-    /// This method will make progress until Ok(State::Finish) is returned
-    /// or throw an Err.
-    ///
-    /// It will return the current State of the process.
-    pub async fn chunk(&mut self) -> Result<State, MakerError> {
-        self.current_state = match self.current_state {
-            State::Starting => {
-                self.get_mods();
-                State::Searching
-            }
-            State::Searching => {
-                if self.hash_filenames.is_empty() {
-                    State::Checking
-                } else {
-                    self.search_mods().await;
-                    State::Searching
-                }
-            }
-            State::Checking => {
-                for rinth_mod in &self.mods_states {
-                    match rinth_mod {
-                        ParseState::Good(m) => self.rinth_pack.add_mod(m.clone().into()),
-                        ParseState::Raw(file_name) => self.raw_mods.push(file_name.clone()),
-                    }
-                }
-                State::Writing
-            }
-            State::Writing => {
-                self.rinth_pack.write_mod_pack_with_name();
-
-                compress_pack("modpack", self.path, &self.raw_mods)
-                    .map_err(|_| MakerError::CantCompress)?;
-
-                std::fs::remove_file(constants::RINTH_JSON)
-                    .map_err(|_| MakerError::CantRemoveJSON)?;
-
-                State::Finish
-            }
-            State::Finish => State::Finish,
-        };
-
-        Ok(self.current_state)
     }
 }
 

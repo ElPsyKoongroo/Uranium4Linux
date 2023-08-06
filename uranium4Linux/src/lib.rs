@@ -1,7 +1,6 @@
-#![allow(non_snake_case)]
 #![forbid(unsafe_code)]
 
-use std::io::Write;
+use std::{io::Write, path::Path};
 
 use downloaders::rinth_downloader::*;
 use error::{ModpackError, MakerError};
@@ -9,17 +8,21 @@ use modpack_maker::maker::{ModpackMaker, State};
 use searcher::rinth::SearchType;
 use variables::constants::*;
 
-pub mod checker;
-pub mod code_functions;
+mod checker;
+mod code_functions;
 pub mod downloaders;
 pub mod error;
-pub mod hashes;
+mod hashes;
 pub mod modpack_maker;
 pub mod searcher;
 pub mod variables;
 pub mod zipper;
 
-pub async fn make_modpack(minecraft_path: &str) -> Result<(), MakerError>  {
+
+
+/// This function will make a Modpack from the 
+/// given path.
+pub async fn make_modpack<I: AsRef<Path>>(minecraft_path: I) -> Result<(), MakerError>  {
     let mut maker = ModpackMaker::new(&minecraft_path);
     maker.start();
     let mut i = 0;
@@ -37,9 +40,14 @@ pub async fn make_modpack(minecraft_path: &str) -> Result<(), MakerError>  {
     //ModpackMaker::make(&minecraft_path).await
 }
 
-pub async fn rinth_pack_download(
-    file_path: String,
-    destination_path: String,
+/// This function will download the modpack specified by `file_path`
+/// into `destination_path`
+///
+/// If there is no mods and/or config folder inside `destination_path` then they
+/// will be created.
+pub async fn rinth_pack_download<I: AsRef<Path>>(
+    file_path: I,
+    destination_path: I,
 ) -> Result<(), ModpackError> {
     let mut rinth_downloader = RinthDownloader::new(&file_path, &destination_path)?;
     rinth_downloader.start().await;

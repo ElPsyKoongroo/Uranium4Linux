@@ -1,20 +1,19 @@
 #![allow(non_snake_case)]
 #![forbid(unsafe_code)]
 
-#[cfg(debug_assertions)]
-use uranium4Linux::checker::olog;
 
-use code_functions::{fix_path, get_bool_element, get_parse_element, update};
 use downloaders::{curse_downloader::curse_modpack_downloader, minecraft_downloader};
 use std::env;
 use uranium4Linux::{request_arg_parser, *};
 use variables::constants::*;
 use zip::result::ZipError;
 
+
+mod code_functions;
+use crate::code_functions::{fix_path, get_bool_element, get_parse_element, update};
+
 #[tokio::main]
 async fn main() -> Result<(), ZipError> {
-    #[cfg(debug_assertions)]
-    olog("Debug enable");
 
     let args: Vec<String> = env::args().collect();
 

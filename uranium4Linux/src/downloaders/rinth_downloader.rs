@@ -18,24 +18,15 @@ pub struct RinthDownloader {
 }
 
 impl RinthDownloader {
-    pub fn new<I: AsRef<Path>>(
-        modpack_path: I,
-        destination: I,
-    ) -> Result<Self, ModpackError> {
+    pub fn new<I: AsRef<Path>>(modpack_path: I, destination: I) -> Result<Self, ModpackError> {
         let modpack = RinthDownloader::load_pack(modpack_path)?;
         let (links, names) = RinthDownloader::get_data(&modpack);
 
         let destination = destination.as_ref().to_owned();
 
-        if !destination.join("mods").exists() {
-            std::fs::create_dir(destination.join("mods"))
-                .map_err(|_| ModpackError::CantCreateDir)?;
-        }
-
-        if !destination.join("config").exists() {
-            std::fs::create_dir(destination.join("config"))
-                .map_err(|_| ModpackError::CantCreateDir)?;
-        }
+        
+        RinthDownloader::check_mods_dir(&destination)?;
+        RinthDownloader::check_config_dir(&destination)?;
 
         Ok(RinthDownloader {
             gen_downloader: Downloader2::new(
@@ -108,5 +99,21 @@ impl RinthDownloader {
     /// Else return None.
     pub async fn chunk(&mut self) -> Option<usize> {
         self.gen_downloader.progress().await
+    }
+
+    fn check_mods_dir(destination: &Path) -> Result<(), ModpackError> {
+        if !destination.join("mods").exists() {
+            std::fs::create_dir(destination.join("mods"))
+                .map_err(|_| ModpackError::CantCreateDir)?;
+        }
+        Ok(())
+    }
+
+    fn check_config_dir(destination: &Path) -> Result<(), ModpackError> {
+        if !destination.join("config").exists() {
+            std::fs::create_dir(destination.join("config"))
+                .map_err(|_| ModpackError::CantCreateDir)?;
+        }
+        Ok(())
     }
 }
