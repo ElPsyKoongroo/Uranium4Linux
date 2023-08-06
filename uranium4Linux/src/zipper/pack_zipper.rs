@@ -17,16 +17,17 @@ use crate::zipper::uranium_structs::FileType;
 /// This function will make a modpack from `path`.
 ///
 /// The modpack will have mrpack struct: 
-///
+/// `
 ///     modpack.mrpack
 ///     |
-///     |-> modrinth.index.json
-///     |-> overrides
-///     |   | -> mods
-///     |   | -> resourcepacks
-///     |   | -> config
-///     |   + -> ...
-/// 
+///     |> modrinth.index.json
+///     |> overrides
+///     |   |> mods
+///     |   |> resourcepacks
+///     |   |> config
+///     |   +> ...
+/// `
+///
 pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> ZipResult<()> {
     //let path = &fix_path(path);
 
