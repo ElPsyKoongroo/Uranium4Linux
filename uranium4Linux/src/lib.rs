@@ -16,7 +16,7 @@ mod hashes;
 pub mod modpack_maker;
 pub mod searcher;
 pub mod variables;
-pub mod zipper;
+mod zipper;
 
 
 
@@ -66,6 +66,10 @@ pub async fn rinth_pack_download<I: AsRef<Path>>(
     }
 }
 
+/// This function will set the max number of threads allowed to use
+///
+/// Use it carefully, a big number of threads may decrease the performance.
+/// The default number of threads is 32.
 pub fn set_threads(t: usize) {
     let mut aux = NTHREADS.write().unwrap();
     *aux = t;

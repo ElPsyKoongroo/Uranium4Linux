@@ -8,26 +8,47 @@ use zip::{result::ZipResult, write::FileOptions, ZipWriter};
 
 use crate::{
     checker::{check, check_panic, dlog},
-    variables::constants,
+    variables::constants::{self, CONFIG_DIR, OVERRIDES_FOLDER},
 };
 
 use super::uranium_structs::UraniumFile;
 use crate::zipper::uranium_structs::FileType;
 
+/// This function will make a modpack from `path`.
+///
+/// The modpack will have mrpack struct: 
+///
+///     modpack.mrpack
+///     |
+///     |-> modrinth.index.json
+///     |-> overrides
+///     |   | -> mods
+///     |   | -> resourcepacks
+///     |   | -> config
+///     |   + -> ...
+/// 
 pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> ZipResult<()> {
     //let path = &fix_path(path);
 
-    let zip_file = File::create(name.to_owned() + constants::EXTENSION).unwrap();
+    let zip_file = File::create(name.to_owned() + constants::EXTENSION)?;
     let mut zip = zip::ZipWriter::new(zip_file);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
-    zip.add_directory("overrides", options).unwrap();
+    zip.add_directory(OVERRIDES_FOLDER, options)?;
 
-    zip.add_directory("overrides/config", options).unwrap();
+    zip.add_directory(
+        PathBuf::from(OVERRIDES_FOLDER)
+            .join(CONFIG_DIR)
+            .as_os_str()
+            .to_str()
+            .unwrap_or_default(),
+        options,
+    )?;
+
     let mut config_files: Vec<UraniumFile> = Vec::new();
 
     // Iter through all the files and sub-directories in "config/" and set the file type.
-    search_files(path, "config/", &mut config_files);
+    search_files(path, &PathBuf::from(CONFIG_DIR), &mut config_files);
 
     add_files_to_zip(path, &mut config_files, &mut zip, options);
 
@@ -46,7 +67,7 @@ pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> ZipResult<
     Ok(())
 }
 
-fn search_files(minecraft_path: &Path, relative_path: &str, config_files: &mut Vec<UraniumFile>) {
+fn search_files(minecraft_path: &Path, relative_path: &Path, config_files: &mut Vec<UraniumFile>) {
     // Get this directory files
     let sub_config_files = get_new_files(
         minecraft_path.to_owned().join(relative_path).as_path(),
@@ -58,19 +79,20 @@ fn search_files(minecraft_path: &Path, relative_path: &str, config_files: &mut V
         let path: PathBuf = minecraft_path
             .to_owned()
             .join(&config_file.get_absolute_path());
+
         if Path::is_file(&path) {
             config_file.set_type(FileType::Data);
             config_files.push(config_file.clone());
         } else {
             config_file.set_type(FileType::Dir);
             config_files.push(config_file.clone());
-            let new_path = relative_path.to_owned() + &config_file.get_name() + "/";
+            let new_path = relative_path.join(config_file.get_name()); 
             search_files(minecraft_path, &new_path, config_files);
         }
     }
 }
 
-fn get_new_files(path: &Path, relative_path: &str) -> Vec<UraniumFile> {
+fn get_new_files(path: &Path, relative_path: &Path) -> Vec<UraniumFile> {
     let sub_directory = std::fs::read_dir(path);
     let sub_directory = check(
         sub_directory,

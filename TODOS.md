@@ -8,6 +8,7 @@
 - [ ] Try to change argument parsing to CLAP
 - [ ] Add a `RinthMaker` struct in `lib.rs`
 - [x] If config folder or mods folder don't exit make them
+- [ ] Change `String` to `PathBuf` in mine_data_struct.
 
 
 ## update.rs
@@ -28,15 +29,16 @@
 - [ ] Handle errors and don't panic
 - [x] Move `client` into the struct
 - [x] Change `&'a path`  to `PathBuf`
-- [ ] Add `len()` method indicating how many mods are in the minecraft dir.
-- [ ] Make a field `threads`  in `ModpackMaker` so it doesnt need to call `N_THREADS()` fun all the time.
+- [x] Add `len()` method indicating how many mods are in the minecraft dir.
+- [x] Make a field `threads`  in `ModpackMaker` so it doesnt need to call `N_THREADS()` fun all the time.
 
 
 
 ## pack_zipper.rs
 - [ ] Change paths/names types to `PathBuf` or `Path`
-- [ ] Fix unwraps in `compress_pack`
-- [ ] Change `&str` to `Path`  in `search_files`
+- [x] Fix unwraps in `compress_pack`
+- [x] Change `&str` to `Path`  in `search_files`
+- [ ] Change magic strings to constants
 
 
 ## rinth_downloader.rs

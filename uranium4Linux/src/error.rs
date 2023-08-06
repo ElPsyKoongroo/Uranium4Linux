@@ -18,5 +18,8 @@ pub enum MakerError {
     CantCompress,
     #[error("Cant remove temp JSON file")]
     CantRemoveJSON
+}
 
+#[derive(Debug, Error)]
+pub enum ZipError {
 }

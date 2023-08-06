@@ -45,6 +45,7 @@ pub struct ModpackMaker {
     rinth_pack: RinthModpack,
     raw_mods: Vec<String>,
     cliente: reqwest::Client,
+    threads: usize,
 }
 
 impl ModpackMaker {
@@ -57,6 +58,7 @@ impl ModpackMaker {
             rinth_pack: RinthModpack::new(),
             raw_mods: vec![],
             cliente: reqwest::Client::new(),
+            threads: N_THREADS(),
         }
     }
 
@@ -87,6 +89,13 @@ impl ModpackMaker {
     /// directory
     pub fn len(&self) -> usize {
         self.hash_filenames.len()
+    }
+
+    /// Returns how many chunks the struct will download
+    ///
+    /// The formula is: `self.len()` / `self.threads`
+    pub fn chunks(&self) -> usize {
+        self.len() / self.threads 
     }
 
     /// This method will make progress until Ok(State::Finish) is returned
@@ -136,11 +145,10 @@ impl ModpackMaker {
     }
 
     async fn search_mods(&mut self) {
-        let threads = N_THREADS();
-        let end = if threads > self.hash_filenames.len() {
+        let end = if self.threads > self.hash_filenames.len() {
             self.hash_filenames.len()
         } else {
-            threads
+            self.threads
         };
 
         let chunk: HashFilename = self.hash_filenames.drain(0..end).collect();
