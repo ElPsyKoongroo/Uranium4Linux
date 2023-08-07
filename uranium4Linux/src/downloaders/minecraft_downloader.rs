@@ -1,7 +1,4 @@
-use crate::{
-    checker::{check_panic, log},
-    variables::constants::CANT_CREATE_DIR,
-};
+use crate::variables::constants::CANT_CREATE_DIR;
 
 use fs_extra::dir::create_all;
 use mine_data_strutcs::minecraft::{
@@ -17,6 +14,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 //#[cfg(feature = "console_output")]
 use std::io::Write;
+
+use log::{warn, error};
 
 use super::gen_downloader;
 
@@ -44,7 +43,7 @@ fn check_file<T: AsRef<[u8]>>(bytes: T, hash: &str) -> Result<(), HashCheckError
     hasher.update(bytes.as_ref());
     let file_hash = hasher.finalize().to_vec();
     if file_hash != hex::decode(hash).map_err(|_| HashCheckError::BadHash)? {
-        log(format!("Error while checking {:?}, wrong hash", hash));
+        warn!("Error while checking {:?}, wrong hash", hash);
         return Err(HashCheckError::HashDoesntMatch);
     }
     Ok(())
@@ -98,17 +97,13 @@ async fn get_sourcers(
         .json::<minecraft::Resources>()
         .await?;
 
-    check_panic(
-        tokio::fs::create_dir_all(destination_path.join("assets/indexes")).await,
-        true,
-        CANT_CREATE_DIR,
-    );
+    if tokio::fs::create_dir_all(destination_path.join("assets/indexes")).await.is_err() {
+        error!("{CANT_CREATE_DIR}");
+    }
 
-    check_panic(
-        tokio::fs::create_dir_all(destination_path.join("assets/objects")).await,
-        true,
-        CANT_CREATE_DIR,
-    );
+    if tokio::fs::create_dir_all(destination_path.join("assets/objects")).await.is_err() {
+        error!("{CANT_CREATE_DIR}");
+    }
 
     Ok(resources)
 }

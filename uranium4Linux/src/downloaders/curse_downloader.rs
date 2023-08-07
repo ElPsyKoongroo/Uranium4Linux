@@ -13,11 +13,11 @@ use requester::{
     requester::request_maker::{CurseRequester, Req},
 };
 use reqwest::Response;
-use std::{path::PathBuf, sync::Arc};
+use std::{path::{PathBuf, Path}, sync::Arc};
 
 use super::{functions::overrides, gen_downloader::Downloader};
 
-pub async fn curse_modpack_downloader(path: &str, destination_path: &str) -> Result<(), ModpackError> {
+pub async fn curse_modpack_downloader<I: AsRef<Path>>(path: I, destination_path: I) -> Result<(), ModpackError> {
     unzip_temp_pack(path)?;
 
     let curse_pack = load_curse_pack((TEMP_DIR.to_owned() + CURSE_JSON).as_ref())
@@ -38,7 +38,7 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str) -> Res
 
     // Get the info of each mod to get the url and download it
     let responses: Vec<Response> = get_mod_responses(&curse_req, &files_ids).await;
-    let mods_path = destination_path.to_owned() + "mods/";
+    let mods_path = destination_path.as_ref().to_path_buf().join("mods/");
 
     let mut names = Vec::with_capacity(files_ids.len());
     let download_urls = get_download_urls(&curse_req, responses, &mut names).await;
@@ -55,7 +55,7 @@ pub async fn curse_modpack_downloader(path: &str, destination_path: &str) -> Res
     .start()
     .await;
 
-    overrides(&destination_path.into(), "overrides");
+    overrides(destination_path.as_ref(), "overrides");
     Ok(())
 }
 

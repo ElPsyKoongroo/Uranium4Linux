@@ -9,6 +9,7 @@
 - [ ] Add a `RinthMaker` struct in `lib.rs`
 - [x] If config folder or mods folder don't exit make them
 - [ ] Change `String` to `PathBuf` in mine_data_struct.
+- [x] Change **uranium4Linux** logs to log crate
 
 
 ## update.rs
@@ -35,7 +36,7 @@
 
 
 ## pack_zipper.rs
-- [ ] Change paths/names types to `PathBuf` or `Path`
+- [x] Change paths/names types to `PathBuf` or `Path`
 - [x] Fix unwraps in `compress_pack`
 - [x] Change `&str` to `Path`  in `search_files`
 - [ ] Change magic strings to constants

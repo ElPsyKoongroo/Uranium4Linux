@@ -1,10 +1,9 @@
-use crate::{
-    checker::{check, elog},
-    variables::constants::TEMP_DIR,
-};
-use std::{fs, path::PathBuf};
+use log::error;
 
-pub fn overrides(destination_path: &PathBuf, overrides_folder: &str) {
+use crate::variables::constants::TEMP_DIR;
+use std::{fs, path::{PathBuf, Path}};
+
+pub fn overrides(destination_path: &Path, overrides_folder: &str) {
     // Copy all the content of overrides into the minecraft root folder
     let options = fs_extra::dir::CopyOptions::new();
     let mut file_options = fs_extra::file::CopyOptions::new();
@@ -16,11 +15,7 @@ pub fn overrides(destination_path: &PathBuf, overrides_folder: &str) {
         Err(error) => {
             // We dont care about this result, we are going to panic or just leave
             // this function in case there is an error so no need to manage it
-            match error.kind() {
-                std::io::ErrorKind::NotFound => elog("Error, no overrides folder"),
-                std::io::ErrorKind::PermissionDenied => elog("Error permision deniend"),
-                _ => elog("Error, cant write the file"),
-            };
+            error!("Error reading overrides folder: {}", error);
             // TODO! Fix this panic. Make the function return a result
             // and manage (or not) the error in parent functions
             panic!();
@@ -34,20 +29,9 @@ pub fn overrides(destination_path: &PathBuf, overrides_folder: &str) {
         // There's no need to panick, ¿Is this a mess?
         // TODO! Check if file_type can actually panic here.
         if file.file_type().unwrap().is_dir() {
-            check(
-                fs_extra::dir::copy(file.path(), destination_path, &options),
-                false,
-                "functions: Failt to copy override file",
-            )
-            .ok();
+            let _ = fs_extra::dir::copy(file.path(), destination_path, &options);
         } else {
-            let copy_status = std::fs::copy(&file.path(), destination_path.join(&file.file_name()));
-            check(
-                copy_status,
-                false,
-                &format!("Error coppying {:?}", file.path()),
-            )
-            .ok();
+            let _ = std::fs::copy(&file.path(), destination_path.join(&file.file_name()));
         }
     }
 }

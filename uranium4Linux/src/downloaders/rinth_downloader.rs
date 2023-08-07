@@ -1,17 +1,17 @@
 use super::gen_downloader::*;
 use crate::{
-    checker::dlog,
     code_functions::N_THREADS,
     error::ModpackError,
     variables::constants::{RINTH_JSON, TEMP_DIR},
     zipper::pack_unzipper::unzip_temp_pack,
 };
+use log::info;
 use mine_data_strutcs::rinth::rinth_packs::{load_rinth_pack, RinthMdFiles, RinthModpack};
 use requester::requester::request_maker::RinthRequester;
 use std::path::{Path, PathBuf};
 
 /// RinthDownloader struct is responsable for downloading
-/// the fiven modpack
+/// the fiven modpack.
 pub struct RinthDownloader {
     gen_downloader: Downloader2<RinthRequester>,
     modpack: RinthModpack,
@@ -24,7 +24,6 @@ impl RinthDownloader {
 
         let destination = destination.as_ref().to_owned();
 
-        
         RinthDownloader::check_mods_dir(&destination)?;
         RinthDownloader::check_config_dir(&destination)?;
 
@@ -39,13 +38,18 @@ impl RinthDownloader {
         })
     }
 
+    /// Returns the number of mods to download.
+    pub fn len(&self) -> usize {
+        self.gen_downloader.urls.len()
+    }
+
     /// Returns the number of **CHUNKS** to download.
     ///
     /// So, if `N_THREADS` is set to 2 and there are 32 mods it
     /// will return 16;
     ///
     /// 32/2 = 16
-    pub fn len(&self) -> usize {
+    pub fn chunks(&self) -> usize {
         self.gen_downloader.urls.len() / N_THREADS()
     }
 
@@ -61,7 +65,7 @@ impl RinthDownloader {
             .map(RinthMdFiles::get_download_link)
             .collect();
 
-        dlog(format!("Downloading {} files", file_links.len()));
+        info!("Downloading {} files", file_links.len());
 
         let file_names: Vec<PathBuf> = rinth_pack
             .get_files()
@@ -71,7 +75,7 @@ impl RinthDownloader {
 
         file_names
             .iter()
-            .for_each(|f| dlog(format!("{}", f.display())));
+            .for_each(|f| info!("{}", f.display()));
 
         (file_links, file_names)
     }
@@ -81,7 +85,7 @@ impl RinthDownloader {
         let Some(rinth_pack) = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON)) else {
             panic!("Cant read the pack")};
 
-        dlog("Pack loaded");
+        info!("Pack loaded");
 
         Ok(rinth_pack)
     }

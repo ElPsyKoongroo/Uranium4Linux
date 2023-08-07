@@ -1,5 +1,6 @@
-use crate::{checker::elog, code_functions::N_THREADS};
+use crate::code_functions::N_THREADS;
 use futures::future::join_all;
+use log::error;
 use requester::{mod_searcher::Method, requester::request_maker::Req};
 use reqwest::Response;
 use std::{collections::VecDeque, error::Error, io::Write, path::PathBuf, sync::Arc};
@@ -83,11 +84,11 @@ impl<T: Req + Clone + std::marker::Send + std::marker::Sync + 'static> Downloade
             match file.write_all(&bytes) {
                 Ok(_) => {}
                 Err(e) => {
-                    elog(format!(
-                        "Can not write in {file_name}: {error}",
-                        file_name = file_path.display(),
-                        error = e
-                    ));
+                    error!(
+                        "Can not write in {:?}: {}",
+                        file_path.file_name().unwrap_or_default(),
+                        e
+                    );
                     return Err(e.into());
                 }
             };

@@ -6,6 +6,7 @@ use downloaders::rinth_downloader::*;
 use error::{ModpackError, MakerError};
 use modpack_maker::maker::{ModpackMaker, State};
 use searcher::rinth::SearchType;
+use simplelog::SimpleLogger;
 use variables::constants::*;
 
 mod checker;
@@ -17,7 +18,6 @@ pub mod modpack_maker;
 pub mod searcher;
 pub mod variables;
 mod zipper;
-
 
 
 /// This function will make a Modpack from the 
