@@ -32,9 +32,12 @@ impl RinthRequester {
             headers: HeaderMap::new(),
         };
 
+
+        let (_, rinth_api_key) = env::vars().find(|(v,_)| v =="RINTH_API_KEY").unwrap_or_default();
+
         req.headers.insert(
             "x-api-key",
-            "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".parse().unwrap(),
+            rinth_api_key.parse().unwrap(),
         );
         req.headers
             .insert("Content-Type", "application/json".parse().unwrap());
