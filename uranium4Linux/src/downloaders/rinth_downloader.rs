@@ -73,9 +73,9 @@ impl RinthDownloader {
             .map(RinthMdFiles::get_name)
             .collect();
 
-        file_names
-            .iter()
-            .for_each(|f| info!("{}", f.display()));
+        for name in &file_names {
+            info!("{}", name.display());
+        }
 
         (file_links, file_names)
     }
@@ -83,9 +83,9 @@ impl RinthDownloader {
     fn load_pack<I: AsRef<Path>>(path: I) -> Result<RinthModpack, ModpackError> {
         unzip_temp_pack(path)?;
         let Some(rinth_pack) = load_rinth_pack(&(TEMP_DIR.to_owned() + RINTH_JSON)) else {
-            panic!("Cant read the pack")};
+            return Err(ModpackError::WrongFileFormat)};
 
-        info!("Pack loaded");
+        info!("Pack loaded {}", rinth_pack.get_name());
 
         Ok(rinth_pack)
     }

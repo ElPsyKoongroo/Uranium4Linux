@@ -1,4 +1,3 @@
-use core::panic;
 use std::{
     fs::read_dir,
     path::{Path, PathBuf},
@@ -6,11 +5,12 @@ use std::{
 
 use futures::future::join_all;
 
+use log::error;
 use mine_data_strutcs::{
     rinth::{rinth_mods::RinthVersion, rinth_packs::RinthModpack},
     url_maker::maker,
 };
-use requester::async_pool::AsyncPool;
+use reqwest::Response;
 
 use crate::{
     code_functions::N_THREADS, error::MakerError, hashes::rinth_hash, variables::constants,
@@ -66,9 +66,10 @@ impl ModpackMaker {
     /// or finish method for optimal performance.
     ///
     /// It fetchs the mods from minecraft/mods folder.
-    pub fn start(&mut self) {
-        self.hash_filenames = self.get_mods();
+    pub fn start(&mut self) -> Result<(), MakerError> {
+        self.hash_filenames = self.get_mods()?;
         self.mods_states = Vec::with_capacity(self.hash_filenames.len());
+        Ok(())
     }
 
     /// Can only be used after start method is called.
@@ -95,7 +96,7 @@ impl ModpackMaker {
     ///
     /// The formula is: `self.len()` / `self.threads`
     pub fn chunks(&self) -> usize {
-        self.len() / self.threads 
+        self.len() / self.threads
     }
 
     /// This method will make progress until Ok(State::Finish) is returned
@@ -106,7 +107,7 @@ impl ModpackMaker {
         self.current_state = match self.current_state {
             State::Starting => {
                 if self.hash_filenames.is_empty() {
-                    self.hash_filenames = self.get_mods();
+                    self.hash_filenames = self.get_mods()?;
                 }
                 State::Searching
             }
@@ -130,8 +131,13 @@ impl ModpackMaker {
             State::Writing => {
                 self.rinth_pack.write_mod_pack_with_name();
 
-                compress_pack("modpack", &self.path, &self.raw_mods)
-                    .map_err(|_| MakerError::CantCompress)?;
+                match compress_pack("modpack", &self.path, &self.raw_mods) {
+                    Err(e) => {
+                        error!("Error while compressing the modpack: {}", e);
+                        return Err(MakerError::CantCompress);
+                    }
+                    Ok(_) => {}
+                }
 
                 std::fs::remove_file(constants::RINTH_JSON)
                     .map_err(|_| MakerError::CantRemoveJSON)?;
@@ -155,14 +161,19 @@ impl ModpackMaker {
 
         // Get rinth_responses
         let mut rinth_responses = Vec::with_capacity(chunk.len());
-        let mut pool = AsyncPool::new();
 
         let reqs = chunk
             .iter()
             .map(|f| tokio::task::spawn(self.cliente.get(maker::ModRinth::hash(&f.0)).send()))
-            .collect();
-        pool.push_request_vec(reqs);
-        rinth_responses.append(&mut pool.start().await);
+            .collect::<Vec<tokio::task::JoinHandle<Result<Response, reqwest::Error>>>>();
+
+        let responses = join_all(reqs)
+            .await
+            .into_iter()
+            .flatten()
+            .collect::<Vec<Result<Response, reqwest::Error>>>();
+
+        rinth_responses.extend(responses);
 
         let rinth_parses = parse_responses(rinth_responses).await;
         for (file_name, rinth) in chunk.into_iter().zip(rinth_parses.into_iter()) {
@@ -174,7 +185,7 @@ impl ModpackMaker {
         }
     }
 
-    fn get_mods(&mut self) -> HashFilename {
+    fn get_mods(&mut self) -> Result<HashFilename, MakerError> {
         assert!(self.path.is_dir(), "{:?} is not a dir", self.path);
 
         let mods_path = self.path.join("mods/");
@@ -184,9 +195,9 @@ impl ModpackMaker {
                 .into_iter()
                 .map(|f| f.unwrap().path())
                 .collect::<Vec<PathBuf>>(),
-            Err(error) => {
-                eprintln!("Error reading the directory: {}", error);
-                panic!("")
+            Err(e) => {
+                error!("Error reading the directory: {}", e);
+                return Err(MakerError::CantReadModsDir);
             }
         };
 
@@ -204,7 +215,7 @@ impl ModpackMaker {
             hashes_names.push((mod_hash, file_name));
         }
 
-        hashes_names
+        Ok(hashes_names)
     }
 }
 

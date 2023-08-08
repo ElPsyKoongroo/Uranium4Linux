@@ -3,13 +3,12 @@
 use std::{io::Write, path::Path};
 
 use downloaders::rinth_downloader::*;
-use error::{ModpackError, MakerError};
+use error::{MakerError, ModpackError};
 use modpack_maker::maker::{ModpackMaker, State};
 use searcher::rinth::SearchType;
-use simplelog::SimpleLogger;
+
 use variables::constants::*;
 
-mod checker;
 mod code_functions;
 pub mod downloaders;
 pub mod error;
@@ -19,12 +18,11 @@ pub mod searcher;
 pub mod variables;
 mod zipper;
 
-
-/// This function will make a Modpack from the 
+/// This function will make a Modpack from the
 /// given path.
-pub async fn make_modpack<I: AsRef<Path>>(minecraft_path: I) -> Result<(), MakerError>  {
+pub async fn make_modpack<I: AsRef<Path>>(minecraft_path: I) -> Result<(), MakerError> {
     let mut maker = ModpackMaker::new(&minecraft_path);
-    maker.start();
+    maker.start()?;
     let mut i = 0;
     loop {
         match maker.chunk().await {
@@ -36,7 +34,7 @@ pub async fn make_modpack<I: AsRef<Path>>(minecraft_path: I) -> Result<(), Maker
             }
         }
     }
-    
+
     //ModpackMaker::make(&minecraft_path).await
 }
 
@@ -51,7 +49,7 @@ pub async fn rinth_pack_download<I: AsRef<Path>>(
 ) -> Result<(), ModpackError> {
     let mut rinth_downloader = RinthDownloader::new(&file_path, &destination_path)?;
     rinth_downloader.start().await;
-    let total = rinth_downloader.len() * 2;
+    let total = rinth_downloader.chunks();
     let mut i = 1;
 
     loop {
@@ -73,6 +71,29 @@ pub async fn rinth_pack_download<I: AsRef<Path>>(
 pub fn set_threads(t: usize) {
     let mut aux = NTHREADS.write().unwrap();
     *aux = t;
+}
+
+/// Init the logger and make a log.txt file to write logs content.
+pub fn init_logger() {
+    use chrono::prelude::Local;
+    use simplelog::*;
+    use std::fs::File;
+
+    let log_file_name = format!("log_{}.txt", Local::now().format("%H-%M-%S_%d-%m-%Y"));
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Warn,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            File::create(log_file_name).unwrap(),
+        ),
+    ])
+    .unwrap();
 }
 
 pub fn request_arg_parser(args: &[String]) -> Option<searcher::rinth::SearchType> {

@@ -4,13 +4,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use zip::{result::ZipResult, write::FileOptions, ZipWriter};
+use zip::{write::FileOptions, ZipWriter};
 
-use crate::variables::constants::{self, CONFIG_DIR, OVERRIDES_FOLDER};
+use crate::{
+    error::ZipError,
+    variables::constants::{self, CONFIG_DIR, OVERRIDES_FOLDER},
+};
 
 use super::uranium_structs::UraniumFile;
 use crate::zipper::uranium_structs::FileType;
-use log::{error, warn, info};
+use log::{error, info, warn};
 
 /// This function will make a modpack from `path`.
 ///
@@ -27,7 +30,7 @@ use log::{error, warn, info};
 ///
 /// =========================================
 ///
-pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> ZipResult<()> {
+pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> Result<(), ZipError> {
     //let path = &fix_path(path);
 
     let zip_file = File::create(name.to_owned() + constants::EXTENSION)?;
@@ -48,7 +51,7 @@ pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> ZipResult<
     let mut config_files: Vec<UraniumFile> = Vec::new();
 
     // Iter through all the files and sub-directories in "config/" and set the file type.
-    search_files(path, &PathBuf::from(CONFIG_DIR), &mut config_files);
+    search_files(path, &PathBuf::from(CONFIG_DIR), &mut config_files)?;
 
     add_files_to_zip(path, &mut config_files, &mut zip, options);
 
@@ -67,12 +70,16 @@ pub fn compress_pack(name: &str, path: &Path, raw_mods: &[String]) -> ZipResult<
     Ok(())
 }
 
-fn search_files(minecraft_path: &Path, relative_path: &Path, config_files: &mut Vec<UraniumFile>) {
+fn search_files(
+    minecraft_path: &Path,
+    relative_path: &Path,
+    config_files: &mut Vec<UraniumFile>,
+) -> Result<(), ZipError> {
     // Get this directory files
     let sub_config_files = get_new_files(
         minecraft_path.to_owned().join(relative_path).as_path(),
         relative_path,
-    );
+    )?;
 
     // Go through the sub_config_files vector and set the right tipe to each file. Then add them to config_files
     for mut config_file in sub_config_files {
@@ -87,17 +94,19 @@ fn search_files(minecraft_path: &Path, relative_path: &Path, config_files: &mut 
             config_file.set_type(FileType::Dir);
             config_files.push(config_file.clone());
             let new_path = relative_path.join(config_file.get_name());
-            search_files(minecraft_path, &new_path, config_files);
+            search_files(minecraft_path, &new_path, config_files)?;
         }
     }
+
+    Ok(())
 }
 
-fn get_new_files(path: &Path, relative_path: &Path) -> Vec<UraniumFile> {
+fn get_new_files(path: &Path, relative_path: &Path) -> Result<Vec<UraniumFile>, ZipError> {
     let sub_directory = match std::fs::read_dir(path) {
         Ok(dir) => dir,
         Err(e) => {
             error!("Error al leer {:?}: {}", path, e);
-            panic!();
+            return Err(ZipError::CantReadDir);
         }
     };
 
@@ -110,7 +119,7 @@ fn get_new_files(path: &Path, relative_path: &Path) -> Vec<UraniumFile> {
             )
         })
         .collect();
-    sub_config_files
+    Ok(sub_config_files)
 }
 
 fn add_files_to_zip(
@@ -155,13 +164,13 @@ fn append_config_file(
     rel_path: &Path,
     zip: &mut ZipWriter<File>,
     option: FileOptions,
-) {
+) -> Result<(), ZipError> {
     // Read the file
     let file = match File::open(absolute_path) {
         Ok(f) => f,
         Err(e) => {
             error!("Unable to open {:?}: {}", absolute_path, e);
-            panic!();
+            return Err(ZipError::IoError(e));
         }
     };
 
@@ -172,19 +181,17 @@ fn append_config_file(
     // and dont add the file
     if buffer.is_empty() {
         warn!("No bytes readed from the pack");
-        return;
+        return Ok(());
     }
 
     // Add the file to the zip
     let _ = zip.start_file(rel_path.as_os_str().to_str().unwrap_or_default(), option);
     let _ = zip.write_all(&buffer);
+    return Ok(());
 }
 
-fn add_raw_mods(path: &Path, zip: &mut ZipWriter<File>, raw_mods: &[String], options: FileOptions) {
-    if zip.add_directory("overrides/mods", options).is_err() {
-        error!("Error adding raw mods dir");
-        panic!();
-    }
+fn add_raw_mods(path: &Path, zip: &mut ZipWriter<File>, raw_mods: &[String], options: FileOptions) -> Result<(), ZipError> {
+    zip.add_directory("overrides/mods", options)?;
 
     for jar_file in raw_mods {
         let file_name = PathBuf::from("overrides/mods/").join(jar_file);
@@ -199,7 +206,6 @@ fn add_raw_mods(path: &Path, zip: &mut ZipWriter<File>, raw_mods: &[String], opt
                 .unwrap_or_default()
         );
 
-
         let jar_path = path.join("mods/").join(jar_file);
         let buffer = match std::fs::read(&jar_path) {
             Ok(data) => data,
@@ -212,4 +218,5 @@ fn add_raw_mods(path: &Path, zip: &mut ZipWriter<File>, raw_mods: &[String], opt
         let _ = zip.start_file(file_name.as_os_str().to_str().unwrap_or_default(), options);
         let _ = zip.write_all(&buffer);
     }
+    Ok(())
 }

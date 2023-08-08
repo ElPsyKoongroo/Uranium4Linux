@@ -1,7 +1,7 @@
 use log::error;
 
 use crate::variables::constants::TEMP_DIR;
-use std::{fs, path::{PathBuf, Path}};
+use std::{fs, path::{Path}};
 
 pub fn overrides(destination_path: &Path, overrides_folder: &str) {
     // Copy all the content of overrides into the minecraft root folder

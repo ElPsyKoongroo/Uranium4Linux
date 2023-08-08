@@ -15,6 +15,8 @@ use crate::code_functions::{get_bool_element, get_parse_element, update};
 #[tokio::main]
 async fn main() -> Result<(), ZipError> {
 
+    init_logger();  
+
     let args: Vec<String> = env::args().collect();
 
     set_threads(get_parse_element(&args, THREADS_FLAG).unwrap_or(DEFAULT_NTHREADS));
@@ -46,8 +48,6 @@ async fn main() -> Result<(), ZipError> {
         SHORT_INSTACIATE | LONG_INSTACIATE => minecraft_downloader::donwload_minecraft(
             &instance,
             destination_path
-                .try_into()
-                .expect("Impossible to parse destination path!"),
         )
         .await
         .expect("Couldnt download this minecraft version!"),

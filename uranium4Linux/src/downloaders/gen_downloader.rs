@@ -199,7 +199,7 @@ impl<T: Req + Clone + std::marker::Send + std::marker::Sync + 'static> Downloade
                 if self.tasks.get(i).unwrap().is_finished() {
                     let task = self.tasks.remove(i).unwrap();
                     task.await.unwrap();
-                    self.tasks.len();
+                    return Some(self.tasks.len());
                 }
             }
             let _ = self.tasks.pop_front().unwrap().await;

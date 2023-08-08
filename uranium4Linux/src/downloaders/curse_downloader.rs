@@ -1,23 +1,30 @@
 use crate::{
     code_functions::N_THREADS,
+    error::ModpackError,
     variables::constants::{CURSE_JSON, TEMP_DIR},
-    zipper::pack_unzipper::unzip_temp_pack, error::ModpackError,
+    zipper::pack_unzipper::unzip_temp_pack,
 };
+use futures::future::join_all;
 use mine_data_strutcs::{
     curse::{curse_modpacks::*, curse_mods::*},
     url_maker::maker::Curse,
 };
 use requester::{
-    async_pool::AsyncPool,
     mod_searcher::Method,
     requester::request_maker::{CurseRequester, Req},
 };
 use reqwest::Response;
-use std::{path::{PathBuf, Path}, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use super::{functions::overrides, gen_downloader::Downloader};
 
-pub async fn curse_modpack_downloader<I: AsRef<Path>>(path: I, destination_path: I) -> Result<(), ModpackError> {
+pub async fn curse_modpack_downloader<I: AsRef<Path>>(
+    path: I,
+    destination_path: I,
+) -> Result<(), ModpackError> {
     unzip_temp_pack(path)?;
 
     let curse_pack = load_curse_pack((TEMP_DIR.to_owned() + CURSE_JSON).as_ref())
@@ -49,7 +56,7 @@ pub async fn curse_modpack_downloader<I: AsRef<Path>>(path: I, destination_path:
     Downloader {
         names,
         urls: Arc::new(download_urls),
-        path: Arc::new(PathBuf::from(mods_path)),
+        path: Arc::new(mods_path),
         requester: curse_req,
     }
     .start()
@@ -63,32 +70,24 @@ async fn get_mod_responses(curse_req: &CurseRequester, files_ids: &[String]) -> 
     let mut responses: Vec<Response> = Vec::with_capacity(files_ids.len());
     let threads: usize = N_THREADS();
 
-    let mut pool = AsyncPool::new();
     for chunk in files_ids.chunks(threads) {
         let mut requests = Vec::new();
         for url in chunk {
             let tarea = curse_req.get(url, Method::GET, "");
             requests.push(tarea);
         }
-        pool.push_request_vec(requests);
+        //pool.push_request_vec(requests);
+
+        let res: Vec<Response> = join_all(requests)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect();
 
         // Wait for the current pool to end and append the results
         // to the results vector
-        responses.append(
-            &mut pool
-                .start()
-                .await
-                .into_iter()
-                .filter_map(|f| match f {
-                    Ok(val) => Some(val),
-                    Err(e) => {
-                        println!("{:?}", e);
-                        None
-                    }
-                })
-                .collect(),
-        );
-        pool.clear();
+        responses.extend(res);
     }
 
     responses

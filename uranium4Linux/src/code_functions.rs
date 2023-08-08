@@ -8,6 +8,7 @@ pub async fn update(path: &Path) {
 }
 
 #[allow(non_snake_case)]
+#[allow(unused)]
 /// Returns the actual max threads allowed.
 pub fn N_THREADS() -> usize {
     match NTHREADS.read() {

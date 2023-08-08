@@ -19,7 +19,7 @@ pub fn unzip_temp_pack<I: AsRef<Path>>(file_path: I) -> Result<(), ModpackError>
 
     if create_dir(TEMP_DIR).is_err() {
         error!("Could not create temporal dir");
-        remove_temp_pack()
+        remove_temp_pack();
     }
 
     if zip.extract(TEMP_DIR).is_err() {
